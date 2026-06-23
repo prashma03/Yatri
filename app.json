@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Yatri",
+    "slug": "yatri",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "yatri",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#07060f"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

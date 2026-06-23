@@ -1,0 +1,1375 @@
+
+
+cat > /mnt/user-data/outputs/nepal_guide_app.html << 'HTMLEOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NepaliGuide – Your Nepal Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #07060f;
+    --surface: #110f1e;
+    --surface2: #1a1730;
+    --border: rgba(255,255,255,0.08);
+    --gold: #F5A623;
+    --gold-light: #FFD87A;
+    --teal: #3ECFB2;
+    --red-np: #C41E3A;
+    --text: #F0EEF8;
+    --muted: rgba(240,238,248,0.5);
+    --dim: rgba(240,238,248,0.25);
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ─── LAYOUT ─── */
+  .app-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ─── TOP NAV ─── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 16px;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 0;
+  }
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.3px;
+  }
+  .nav-logo span { color: var(--text); font-weight: 400; }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--gold);
+    color: #1a0f00;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative;
+    height: 88vh;
+    min-height: 560px;
+    max-height: 800px;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 24px;
+  }
+  .hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+  }
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(7,6,15,0.1) 0%,
+      rgba(7,6,15,0.3) 40%,
+      rgba(7,6,15,0.85) 100%
+    );
+  }
+  .hero-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 48px 52px;
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+  }
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(42px, 6vw, 72px);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -1px;
+    color: #fff;
+    max-width: 560px;
+    margin-bottom: 18px;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold-light);
+  }
+  .hero-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+    max-width: 420px;
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+  .hero-actions { display: flex; gap: 12px; align-items: center; }
+  .btn-primary {
+    background: var(--gold);
+    color: #1a0f00;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 0.5px solid rgba(255,255,255,0.25);
+    padding: 14px 28px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font-body);
+    backdrop-filter: blur(8px);
+  }
+  .hero-stats {
+    position: absolute;
+    bottom: 48px;
+    right: 52px;
+    display: flex;
+    gap: 32px;
+  }
+  .hero-stat { text-align: right; }
+  .hero-stat-num {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1;
+  }
+  .hero-stat-lbl {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── PRAYER FLAGS BAR ─── */
+  .flags-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 16px 0;
+    border-bottom: 0.5px solid var(--border);
+    overflow: hidden;
+  }
+  .flag-string {
+    display: flex;
+    gap: 0;
+    animation: scrollFlags 20s linear infinite;
+  }
+  .flag-item {
+    width: 28px;
+    height: 20px;
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+    flex-shrink: 0;
+  }
+  @keyframes scrollFlags {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ─── SECTION HEADER ─── */
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .section-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .section-link {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 4px;
+  }
+  section { padding: 60px 0; }
+
+  /* ─── PERSONA CARDS ─── */
+  .persona-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .persona-card {
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    height: 260px;
+    transition: transform .3s;
+    border: 0.5px solid var(--border);
+  }
+  .persona-card:hover { transform: translateY(-4px); }
+  .persona-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .5s;
+  }
+  .persona-card:hover img { transform: scale(1.05); }
+  .persona-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(7,6,15,0.92) 0%, rgba(7,6,15,0.3) 60%, transparent 100%);
+  }
+  .persona-card-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 18px 18px;
+  }
+  .persona-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .persona-name {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: #fff;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .persona-desc {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 4px;
+  }
+
+  /* ─── HIGHLIGHTS GRID ─── */
+  .highlights {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+  }
+  .hl-big {
+    grid-row: 1 / 3;
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    height: 480px;
+    border: 0.5px solid var(--border);
+  }
+  .hl-small {
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    height: 232px;
+    border: 0.5px solid var(--border);
+  }
+  .hl-big img, .hl-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .6s;
+  }
+  .hl-big:hover img, .hl-small:hover img { transform: scale(1.04); }
+  .hl-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(7,6,15,0.9) 0%, rgba(7,6,15,0.2) 55%, transparent 100%);
+  }
+  .hl-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 24px 22px;
+  }
+  .hl-tag {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .hl-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: #fff;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .hl-big .hl-title { font-size: 26px; }
+  .hl-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+
+  /* ─── FEATURES ROW ─── */
+  .features-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .feat-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 20px;
+    transition: border-color .2s, background .2s;
+    cursor: pointer;
+  }
+  .feat-card:hover {
+    background: var(--surface2);
+    border-color: rgba(245,166,35,0.3);
+  }
+  .feat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+  .feat-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 5px;
+  }
+  .feat-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ─── TRANSLATE SECTION ─── */
+  .translate-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .translate-left { }
+  .phrase-list { display: flex; flex-direction: column; gap: 10px; }
+  .phrase-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+  }
+  .phrase-card:hover {
+    background: var(--surface2);
+    border-color: rgba(245,166,35,0.25);
+  }
+  .phrase-card.featured {
+    border-color: rgba(245,166,35,0.4);
+    background: rgba(245,166,35,0.06);
+  }
+  .phrase-nep {
+    font-size: 22px;
+    color: var(--text);
+    min-width: 52px;
+    text-align: center;
+  }
+  .phrase-info { flex: 1; }
+  .phrase-en { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+  .phrase-roman { font-size: 14px; font-weight: 500; color: var(--text); }
+  .phrase-tip { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .play-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--gold);
+    font-size: 16px;
+    transition: background .2s;
+  }
+  .phrase-card:hover .play-btn { background: rgba(245,166,35,0.12); }
+  .gesture-box {
+    background: var(--surface2);
+    border: 0.5px solid rgba(245,166,35,0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 12px;
+  }
+  .gesture-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .gesture-steps { display: flex; flex-direction: column; gap: 8px; }
+  .gesture-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .gesture-step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(245,166,35,0.15);
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .translate-right {
+    position: sticky;
+    top: 24px;
+  }
+  .mandala-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .mandala-visual {
+    height: 220px;
+    background: #08001a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .mandala-visual svg { width: 180px; height: 180px; }
+  .culture-facts { padding: 20px; }
+  .culture-fact {
+    padding: 12px 0;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .culture-fact:last-child { border-bottom: none; padding-bottom: 0; }
+  .cf-icon { font-size: 18px; color: var(--gold); flex-shrink: 0; margin-top: 2px; }
+  .cf-text { font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .cf-text strong { color: var(--text); font-weight: 500; }
+
+  /* ─── PRICES ─── */
+  .price-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .price-col { }
+  .price-col-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .price-row:last-child { border-bottom: none; }
+  .price-item-info {}
+  .price-item-name { font-size: 13px; color: var(--text); font-weight: 500; }
+  .price-item-note { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .price-right { text-align: right; }
+  .price-val { font-size: 13px; font-weight: 600; color: #3ECFB2; }
+  .price-badge {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 6px;
+    margin-top: 3px;
+  }
+  .badge-warn { background: rgba(220,80,80,0.15); color: #F09595; }
+  .badge-ok { background: rgba(62,207,178,0.1); color: #3ECFB2; }
+  .ride-cards { display: flex; gap: 12px; margin-bottom: 20px; }
+  .ride-card {
+    flex: 1;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .ride-logo-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+  }
+  .ride-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .ride-type { font-size: 11px; color: var(--muted); margin-top: 2px; margin-bottom: 10px; }
+  .ride-detail { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; padding: 4px 0; }
+  .ride-detail span:last-child { color: var(--text); font-weight: 500; }
+
+  /* ─── FESTIVALS ─── */
+  .festival-scroll {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .fest-card {
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    height: 340px;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    transition: transform .3s;
+  }
+  .fest-card:hover { transform: translateY(-4px); }
+  .fest-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .5s;
+  }
+  .fest-card:hover img { transform: scale(1.05); }
+  .fest-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(7,6,15,0.95) 0%, rgba(7,6,15,0.3) 55%, transparent 100%);
+  }
+  .fest-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 22px 20px;
+  }
+  .fest-date {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--gold);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+  }
+  .fest-name {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .fest-desc {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.5;
+  }
+  .fest-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(245,166,35,0.9);
+    color: #1a0f00;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ─── FACTS ─── */
+  .facts-mosaic {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .fact-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 20px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s;
+  }
+  .fact-card:hover {
+    background: var(--surface2);
+    border-color: rgba(245,166,35,0.2);
+  }
+  .fact-num {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .fact-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 5px; }
+  .fact-body { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  /* ─── BOTTOM CTA ─── */
+  .cta-banner {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-banner::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,166,35,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cta-left { max-width: 440px; }
+  .cta-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+  .cta-title { font-family: var(--font-display); font-size: 32px; font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 12px; }
+  .cta-sub { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .cta-right { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .store-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 20px;
+    cursor: pointer;
+    min-width: 180px;
+    transition: border-color .2s;
+  }
+  .store-btn:hover { border-color: rgba(245,166,35,0.3); }
+  .store-btn i { font-size: 22px; color: var(--text); }
+  .store-btn-text { text-align: left; }
+  .store-btn-sub { font-size: 9px; color: var(--muted); }
+  .store-btn-name { font-size: 14px; font-weight: 600; color: var(--text); }
+
+  /* ─── FOOTER ─── */
+  footer {
+    padding: 32px 0 0;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0;
+  }
+  footer p { font-size: 12px; color: var(--dim); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes pulse { 0%,100% { opacity: .6; } 50% { opacity: 1; } }
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .mandala-spin { animation: rotate 30s linear infinite; transform-origin: center; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">🏔️ Nepali<span>Guide</span></div>
+    <div class="nav-links">
+      <a href="#">Explore</a>
+      <a href="#">Festivals</a>
+      <a href="#">Phrases</a>
+      <a href="#">Prices</a>
+      <a href="#">About</a>
+    </div>
+    <button class="nav-cta">Download App</button>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <img class="hero-img"
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg/1280px-Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg"
+      alt="Mount Everest and Himalayan peaks"
+      onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Annapurna_Panorama.jpg/1280px-Annapurna_Panorama.jpg'"
+    >
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">Your Nepal companion</div>
+      <h1 class="hero-title">Travel Nepal<br>like you <em>belong</em> here</h1>
+      <p class="hero-sub">Phrases, festivals, fair prices, rides, food — everything a traveler needs, beautifully organised.</p>
+      <div class="hero-actions">
+        <button class="btn-primary"><i class="ti ti-download"></i> Download free</button>
+        <button class="btn-secondary">Watch demo</button>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">8</div>
+        <div class="hero-stat-lbl">of world's 10<br>tallest peaks</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">50+</div>
+        <div class="hero-stat-lbl">festivals<br>covered</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">200+</div>
+        <div class="hero-stat-lbl">Nepali<br>phrases</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRAYER FLAGS BAR -->
+  <div class="flags-bar" aria-hidden="true">
+    <div class="flag-string">
+      <!-- Duplicated for seamless loop -->
+      <div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div>
+      <!-- duplicate -->
+      <div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div><div class="flag-item" style="background:#C41E3A"></div><div class="flag-item" style="background:#1565C0"></div><div class="flag-item" style="background:#2E7D32"></div><div class="flag-item" style="background:#F9A825"></div><div class="flag-item" style="background:#fff;opacity:.5"></div>
+    </div>
+  </div>
+
+  <!-- PERSONAS -->
+  <section>
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Who are you?</div>
+        <h2 class="section-title">Travel your way</h2>
+      </div>
+      <a href="#" class="section-link">See all <i class="ti ti-arrow-right" style="font-size:13px"></i></a>
+    </div>
+    <div class="persona-grid">
+      <div class="persona-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Dwarika%27s_Hotel_-_Kathmandu%2C_Nepal_%282%29.jpg/800px-Dwarika%27s_Hotel_-_Kathmandu%2C_Nepal_%282%29.jpg"
+          alt="Luxury Nepal hotel" onerror="this.style.background='#1a1020';this.style.display='block'">
+        <div class="persona-card-overlay"></div>
+        <div class="persona-card-content">
+          <div class="persona-tag" style="background:rgba(245,166,35,0.2);color:#F5A623;">💎 Luxury</div>
+          <div class="persona-name">Five-star Nepal</div>
+          <div class="persona-desc">Boutique hotels, spas, fine dining</div>
+        </div>
+      </div>
+      <div class="persona-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Morning_in_a_Village_in_Nepal.jpg/800px-Morning_in_a_Village_in_Nepal.jpg"
+          alt="Nepal village local life" onerror="this.style.background='#0a1a10';this.style.display='block'">
+        <div class="persona-card-overlay"></div>
+        <div class="persona-card-content">
+          <div class="persona-tag" style="background:rgba(62,207,178,0.2);color:#3ECFB2;">🏘️ Local life</div>
+          <div class="persona-name">Live like a local</div>
+          <div class="persona-desc">Tea houses, markets, home stays</div>
+        </div>
+      </div>
+      <div class="persona-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Annapurna_base_camp_trail_%282%29.jpg/800px-Annapurna_base_camp_trail_%282%29.jpg"
+          alt="Nepal trekking Annapurna trail" onerror="this.style.background='#0a0a1a';this.style.display='block'">
+        <div class="persona-card-overlay"></div>
+        <div class="persona-card-content">
+          <div class="persona-tag" style="background:rgba(100,130,255,0.2);color:#85B7EB;">🗺️ Explorer</div>
+          <div class="persona-name">Trails & temples</div>
+          <div class="persona-desc">Treks, hidden gems, ancient sites</div>
+        </div>
+      </div>
+      <div class="persona-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Paragliding_in_Pokhara.jpg/800px-Paragliding_in_Pokhara.jpg"
+          alt="Paragliding Pokhara Nepal" onerror="this.style.background='#1a0a0a';this.style.display='block'">
+        <div class="persona-card-overlay"></div>
+        <div class="persona-card-content">
+          <div class="persona-tag" style="background:rgba(220,80,80,0.2);color:#F09595;">🎉 Fun</div>
+          <div class="persona-name">Thrills & chills</div>
+          <div class="persona-desc">Rafting, paragliding, nightlife</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HIGHLIGHTS -->
+  <section>
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Cultural icons</div>
+        <h2 class="section-title">Nepal's soul</h2>
+      </div>
+    </div>
+    <div class="highlights">
+      <div class="hl-big">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Kumari_Ghar_-_Kathmandu%2C_Nepal_%281%29.jpg/800px-Kumari_Ghar_-_Kathmandu%2C_Nepal_%281%29.jpg"
+          alt="Kumari Ghar, home of Nepal's Living Goddess in Kathmandu Durbar Square"
+          onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Boudhanath_stupa_in_Kathmandu%2C_Nepal.jpg/800px-Boudhanath_stupa_in_Kathmandu%2C_Nepal.jpg'">
+        <div class="hl-overlay"></div>
+        <div class="hl-content">
+          <div class="hl-tag">✦ Living Goddess</div>
+          <div class="hl-title">Kumari — Nepal's divine child</div>
+          <div class="hl-desc">A pre-pubescent girl chosen to embody the goddess Taleju. Even a glimpse from her window at Kumari Ghar, Durbar Square is believed to bring great fortune.</div>
+        </div>
+      </div>
+      <div class="hl-small">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Boudhanath_stupa_in_Kathmandu%2C_Nepal.jpg/800px-Boudhanath_stupa_in_Kathmandu%2C_Nepal.jpg"
+          alt="Boudhanath stupa Kathmandu Nepal"
+          onerror="this.style.background='#0a0515'">
+        <div class="hl-overlay"></div>
+        <div class="hl-content">
+          <div class="hl-tag">UNESCO Heritage</div>
+          <div class="hl-title">Boudhanath Stupa</div>
+          <div class="hl-desc">One of the world's largest Buddhist stupas, its all-seeing eyes watch over Kathmandu.</div>
+        </div>
+      </div>
+      <div class="hl-small">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Pashupatinath_Temple_-_Kathmandu%2C_Nepal_%281%29.jpg/800px-Pashupatinath_Temple_-_Kathmandu%2C_Nepal_%281%29.jpg"
+          alt="Pashupatinath temple Kathmandu"
+          onerror="this.style.background='#150a00'">
+        <div class="hl-overlay"></div>
+        <div class="hl-content">
+          <div class="hl-tag">Sacred site</div>
+          <div class="hl-title">Pashupatinath</div>
+          <div class="hl-desc">Nepal's holiest Hindu temple, on the banks of the Bagmati river.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section>
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">App features</div>
+        <h2 class="section-title">Everything you need</h2>
+      </div>
+    </div>
+    <div class="features-row">
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(245,166,35,0.12)">🗣️</div>
+        <div class="feat-name">Translate & gesture</div>
+        <div class="feat-desc">Nepali phrases with pronunciation, audio, and cultural gesture tips — not just words.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(62,207,178,0.1)">💰</div>
+        <div class="feat-name">Fair price guide</div>
+        <div class="feat-desc">Real prices locals pay. Know when you're being overcharged — and push back confidently.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(133,183,235,0.1)">🎪</div>
+        <div class="feat-name">Festival calendar</div>
+        <div class="feat-desc">50+ festivals with photos, customs, what to wear, and what to say — auto-alerts near your dates.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(240,153,123,0.1)">🛺</div>
+        <div class="feat-name">Ride & transport</div>
+        <div class="feat-desc">Pathao bike, inDrive car — fare estimates, how to bid, and which to use when.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRANSLATE -->
+  <section>
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Language</div>
+        <h2 class="section-title">Speak a little Nepali</h2>
+      </div>
+    </div>
+    <div class="translate-wrap">
+      <div class="translate-left">
+        <div class="phrase-list">
+          <div class="phrase-card featured">
+            <div class="phrase-nep">नमस्ते</div>
+            <div class="phrase-info">
+              <div class="phrase-en">Greeting</div>
+              <div class="phrase-roman">Namaste</div>
+              <div class="phrase-tip">The universal hello, goodbye, and thank you — all in one word</div>
+            </div>
+            <div class="play-btn"><i class="ti ti-volume" aria-hidden="true"></i></div>
+          </div>
+          <div class="phrase-card">
+            <div class="phrase-nep">धन्यवाद</div>
+            <div class="phrase-info">
+              <div class="phrase-en">Thank you</div>
+              <div class="phrase-roman">Dhanyabad</div>
+              <div class="phrase-tip">Locals light up when tourists say this</div>
+            </div>
+            <div class="play-btn"><i class="ti ti-volume" aria-hidden="true"></i></div>
+          </div>
+          <div class="phrase-card">
+            <div class="phrase-nep">कति पर्छ?</div>
+            <div class="phrase-info">
+              <div class="phrase-en">How much?</div>
+              <div class="phrase-roman">Kati parcha?</div>
+              <div class="phrase-tip">Always bargain — start at 50% of the first price</div>
+            </div>
+            <div class="play-btn"><i class="ti ti-volume" aria-hidden="true"></i></div>
+          </div>
+          <div class="phrase-card">
+            <div class="phrase-nep">मिठो छ!</div>
+            <div class="phrase-info">
+              <div class="phrase-en">It's delicious!</div>
+              <div class="phrase-roman">Mitho chha!</div>
+              <div class="phrase-tip">Say this after eating — the cook will remember you forever</div>
+            </div>
+            <div class="play-btn"><i class="ti ti-volume" aria-hidden="true"></i></div>
+          </div>
+          <div class="phrase-card">
+            <div class="phrase-nep">… कहाँ छ?</div>
+            <div class="phrase-info">
+              <div class="phrase-en">Where is…?</div>
+              <div class="phrase-roman">… kaha chha?</div>
+              <div class="phrase-tip">Point while asking — Nepalis are happy to help with directions</div>
+            </div>
+            <div class="play-btn"><i class="ti ti-volume" aria-hidden="true"></i></div>
+          </div>
+        </div>
+        <div class="gesture-box">
+          <div class="gesture-label">How to do Namaste</div>
+          <div class="gesture-steps">
+            <div class="gesture-step">
+              <div class="gesture-step-num">1</div>
+              <div>Bring both palms together at chest level, fingers pointing upward.</div>
+            </div>
+            <div class="gesture-step">
+              <div class="gesture-step-num">2</div>
+              <div>Give a slight bow of the head — deeper for elders.</div>
+            </div>
+            <div class="gesture-step">
+              <div class="gesture-step-num">3</div>
+              <div>Say "Namaste" clearly, with a genuine smile. No handshake needed.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="translate-right">
+        <div class="mandala-card">
+          <div class="mandala-visual">
+            <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+              <rect width="180" height="180" fill="#08001a"/>
+              <g transform="translate(90,90)">
+                <g class="mandala-spin">
+                  <circle r="75" fill="none" stroke="#2d0a4e" stroke-width="0.5"/>
+                  <circle r="62" fill="none" stroke="#4a1a7a" stroke-width="0.5"/>
+                  <circle r="48" fill="none" stroke="#6a2a9a" stroke-width="0.8"/>
+                  <circle r="34" fill="none" stroke="#8a3ac0" stroke-width="0.8"/>
+                  <circle r="20" fill="none" stroke="#aa4ae0" stroke-width="1"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#7B1FA2" opacity=".5" transform="rotate(0)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#6a1090" opacity=".45" transform="rotate(30)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#7B1FA2" opacity=".5" transform="rotate(60)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#6a1090" opacity=".45" transform="rotate(90)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#7B1FA2" opacity=".5" transform="rotate(120)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#6a1090" opacity=".45" transform="rotate(150)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#7B1FA2" opacity=".5" transform="rotate(180)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#6a1090" opacity=".45" transform="rotate(210)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#7B1FA2" opacity=".5" transform="rotate(240)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#6a1090" opacity=".45" transform="rotate(270)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#7B1FA2" opacity=".5" transform="rotate(300)"/>
+                  <ellipse cx="0" cy="-55" rx="7" ry="14" fill="#6a1090" opacity=".45" transform="rotate(330)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(0)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(45)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(90)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(135)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(180)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(225)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(270)"/>
+                  <circle cx="0" cy="-32" r="3.5" fill="#CE93D8" opacity=".8" transform="rotate(315)"/>
+                </g>
+                <circle r="10" fill="#7B1FA2" opacity=".7"/>
+                <text text-anchor="middle" dy=".4em" font-size="16" fill="#CE93D8" font-family="serif" opacity=".9">ॐ</text>
+              </g>
+            </svg>
+          </div>
+          <div class="culture-facts">
+            <div class="culture-fact">
+              <i class="ti ti-building-arch cf-icon" aria-hidden="true"></i>
+              <div class="cf-text"><strong>7 UNESCO World Heritage sites</strong> are within one valley — Kathmandu. More than anywhere else on Earth per square kilometre.</div>
+            </div>
+            <div class="culture-fact">
+              <i class="ti ti-moon cf-icon" aria-hidden="true"></i>
+              <div class="cf-text"><strong>Nepal follows its own calendar</strong> — the Bikram Sambat, which is 56–57 years ahead of the Gregorian calendar. New Year falls in mid-April.</div>
+            </div>
+            <div class="culture-fact">
+              <i class="ti ti-heart cf-icon" aria-hidden="true"></i>
+              <div class="cf-text"><strong>The head is sacred.</strong> Never touch anyone's head, even a child's — it's the most sacred part of the body. Feet are the opposite.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICES -->
+  <section>
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Don't get scammed</div>
+        <h2 class="section-title">Fair price guide</h2>
+      </div>
+    </div>
+    <div class="ride-cards">
+      <div class="ride-card">
+        <div class="ride-logo-wrap" style="background:rgba(245,166,35,0.1)">🛵</div>
+        <div class="ride-name">Pathao Bike</div>
+        <div class="ride-type">Fastest in traffic · app only · helmet included</div>
+        <div class="ride-detail"><span>Base fare</span><span>Rs. 30</span></div>
+        <div class="ride-detail"><span>Per km</span><span>Rs. 25</span></div>
+        <div class="ride-detail"><span>Thamel → Airport</span><span>Rs. 200–280</span></div>
+        <div class="ride-detail"><span>Tip</span><span>Book inside Kathmandu only</span></div>
+      </div>
+      <div class="ride-card">
+        <div class="ride-logo-wrap" style="background:rgba(133,183,235,0.1)">🚗</div>
+        <div class="ride-name">inDrive Car</div>
+        <div class="ride-type">You name the price · driver accepts or counters</div>
+        <div class="ride-detail"><span>Strategy</span><span>Bid 20–25% below estimate</span></div>
+        <div class="ride-detail"><span>Airport run</span><span>Rs. 600–900</span></div>
+        <div class="ride-detail"><span>Tip</span><span>Better for intercity or late night</span></div>
+      </div>
+      <div class="ride-card">
+        <div class="ride-logo-wrap" style="background:rgba(62,207,178,0.1)">🚌</div>
+        <div class="ride-name">Local bus</div>
+        <div class="ride-type">Cheapest option · crowded but authentic</div>
+        <div class="ride-detail"><span>Short trip</span><span>Rs. 20–50</span></div>
+        <div class="ride-detail"><span>Cross-city</span><span>Rs. 80–150</span></div>
+        <div class="ride-detail"><span>Tip</span><span>Pay when conductor comes around</span></div>
+      </div>
+    </div>
+    <div class="price-grid">
+      <div class="price-col">
+        <div class="price-col-title"><i class="ti ti-bowl" aria-hidden="true"></i> Street food &amp; restaurants</div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Momo (10 pieces)</div>
+            <div class="price-item-note">Steamed dumplings · street stall</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 60–100</div>
+            <span class="price-badge badge-ok">fair price</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Dal Bhat (local joint)</div>
+            <div class="price-item-note">Unlimited refills standard</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 150–250</div>
+            <span class="price-badge badge-ok">fair price</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Dal Bhat (tourist area)</div>
+            <div class="price-item-note">Same dish, tourist markup</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 400–700</div>
+            <span class="price-badge badge-warn">tourist price</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Chai (milk tea)</div>
+            <div class="price-item-note">Spiced, sweet, perfect</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 20–40</div>
+            <span class="price-badge badge-ok">fair price</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Bottled water (1L)</div>
+            <div class="price-item-note">Often inflated near tourist spots</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 20–30</div>
+            <span class="price-badge badge-warn">often inflated</span>
+          </div>
+        </div>
+      </div>
+      <div class="price-col">
+        <div class="price-col-title"><i class="ti ti-shopping-bag" aria-hidden="true"></i> Souvenirs &amp; activities</div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Thangka painting (small)</div>
+            <div class="price-item-note">Handmade, Thamel market</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 800–2,000</div>
+            <span class="price-badge badge-ok">bargainable</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Singing bowl (copper)</div>
+            <div class="price-item-note">Test the sound before buying</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 500–1,500</div>
+            <span class="price-badge badge-ok">bargainable</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Paragliding, Pokhara</div>
+            <div class="price-item-note">30–45 min flight, includes instructor</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 6,500–8,000</div>
+            <span class="price-badge badge-ok">fixed</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">Pashmina shawl (real)</div>
+            <div class="price-item-note">Real = softens in warm water</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">Rs. 2,000–5,000</div>
+            <span class="price-badge badge-warn">check quality</span>
+          </div>
+        </div>
+        <div class="price-row">
+          <div class="price-item-info">
+            <div class="price-item-name">TIMS trekking permit</div>
+            <div class="price-item-note">Required for most treks</div>
+          </div>
+          <div class="price-right">
+            <div class="price-val">USD $10–20</div>
+            <span class="price-badge badge-ok">official</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FESTIVALS -->
+  <section>
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Coming up</div>
+        <h2 class="section-title">Festivals & celebrations</h2>
+      </div>
+      <a href="#" class="section-link">Full calendar <i class="ti ti-arrow-right" style="font-size:13px"></i></a>
+    </div>
+    <div class="festival-scroll">
+      <div class="fest-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Dashain_kite_flying_Nepal.jpg/800px-Dashain_kite_flying_Nepal.jpg"
+          alt="Dashain festival Nepal kite flying"
+          onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Dashain_festival_Nepal.jpg/800px-Dashain_festival_Nepal.jpg'">
+        <div class="fest-overlay"></div>
+        <div class="fest-badge">8 days away</div>
+        <div class="fest-content">
+          <div class="fest-date">Oct 2–14, 2025</div>
+          <div class="fest-name">Dashain</div>
+          <div class="fest-desc">Nepal's biggest festival — tika blessings from elders, kite battles, massive feasts, and city-wide decorations</div>
+        </div>
+      </div>
+      <div class="fest-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Tihar_Kathmandu_Nepal.jpg/800px-Tihar_Kathmandu_Nepal.jpg"
+          alt="Tihar festival of lights Kathmandu"
+          onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Tihar_festival_Nepal.jpg/800px-Tihar_festival_Nepal.jpg'">
+        <div class="fest-overlay"></div>
+        <div class="fest-content">
+          <div class="fest-date">Oct 20–24, 2025</div>
+          <div class="fest-name">Tihar</div>
+          <div class="fest-desc">Festival of lights — marigold strings, butter lamps, worship of crows, dogs, cows, and the goddess Lakshmi</div>
+        </div>
+      </div>
+      <div class="fest-card">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Indra_Jatra_festival_Kathmandu.jpg/800px-Indra_Jatra_festival_Kathmandu.jpg"
+          alt="Indra Jatra festival chariot procession Kathmandu"
+          onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Indra_Jatra.jpg/800px-Indra_Jatra.jpg'">
+        <div class="fest-overlay"></div>
+        <div class="fest-content">
+          <div class="fest-date">Sep 17, 2025</div>
+          <div class="fest-name">Indra Jatra</div>
+          <div class="fest-desc">The Kumari rides her golden chariot through Durbar Square — massive street procession, masked dances, and free rice wine</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FACTS -->
+  <section>
+    <div class="section-header">
+      <div>
+        <div class="section-eyebrow">Did you know?</div>
+        <h2 class="section-title">Nepal in numbers</h2>
+      </div>
+    </div>
+    <div class="facts-mosaic">
+      <div class="fact-card">
+        <div class="fact-num">8,849<span style="font-size:16px">m</span></div>
+        <div class="fact-title">Height of Everest</div>
+        <div class="fact-body">The world's tallest mountain was remeasured in 2020 and is now officially 8,848.86 m — Nepalis just round up.</div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-num">8</div>
+        <div class="fact-title">of 10 tallest peaks</div>
+        <div class="fact-body">Nepal contains 8 of the world's 10 highest mountains, all above 8,000 metres — the "death zone".</div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-num">50+</div>
+        <div class="fact-title">Festivals per year</div>
+        <div class="fact-body">Kathmandu Valley holds so many festivals that locals joke "we have more festivals than days in a year."</div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-num">123</div>
+        <div class="fact-title">Languages spoken</div>
+        <div class="fact-body">Nepal's 30 million people speak 123 distinct languages — Nepali is the lingua franca but most have a mother tongue.</div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-num">🐯</div>
+        <div class="fact-title">Tigers & rhinos live here</div>
+        <div class="fact-body">Chitwan National Park is one of the last homes of the one-horned rhinoceros and Bengal tiger in the wild.</div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-num">1</div>
+        <div class="fact-title">Non-rectangular flag</div>
+        <div class="fact-body">Nepal is the only country in the world with a national flag that isn't a rectangle or square — it's two stacked triangles.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta-banner">
+    <div class="cta-left">
+      <div class="cta-eyebrow">🙏 Free download</div>
+      <h2 class="cta-title">Nepal belongs in your pocket</h2>
+      <p class="cta-sub">No subscription. Works offline. Updated before every major festival season. Your Nepal companion from landing to leaving.</p>
+    </div>
+    <div class="cta-right">
+      <button class="store-btn">
+        <i class="ti ti-brand-apple" aria-hidden="true"></i>
+        <div class="store-btn-text">
+          <div class="store-btn-sub">Download on the</div>
+          <div class="store-btn-name">App Store</div>
+        </div>
+      </button>
+      <button class="store-btn">
+        <i class="ti ti-brand-google-play" aria-hidden="true"></i>
+        <div class="store-btn-text">
+          <div class="store-btn-sub">Get it on</div>
+          <div class="store-btn-name">Google Play</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2025 NepaliGuide · Designed with 🙏 for travelers</p>
+    <p style="font-size:11px;color:rgba(240,238,248,0.15)">All prices in Nepalese Rupees · Updated June 2025</p>
+  </footer>
+
+</div>
+</body>
+</html>
+HTMLEOF
+echo "Done"
