@@ -32,3 +32,17 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Expo / JavaScript
+.expo/
+.expo-shared/
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+dist/
+web-build/
+
+# Environment files
+.env
+.env.*

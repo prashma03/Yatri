@@ -1,0 +1,7 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="108" fill="#07060F"/>
+  <path d="M256 146L151 329H361L256 146Z" stroke="#F5A623" stroke-width="18" stroke-linejoin="round"/>
+  <path d="M197 251H315" stroke="#F5A623" stroke-width="12" stroke-linecap="round" opacity="0.72"/>
+  <circle cx="256" cy="146" r="15" fill="#F5A623"/>
+  <text x="256" y="388" text-anchor="middle" font-family="Georgia, serif" font-size="44" font-weight="700" fill="#F5A623">यात्री</text>
+</svg>

@@ -152,6 +152,6 @@ export const festivals: Festival[] = [
     name: 'Indra Jatra',
     date: 'Kathmandu',
     description: 'Chariot processions, masked dances, and Durbar Square celebrations.',
-    icon: 'temple-buddhist'
+    icon: 'pillar'
   }
 ];
