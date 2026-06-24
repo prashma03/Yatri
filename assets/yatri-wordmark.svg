@@ -1,0 +1,8 @@
+<svg width="900" height="300" viewBox="0 0 900 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="300" rx="72" fill="#07060F"/>
+  <path d="M142 77L75 193H209L142 77Z" stroke="#F5A623" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M105 144H180" stroke="#F5A623" stroke-width="8" stroke-linecap="round" opacity="0.72"/>
+  <circle cx="142" cy="77" r="10" fill="#F5A623"/>
+  <text x="270" y="134" font-family="Georgia, serif" font-size="62" font-weight="700" fill="#F5A623">Yatri</text>
+  <text x="274" y="181" font-family="Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="12" fill="#BDA36F">NEPAL GUIDE</text>
+</svg>

@@ -37,5 +37,6 @@ npm run web
 - Namaste gesture guidance
 - Food, drink, ride, and transport price guide
 - Festival and culture cards
+- Custom Yatri logo mark and wordmark assets
 
 The original `index.html` is kept as the visual design reference.
