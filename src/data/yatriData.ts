@@ -1,14 +1,61 @@
 import type { ComponentProps } from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-type IoniconName = ComponentProps<typeof Ionicons>['name'];
-type MaterialIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type IconName = ComponentProps<typeof Ionicons>['name'];
+export type MaterialIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type TravelMode = 'culture' | 'adventure';
 
-export type Feature = {
+export type QuickAction = {
   title: string;
+  subtitle: string;
+  icon: IconName;
+  accent: string;
+};
+
+export type OfflinePack = {
+  title: string;
+  size: string;
+  status: string;
   description: string;
-  icon: IoniconName;
-  color: string;
+  icon: IconName;
+  progress: number;
+};
+
+export type Festival = {
+  name: string;
+  date: string;
+  description: string;
+  icon: MaterialIconName;
+  countdown: string;
+  crowd: string;
+  why: string;
+  image: string;
+  accent: string;
+};
+
+export type DiscoverItem = {
+  mode: TravelMode;
+  title: string;
+  location: string;
+  tag: string;
+  summary: string;
+  meta: string;
+  image: string;
+};
+
+export type TrailAlert = {
+  title: string;
+  location: string;
+  status: string;
+  detail: string;
+  icon: IconName;
+  urgent?: boolean;
+};
+
+export type TrailUpdate = {
+  route: string;
+  update: string;
+  time: string;
 };
 
 export type Phrase = {
@@ -18,19 +65,47 @@ export type Phrase = {
   tip: string;
 };
 
+export type EtiquetteCard = {
+  context: string;
+  rule: string;
+  detail: string;
+  icon: IconName;
+};
+
+export type FoodCard = {
+  dish: string;
+  region: string;
+  orderTip: string;
+  flavors: string;
+};
+
+export type PriceTool = {
+  item: string;
+  range: string;
+  phrase: string;
+  note: string;
+};
+
+export const quickActions: QuickAction[] = [
+  { title: 'SOS', subtitle: 'GPS + help lines', icon: 'medical-outline', accent: '#ff5d6c' },
+  { title: 'Fair Price', subtitle: 'Check before paying', icon: 'calculator-outline', accent: '#3ecfb2' },
+  { title: 'Ride Tips', subtitle: 'Pathao + inDrive', icon: 'car-outline', accent: '#85b7eb' },
+  { title: 'Offline', subtitle: 'Download packs', icon: 'cloud-download-outline', accent: '#f5a623' }
+];
+
+export type Feature = {
+  title: string;
+  description: string;
+  icon: IconName;
+  color: string;
+};
+
 export type PriceItem = {
   name: string;
   note: string;
   price: string;
   badge: string;
   good?: boolean;
-};
-
-export type Festival = {
-  name: string;
-  date: string;
-  description: string;
-  icon: MaterialIconName;
 };
 
 export const features: Feature[] = [
@@ -62,28 +137,22 @@ export const features: Feature[] = [
 
 export const phrases: Phrase[] = [
   {
-    nepali: 'नमस्ते',
+    nepali: 'Namaste',
     english: 'Hello',
     roman: 'Namaste',
     tip: 'Bring both palms together at chest level.'
   },
   {
-    nepali: 'धन्यवाद',
+    nepali: 'Dhanyabad',
     english: 'Thank you',
     roman: 'Dhanyabad',
     tip: 'Locals appreciate this small effort immediately.'
   },
   {
-    nepali: 'कति पर्छ?',
+    nepali: 'Kati parcha?',
     english: 'How much?',
     roman: 'Kati parcha?',
     tip: 'Useful before taxis, markets, and small shops.'
-  },
-  {
-    nepali: 'मिठो छ!',
-    english: 'It is delicious!',
-    roman: 'Mitho chha!',
-    tip: 'Perfect after momo, dal bhat, or homemade tea.'
   }
 ];
 
@@ -139,19 +208,34 @@ export const festivals: Festival[] = [
   {
     name: 'Dashain',
     date: 'Autumn',
-    description: 'Nepal’s biggest festival, with family blessings, tika, kites, and feasts.',
-    icon: 'kite'
+    description: 'Nepal’s biggest festival, with tika blessings, kites, and family feasts.',
+    icon: 'kite',
+    countdown: 'Upcoming',
+    crowd: 'Family festival',
+    why: 'Nepal’s biggest festival, with tika blessings, kites, and family feasts.',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80',
+    accent: '#f5a623'
   },
   {
     name: 'Tihar',
     date: 'Autumn',
-    description: 'Festival of lights, marigolds, lamps, and worship of crows, dogs, cows, and Lakshmi.',
-    icon: 'string-lights'
+    description: 'Festival of lights with marigolds, oil lamps, and Lakshmi worship.',
+    icon: 'string-lights',
+    countdown: 'Upcoming',
+    crowd: 'Evening lights',
+    why: 'Festival of lights with marigolds, oil lamps, and Lakshmi worship.',
+    image: 'https://images.unsplash.com/photo-1600100594070-c16b588d42c9?auto=format&fit=crop&w=900&q=80',
+    accent: '#3ecfb2'
   },
   {
     name: 'Indra Jatra',
     date: 'Kathmandu',
     description: 'Chariot processions, masked dances, and Durbar Square celebrations.',
-    icon: 'pillar'
+    icon: 'pillar',
+    countdown: 'Live route',
+    crowd: 'High crowd',
+    why: 'Chariot processions, masked dances, and Durbar Square celebrations.',
+    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80',
+    accent: '#b65334'
   }
 ];
