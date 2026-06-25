@@ -239,3 +239,186 @@ export const festivals: Festival[] = [
     accent: '#b65334'
   }
 ];
+
+export const offlinePacks: OfflinePack[] = [
+  {
+    title: 'Culture + Phrases',
+    size: '42 MB',
+    status: 'Ready offline',
+    description: 'Festival calendar, etiquette cards, fair price guide, and essential phrase audio.',
+    icon: 'language-outline',
+    progress: 1
+  },
+  {
+    title: 'Trekking Map Lite',
+    size: '118 MB',
+    status: 'Download',
+    description: 'Lightweight trail map with teahouses, water points, viewpoints, and checkpoints.',
+    icon: 'map-outline',
+    progress: 0.38
+  },
+  {
+    title: 'Emergency Kit',
+    size: '9 MB',
+    status: 'Ready offline',
+    description: 'Tourist police, hospital, embassy, AMS warning signs, and rescue checklist.',
+    icon: 'shield-checkmark-outline',
+    progress: 1
+  }
+];
+
+export const discoverItems: DiscoverItem[] = [
+  {
+    mode: 'adventure',
+    title: 'Australian Camp',
+    location: 'Near Pokhara',
+    tag: 'Day hike',
+    summary: 'A scenic ridge walk with Annapurna views, village stops, and sunrise potential.',
+    meta: 'Moderate - 5 hr - Mountain views',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    mode: 'adventure',
+    title: 'Poon Hill',
+    location: 'Annapurna region',
+    tag: 'Multi-day trek',
+    summary: 'Classic sunrise panorama with teahouse stays and rhododendron forests.',
+    meta: 'Moderate - 3 to 5 days - Sunrise',
+    image: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    mode: 'culture',
+    title: 'Patan Heritage Walk',
+    location: 'Lalitpur',
+    tag: 'Historic walk',
+    summary: 'Courtyards, temples, metal workshops, and Newari food within a compact route.',
+    meta: 'Easy - 2 hr - Architecture',
+    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    mode: 'culture',
+    title: 'Boudha Morning Kora',
+    location: 'Kathmandu',
+    tag: 'Ritual walk',
+    summary: 'Walk clockwise around the stupa with pilgrims, butter lamps, and monastery sounds.',
+    meta: 'Easy - 45 min - Etiquette',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80'
+  }
+];
+
+export const trailAlerts: TrailAlert[] = [
+  {
+    title: 'Weather shift',
+    location: 'Annapurna Base Camp',
+    status: 'Watch afternoon clouds',
+    detail: 'Start early and confirm teahouse availability before moving above Deurali.',
+    icon: 'thunderstorm-outline',
+    urgent: true
+  },
+  {
+    title: 'AMS reminder',
+    location: 'Above 2,800 m',
+    status: 'Ascend slowly',
+    detail: 'Headache, nausea, dizziness, or sleep trouble can be early altitude sickness signs.',
+    icon: 'pulse-outline',
+    urgent: true
+  },
+  {
+    title: 'Water point',
+    location: 'Ghorepani trail',
+    status: 'Marked offline',
+    detail: 'Carry purification tablets; refill points can change after heavy rain.',
+    icon: 'water-outline'
+  }
+];
+
+export const trailUpdates: TrailUpdate[] = [
+  {
+    route: 'Tatopani to Ghorepani',
+    update: 'Muddy section after rain; poles recommended.',
+    time: '2 hr ago'
+  },
+  {
+    route: 'Mardi High Camp',
+    update: 'Clear morning views, strong wind after noon.',
+    time: 'Today'
+  },
+  {
+    route: 'Jhinu bridge',
+    update: 'Bridge open; avoid late crossing in heavy rain.',
+    time: 'Yesterday'
+  }
+];
+
+export const etiquetteCards: EtiquetteCard[] = [
+  {
+    context: 'At a temple',
+    rule: 'Walk clockwise and remove shoes where required.',
+    detail: 'Watch what locals do at entrances and avoid stepping over offerings.',
+    icon: 'footsteps-outline'
+  },
+  {
+    context: 'Around people',
+    rule: 'Do not point your feet at people or sacred objects.',
+    detail: 'Feet are considered low and the head is treated as sacred.',
+    icon: 'body-outline'
+  },
+  {
+    context: 'Taking photos',
+    rule: 'Ask before photographing rituals or monks.',
+    detail: 'Some courtyards, cremation areas, and shrines prohibit photography.',
+    icon: 'camera-outline'
+  }
+];
+
+export const foodCards: FoodCard[] = [
+  {
+    dish: 'Yomari',
+    region: 'Newari',
+    orderTip: 'Ask for chaku filling if you want the classic sweet version.',
+    flavors: 'Steamed rice flour, molasses, sesame'
+  },
+  {
+    dish: 'Thakali Set',
+    region: 'Thakali',
+    orderTip: 'Look for gundruk, timur achar, and balanced refills.',
+    flavors: 'Rice, lentils, curry, pickles, greens'
+  },
+  {
+    dish: 'Sherpa Stew',
+    region: 'Mountain',
+    orderTip: 'Best after a cold trek day; ask if yak cheese is available.',
+    flavors: 'Broth, potatoes, noodles, vegetables'
+  }
+];
+
+export const priceTools: PriceTool[] = [
+  {
+    item: 'Taxi: Thamel to Boudha',
+    range: 'Rs. 500-800',
+    phrase: 'Ali sasto huncha?',
+    note: 'Confirm price before entering; ride apps may be cheaper in traffic.'
+  },
+  {
+    item: 'Pashmina shawl',
+    range: 'Rs. 2,000-5,000',
+    phrase: 'Yo genuine ho?',
+    note: 'Ask about material and compare multiple shops before buying.'
+  },
+  {
+    item: 'Singing bowl',
+    range: 'Rs. 500-1,500',
+    phrase: 'Arko dekhaunu na.',
+    note: 'Test the sound; decorative bowls should cost less than handmade bowls.'
+  }
+];
+
+export const filterChips = [
+  'Day trip',
+  'Multi-day trek',
+  'Lazy stroll',
+  'Moderate hike',
+  'Waterfalls',
+  'Sunrise',
+  'Bird watching'
+];

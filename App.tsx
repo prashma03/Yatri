@@ -1,12 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { YatriHomeScreen } from './src/screens/YatriHomeScreen';
+import { YatriDashboardScreen } from './src/screens/YatriDashboardScreen';
 
 export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
-      <YatriHomeScreen />
+      <YatriDashboardScreen />
     </SafeAreaProvider>
   );
 }

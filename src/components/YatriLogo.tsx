@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme';
+import { colors, fonts } from '../theme';
 
 type YatriLogoProps = {
   compact?: boolean;
@@ -75,6 +75,7 @@ const styles = StyleSheet.create({
   },
   nepaliName: {
     bottom: -3,
+    fontFamily: fonts.display,
     fontSize: 12,
     fontWeight: '800',
     left: 0,
@@ -83,8 +84,9 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   wordmark: {
+    fontFamily: fonts.display,
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.2,
     lineHeight: 31
   },
@@ -93,6 +95,7 @@ const styles = StyleSheet.create({
     lineHeight: 29
   },
   tagline: {
+    fontFamily: fonts.label,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 2.4,

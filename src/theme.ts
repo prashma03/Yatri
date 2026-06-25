@@ -25,3 +25,10 @@ export const spacing = {
   lg: 24,
   xl: 34
 };
+
+export const fonts = {
+  display: 'Georgia',
+  body: 'System',
+  label: 'Courier New',
+  accent: 'Trebuchet MS'
+};
