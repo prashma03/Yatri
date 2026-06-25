@@ -38,5 +38,12 @@ npm run web
 - Food, drink, ride, and transport price guide
 - Festival and culture cards
 - Custom Yatri logo mark and wordmark assets
+- Login and sign-up prototype with local web session remembering
 
 The original `index.html` is kept as the visual design reference.
+
+## Auth status
+
+The current login flow is a front-end prototype. In the web preview, "Remember me" stores a demo signed-in flag in local browser storage so refreshes stay on the dashboard.
+
+For production accounts, connect an auth provider such as Supabase, Firebase Auth, Clerk, or Auth0. Production auth should use provider-managed email verification, password hashing, password reset, and session refresh.
