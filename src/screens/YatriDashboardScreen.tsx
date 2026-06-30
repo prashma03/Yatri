@@ -1,4 +1,4 @@
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -206,16 +206,7 @@ export function YatriDashboardScreen() {
             </View>
           ))}
         </View>
-        <View style={styles.sosPanel}>
-          <View>
-            <Text style={styles.sosTitle}>Emergency SOS</Text>
-            <Text style={styles.sosText}>Tourist police, medical help, embassy list, and GPS coordinate sharing prepared for offline use.</Text>
-          </View>
-          <Pressable style={styles.sosButton}>
-            <Ionicons name="call-outline" size={18} color={colors.white} />
-            <Text style={styles.sosButtonText}>SOS</Text>
-          </Pressable>
-        </View>
+        <OfflineSos />
       </ScrollView>
     </SafeAreaView>
   );
@@ -376,6 +367,95 @@ function ScamAlertMap() {
   );
 }
 
+function OfflineSos() {
+  const coordinates = '27.7172 N, 85.3240 E';
+  const message = `SOS: I need help. My last saved GPS location is ${coordinates}. Map: https://maps.google.com/?q=27.7172,85.3240`;
+
+  const prepareSms = () => {
+    Alert.alert(
+      'Prepare emergency SMS?',
+      'Your location will open in Messages. Choose your saved embassy or trusted contact, then send.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Open Messages',
+          onPress: () => {
+            Linking.openURL(`sms:?body=${encodeURIComponent(message)}`).catch(() => {
+              Alert.alert('Messages unavailable', 'Copy the GPS coordinates shown here and send them by SMS.');
+            });
+          }
+        }
+      ]
+    );
+  };
+
+  const callTouristPolice = () => {
+    Linking.openURL('tel:1144').catch(() => {
+      Alert.alert('Calling unavailable', 'Dial 1144 for Nepal Tourist Police.');
+    });
+  };
+
+  return (
+    <View style={styles.sosPanel}>
+      <View style={styles.sosHeader}>
+        <View style={styles.sosIcon}>
+          <Ionicons name="shield-checkmark-outline" size={22} color={colors.white} />
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.sosTitle}>Offline GPS SOS</Text>
+          <Text style={styles.sosText}>Uses your last saved location and the phone network. Mobile data is not required.</Text>
+        </View>
+        <View style={styles.offlineBadge}>
+          <View style={styles.offlineStatusDot} />
+          <Text style={styles.offlineBadgeText}>READY</Text>
+        </View>
+      </View>
+
+      <View style={styles.gpsFix}>
+        <Ionicons name="location" size={20} color={colors.danger} />
+        <View style={styles.flex}>
+          <Text style={styles.gpsLabel}>LAST GPS FIX · 2 MIN AGO</Text>
+          <Text style={styles.gpsCoordinates}>{coordinates}</Text>
+          <Text style={styles.gpsArea}>Kathmandu, Bagmati Province</Text>
+        </View>
+      </View>
+
+      <View style={styles.sosRecipients}>
+        <View style={styles.recipientRow}>
+          <Ionicons name="business-outline" size={17} color={colors.goldLight} />
+          <Text style={styles.recipientText}>Embassy contact</Text>
+          <Text style={styles.recipientStatus}>Choose in Messages</Text>
+        </View>
+        <View style={styles.recipientRow}>
+          <Ionicons name="person-outline" size={17} color={colors.teal} />
+          <Text style={styles.recipientText}>Trusted contact</Text>
+          <Text style={styles.recipientStatus}>Choose in Messages</Text>
+        </View>
+      </View>
+
+      <Pressable
+        accessibilityLabel="Prepare emergency location SMS"
+        accessibilityRole="button"
+        onPress={prepareSms}
+        style={({ pressed }) => [styles.sosButton, pressed && styles.buttonPressed]}
+      >
+        <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.white} />
+        <Text style={styles.sosButtonText}>Prepare location SMS</Text>
+      </Pressable>
+
+      <Pressable
+        accessibilityLabel="Call Nepal Tourist Police at 1144"
+        accessibilityRole="button"
+        onPress={callTouristPolice}
+        style={styles.policeCallButton}
+      >
+        <Ionicons name="call-outline" size={17} color={colors.danger} />
+        <Text style={styles.policeCallText}>Call Tourist Police · 1144</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function InfoCard({ icon, title, body }: { icon: IconName; title: string; body: string }) {
   return (
     <View style={styles.infoCard}>
@@ -514,9 +594,25 @@ const styles = StyleSheet.create({
   foodDish: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 4 },
   foodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 6 },
   foodTip: { color: colors.dim, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 8 },
-  sosPanel: { alignItems: 'center', backgroundColor: 'rgba(255,93,108,0.13)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, borderWidth: 1, flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between', marginTop: spacing.lg, padding: spacing.md },
+  sosPanel: { backgroundColor: 'rgba(255,93,108,0.10)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, borderWidth: 1, gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
+  sosHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
+  sosIcon: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
   sosTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 21, fontWeight: '700' },
-  sosText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4, maxWidth: 320 },
-  sosButton: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 20, flexDirection: 'row', gap: 6, paddingHorizontal: 16, paddingVertical: 10 },
-  sosButtonText: { color: colors.white, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' }
+  sosText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  offlineBadge: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderColor: 'rgba(62,207,178,0.30)', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: 5, paddingHorizontal: 8, paddingVertical: 6 },
+  offlineStatusDot: { backgroundColor: colors.teal, borderRadius: 4, height: 7, width: 7 },
+  offlineBadgeText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  gpsFix: { alignItems: 'center', backgroundColor: 'rgba(7,6,15,0.46)', borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  gpsLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  gpsCoordinates: { color: colors.white, fontFamily: fonts.accent, fontSize: 17, fontWeight: '900', marginTop: 3 },
+  gpsArea: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, marginTop: 2 },
+  sosRecipients: { gap: spacing.xs },
+  recipientRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, minHeight: 30 },
+  recipientText: { color: colors.text, flex: 1, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
+  recipientStatus: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '800' },
+  sosButton: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, flexDirection: 'row', gap: 8, justifyContent: 'center', minHeight: 48, paddingHorizontal: 16, paddingVertical: 12 },
+  buttonPressed: { opacity: 0.78 },
+  sosButtonText: { color: colors.white, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  policeCallButton: { alignItems: 'center', flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 38 },
+  policeCallText: { color: colors.danger, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' }
 });
