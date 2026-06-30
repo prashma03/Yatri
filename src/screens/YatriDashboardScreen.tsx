@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -126,6 +127,9 @@ export function YatriDashboardScreen() {
             <AlertCard key={alert.title} alert={alert} />
           ))}
         </View>
+        <SectionHeader label="Altitude safety" title="Daily symptom check-in" />
+        <AltitudeTracker />
+
         <View style={styles.mapPanel}>
           <View>
             <Text style={styles.mapTitle}>Offline vector map preview</Text>
@@ -367,6 +371,93 @@ function ScamAlertMap() {
   );
 }
 
+function AltitudeTracker() {
+  const symptoms = [
+    { id: 'headache', label: 'Headache', icon: 'flash-outline' as IconName, weight: 1 },
+    { id: 'nausea', label: 'Nausea', icon: 'water-outline' as IconName, weight: 1 },
+    { id: 'dizziness', label: 'Dizziness', icon: 'sync-outline' as IconName, weight: 1 },
+    { id: 'fatigue', label: 'Unusual fatigue', icon: 'battery-half-outline' as IconName, weight: 1 },
+    { id: 'breathlessness', label: 'Breathless at rest', icon: 'pulse-outline' as IconName, weight: 3 },
+    { id: 'coordination', label: 'Confused or unsteady', icon: 'warning-outline' as IconName, weight: 3 }
+  ];
+  const [selected, setSelected] = useState<string[]>([]);
+  const [submitted, setSubmitted] = useState(false);
+  const previousScore = 1;
+  const score = symptoms.reduce((total, symptom) => total + (selected.includes(symptom.id) ? symptom.weight : 0), 0);
+  const urgent = selected.includes('breathlessness') || selected.includes('coordination');
+  const worsening = score > previousScore;
+
+  const toggleSymptom = (id: string) => {
+    setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+    setSubmitted(false);
+  };
+
+  const guidance = urgent
+    ? { label: 'DESCEND NOW', detail: 'A serious warning sign is selected. Descend, seek medical help, and do not continue upward.', color: colors.danger, icon: 'alert-circle' as IconName }
+    : score > 0
+      ? { label: 'DO NOT ASCEND', detail: 'Rest at this altitude. Only continue higher after symptoms have fully resolved.', color: colors.gold, icon: 'pause-circle' as IconName }
+      : { label: 'NO SYMPTOMS LOGGED', detail: 'Continue monitoring. A clear check-in does not guarantee acclimatization.', color: colors.teal, icon: 'checkmark-circle' as IconName };
+
+  return (
+    <View style={styles.altitudePanel}>
+      <View style={styles.altitudeHeader}>
+        <View>
+          <Text style={styles.altitudeLabel}>CURRENT SLEEPING ALTITUDE</Text>
+          <Text style={styles.altitudeValue}>3,440 m</Text>
+          <Text style={styles.altitudePlace}>Namche Bazaar · Day 3</Text>
+        </View>
+        <View style={styles.scoreBox}>
+          <Text style={styles.scoreValue}>{score}</Text>
+          <Text style={styles.scoreLabel}>TODAY'S SCORE</Text>
+        </View>
+      </View>
+
+      <Text style={styles.symptomPrompt}>How do you feel right now?</Text>
+      <View style={styles.symptomGrid}>
+        {symptoms.map((symptom) => {
+          const active = selected.includes(symptom.id);
+          return (
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: active }}
+              key={symptom.id}
+              onPress={() => toggleSymptom(symptom.id)}
+              style={[styles.symptomButton, active && styles.symptomButtonActive]}
+            >
+              <Ionicons name={symptom.icon} size={18} color={active ? colors.white : colors.muted} />
+              <Text style={[styles.symptomText, active && styles.symptomTextActive]}>{symptom.label}</Text>
+              <Ionicons name={active ? 'checkmark-circle' : 'ellipse-outline'} size={17} color={active ? colors.danger : colors.dim} />
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <View style={[styles.altitudeGuidance, { borderColor: `${guidance.color}55` }]}>
+        <Ionicons name={guidance.icon} size={24} color={guidance.color} />
+        <View style={styles.flex}>
+          <Text style={[styles.guidanceLabel, { color: guidance.color }]}>{guidance.label}</Text>
+          <Text style={styles.guidanceText}>{guidance.detail}</Text>
+        </View>
+      </View>
+
+      {submitted && (
+        <View style={styles.checkInSaved}>
+          <Ionicons name="cloud-done-outline" size={17} color={colors.teal} />
+          <Text style={styles.checkInSavedText}>
+            Saved offline · {worsening ? `Score worsened by ${score - previousScore} since yesterday` : 'No worsening since yesterday'}
+          </Text>
+        </View>
+      )}
+
+      <Pressable onPress={() => setSubmitted(true)} style={styles.checkInButton}>
+        <Ionicons name="save-outline" size={18} color="#1a0f00" />
+        <Text style={styles.checkInButtonText}>Save today's check-in</Text>
+      </Pressable>
+      <Text style={styles.medicalDisclaimer}>This tracker cannot diagnose altitude illness. When in doubt, stop ascending and seek medical help.</Text>
+    </View>
+  );
+}
+
 function OfflineSos() {
   const coordinates = '27.7172 N, 85.3240 E';
   const message = `SOS: I need help. My last saved GPS location is ${coordinates}. Map: https://maps.google.com/?q=27.7172,85.3240`;
@@ -594,6 +685,28 @@ const styles = StyleSheet.create({
   foodDish: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 4 },
   foodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 6 },
   foodTip: { color: colors.dim, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 8 },
+  altitudePanel: { backgroundColor: colors.surface, borderColor: 'rgba(79,163,217,0.30)', borderRadius: 18, borderWidth: 1, gap: spacing.md, padding: spacing.md },
+  altitudeHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  altitudeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  altitudeValue: { color: colors.white, fontFamily: fonts.display, fontSize: 31, fontWeight: '700', marginTop: 2 },
+  altitudePlace: { color: colors.mountainBlue, fontFamily: fonts.label, fontSize: 11, fontWeight: '800', marginTop: 2 },
+  scoreBox: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 14, borderWidth: 1, minWidth: 82, paddingHorizontal: 12, paddingVertical: 9 },
+  scoreValue: { color: colors.goldLight, fontFamily: fonts.display, fontSize: 26, fontWeight: '700' },
+  scoreLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginTop: 1 },
+  symptomPrompt: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  symptomGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  symptomButton: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: 7, minHeight: 45, paddingHorizontal: 10, width: '48.5%' },
+  symptomButtonActive: { backgroundColor: 'rgba(255,93,108,0.14)', borderColor: 'rgba(255,93,108,0.50)' },
+  symptomText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 11, fontWeight: '700' },
+  symptomTextActive: { color: colors.white },
+  altitudeGuidance: { alignItems: 'flex-start', backgroundColor: 'rgba(7,6,15,0.44)', borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  guidanceLabel: { fontFamily: fonts.label, fontSize: 10, fontWeight: '900' },
+  guidanceText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 3 },
+  checkInSaved: { alignItems: 'center', flexDirection: 'row', gap: 7 },
+  checkInSavedText: { color: colors.teal, flex: 1, fontFamily: fonts.label, fontSize: 10, fontWeight: '800' },
+  checkInButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 15, flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 46, paddingHorizontal: 14 },
+  checkInButtonText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
+  medicalDisclaimer: { color: colors.dim, fontFamily: fonts.body, fontSize: 10, lineHeight: 15, textAlign: 'center' },
   sosPanel: { backgroundColor: 'rgba(255,93,108,0.10)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, borderWidth: 1, gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
   sosHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   sosIcon: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
