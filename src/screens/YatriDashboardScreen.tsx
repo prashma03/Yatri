@@ -14,12 +14,14 @@ import {
   phrases,
   priceTools,
   quickActions,
+  scamAlerts,
   trailAlerts,
   trailUpdates,
   type DiscoverItem,
   type Festival,
   type IconName,
   type OfflinePack,
+  type ScamAlert,
   type TravelMode
 } from '../data/yatriData';
 
@@ -146,6 +148,9 @@ export function YatriDashboardScreen() {
             </View>
           ))}
         </View>
+
+        <SectionHeader label="Traveler safety" title="Live scam alert map" />
+        <ScamAlertMap />
 
         <SectionHeader label="Speak and behave well" title="Phrasebook plus etiquette" />
         <View style={styles.namasteCard}>
@@ -297,6 +302,80 @@ function AlertCard({ alert }: { alert: { title: string; location: string; status
   );
 }
 
+function scamRiskColor(risk: ScamAlert['risk']) {
+  if (risk === 'High') return colors.danger;
+  if (risk === 'Medium') return colors.gold;
+  return colors.teal;
+}
+
+function ScamAlertMap() {
+  const totalReports = scamAlerts.reduce((total, alert) => total + alert.reportCount, 0);
+
+  return (
+    <>
+      <View style={styles.scamMap}>
+        <View style={styles.mapLiveRow}>
+          <View style={styles.liveDot} />
+          <Text style={styles.liveLabel}>LIVE COMMUNITY REPORTS</Text>
+          <Text style={styles.liveCount}>{totalReports} nearby</Text>
+        </View>
+        <View style={[styles.mapRoad, styles.mapRoadOne]} />
+        <View style={[styles.mapRoad, styles.mapRoadTwo]} />
+        <View style={[styles.mapRoad, styles.mapRoadThree]} />
+        <Text style={[styles.mapPlace, styles.mapPlaceThamel]}>Thamel</Text>
+        <Text style={[styles.mapPlace, styles.mapPlaceDurbar]}>Durbar Square</Text>
+        <Text style={[styles.mapPlace, styles.mapPlaceAirport]}>Airport</Text>
+        {scamAlerts.map((alert) => {
+          const riskColor = scamRiskColor(alert.risk);
+          return (
+            <View
+              key={alert.title}
+              style={[styles.scamPin, { backgroundColor: riskColor, borderColor: colors.white, left: alert.left, top: alert.top }]}
+            >
+              <Text style={styles.scamPinCount}>{alert.reportCount}</Text>
+            </View>
+          );
+        })}
+        <View style={styles.currentLocation}>
+          <Ionicons name="navigate" size={13} color={colors.white} />
+        </View>
+      </View>
+
+      <View style={styles.scamLegend}>
+        {(['High', 'Medium', 'Low'] as ScamAlert['risk'][]).map((risk) => (
+          <View key={risk} style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: scamRiskColor(risk) }]} />
+            <Text style={styles.legendText}>{risk} activity</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.stack}>
+        {scamAlerts.map((alert) => (
+          <View key={alert.location} style={styles.scamAlertRow}>
+            <View style={[styles.scamAlertIcon, { backgroundColor: `${scamRiskColor(alert.risk)}1f` }]}>
+              <Ionicons name="warning-outline" size={19} color={scamRiskColor(alert.risk)} />
+            </View>
+            <View style={styles.flex}>
+              <View style={styles.rowBetween}>
+                <Text style={styles.scamAlertTitle}>{alert.title}</Text>
+                <Text style={styles.scamAlertTime}>{alert.time}</Text>
+              </View>
+              <Text style={styles.scamAlertLocation}>{alert.location} · {alert.reportCount} reports</Text>
+              <Text style={styles.cardText}>{alert.detail}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <Pressable style={styles.reportScamButton}>
+        <Ionicons name="add-circle-outline" size={19} color="#1a0f00" />
+        <Text style={styles.reportScamText}>Report suspicious activity</Text>
+      </Pressable>
+    </>
+  );
+}
+
 function InfoCard({ icon, title, body }: { icon: IconName; title: string; body: string }) {
   return (
     <View style={styles.infoCard}>
@@ -383,6 +462,33 @@ const styles = StyleSheet.create({
   updateRoute: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   updateText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, marginTop: 3 },
   updateTime: { color: colors.dim, fontFamily: fonts.label, fontSize: 11, fontWeight: '800' },
+  scamMap: { backgroundColor: '#151a24', borderColor: 'rgba(62,207,178,0.28)', borderRadius: 18, borderWidth: 1, height: 300, overflow: 'hidden', position: 'relative' },
+  mapLiveRow: { alignItems: 'center', backgroundColor: 'rgba(7,6,15,0.76)', flexDirection: 'row', left: 12, paddingHorizontal: 10, paddingVertical: 7, position: 'absolute', right: 12, top: 12, zIndex: 3 },
+  liveDot: { backgroundColor: colors.danger, borderRadius: 5, height: 9, marginRight: 7, width: 9 },
+  liveLabel: { color: colors.text, flex: 1, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  liveCount: { color: colors.teal, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
+  mapRoad: { backgroundColor: 'rgba(255,255,255,0.10)', height: 9, position: 'absolute', width: '115%' },
+  mapRoadOne: { left: -20, top: 142, transform: [{ rotate: '-10deg' }] },
+  mapRoadTwo: { left: -28, top: 212, transform: [{ rotate: '19deg' }] },
+  mapRoadThree: { left: 74, top: 176, transform: [{ rotate: '70deg' }] },
+  mapPlace: { color: 'rgba(240,238,248,0.44)', fontFamily: fonts.label, fontSize: 10, fontWeight: '800', position: 'absolute' },
+  mapPlaceThamel: { left: '17%', top: '25%' },
+  mapPlaceDurbar: { left: '38%', top: '69%' },
+  mapPlaceAirport: { right: '9%', top: '62%' },
+  scamPin: { alignItems: 'center', borderRadius: 18, borderWidth: 2, height: 36, justifyContent: 'center', marginLeft: -18, marginTop: -18, position: 'absolute', width: 36, zIndex: 2 },
+  scamPinCount: { color: colors.white, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
+  currentLocation: { alignItems: 'center', backgroundColor: colors.mountainBlue, borderColor: colors.white, borderRadius: 15, borderWidth: 2, bottom: 28, height: 30, justifyContent: 'center', left: '53%', position: 'absolute', width: 30 },
+  scamLegend: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.sm, marginTop: spacing.sm },
+  legendItem: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+  legendDot: { borderRadius: 4, height: 8, width: 8 },
+  legendText: { color: colors.muted, fontFamily: fonts.label, fontSize: 10, fontWeight: '800' },
+  scamAlertRow: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  scamAlertIcon: { alignItems: 'center', borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
+  scamAlertTitle: { color: colors.text, flex: 1, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900', paddingRight: spacing.sm },
+  scamAlertTime: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '800' },
+  scamAlertLocation: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 10, fontWeight: '800', marginTop: 3 },
+  reportScamButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.gold, borderRadius: 18, flexDirection: 'row', gap: 7, marginTop: spacing.sm, paddingHorizontal: 14, paddingVertical: 10 },
+  reportScamText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
   namasteCard: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm, padding: spacing.md },
   namasteAnimation: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.10)', borderRadius: 28, flexDirection: 'row', height: 56, justifyContent: 'center', width: 56 },
   palmLeft: { backgroundColor: colors.gold, borderRadius: 6, height: 34, transform: [{ rotate: '-24deg' }], width: 10 },

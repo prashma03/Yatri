@@ -86,6 +86,17 @@ export type PriceTool = {
   note: string;
 };
 
+export type ScamAlert = {
+  title: string;
+  location: string;
+  reportCount: number;
+  time: string;
+  risk: 'High' | 'Medium' | 'Low';
+  detail: string;
+  top: `${number}%`;
+  left: `${number}%`;
+};
+
 export const quickActions: QuickAction[] = [
   { title: 'SOS', subtitle: 'GPS + help lines', icon: 'medical-outline', accent: '#ff5d6c' },
   { title: 'Fair Price', subtitle: 'Check before paying', icon: 'calculator-outline', accent: '#3ecfb2' },
@@ -410,6 +421,39 @@ export const priceTools: PriceTool[] = [
     range: 'Rs. 500-1,500',
     phrase: 'Arko dekhaunu na.',
     note: 'Test the sound; decorative bowls should cost less than handmade bowls.'
+  }
+];
+
+export const scamAlerts: ScamAlert[] = [
+  {
+    title: 'Taxi overcharge cluster',
+    location: 'Tribhuvan Airport arrivals',
+    reportCount: 18,
+    time: '12 min ago',
+    risk: 'High',
+    detail: 'Drivers quoting fixed tourist fares before meter or app comparison.',
+    top: '28%',
+    left: '69%'
+  },
+  {
+    title: 'Fake guide approach',
+    location: 'Durbar Square north gate',
+    reportCount: 9,
+    time: '31 min ago',
+    risk: 'Medium',
+    detail: 'Unlicensed helpers asking for entry cash away from the official booth.',
+    top: '50%',
+    left: '43%'
+  },
+  {
+    title: 'SIM card markup',
+    location: 'Thamel side streets',
+    reportCount: 6,
+    time: '1 hr ago',
+    risk: 'Low',
+    detail: 'Travelers report add-on data packs priced above posted NTC/Ncell rates.',
+    top: '36%',
+    left: '28%'
   }
 ];
 
