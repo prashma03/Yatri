@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -155,6 +155,9 @@ export function YatriDashboardScreen() {
 
         <SectionHeader label="Traveler safety" title="Live scam alert map" />
         <ScamAlertMap />
+
+        <SectionHeader label="Local insight" title="Ask a verified local" />
+        <AskALocalChat />
 
         <SectionHeader label="Speak and behave well" title="Phrasebook plus etiquette" />
         <View style={styles.namasteCard}>
@@ -368,6 +371,122 @@ function ScamAlertMap() {
         <Text style={styles.reportScamText}>Report suspicious activity</Text>
       </Pressable>
     </>
+  );
+}
+
+type LocalMessage = {
+  id: number;
+  sender: 'traveler' | 'guide';
+  text: string;
+};
+
+function AskALocalChat() {
+  const [draft, setDraft] = useState('');
+  const [selectedTip, setSelectedTip] = useState(100);
+  const [messages, setMessages] = useState<LocalMessage[]>([
+    { id: 1, sender: 'traveler', text: 'Is Rs. 900 fair for a taxi from Thamel to Boudha?' },
+    { id: 2, sender: 'guide', text: 'That is high for normal traffic. Ask for the meter or compare Pathao before agreeing.' }
+  ]);
+  const quickQuestions = ['Is this taxi price fair?', 'Can I enter this temple?', 'Is this guide licensed?'];
+
+  const sendQuestion = () => {
+    const question = draft.trim();
+    if (!question) return;
+
+    setMessages((current) => [
+      ...current,
+      { id: Date.now(), sender: 'traveler', text: question },
+      {
+        id: Date.now() + 1,
+        sender: 'guide',
+        text: 'I have your question. For this prototype, a verified local reply appears here when the guide responds.'
+      }
+    ]);
+    setDraft('');
+  };
+
+  return (
+    <View style={styles.localChat}>
+      <View style={styles.guideHeader}>
+        <View style={styles.guideAvatar}>
+          <Text style={styles.guideInitials}>AS</Text>
+          <View style={styles.guideOnlineDot} />
+        </View>
+        <View style={styles.flex}>
+          <View style={styles.guideNameRow}>
+            <Text style={styles.guideName}>Asha Shrestha</Text>
+            <Ionicons name="checkmark-circle" size={16} color={colors.teal} />
+          </View>
+          <Text style={styles.guideMeta}>Verified Kathmandu guide · Nepali / English</Text>
+        </View>
+        <View style={styles.liveGuideBadge}>
+          <View style={styles.liveGuideDot} />
+          <Text style={styles.liveGuideText}>LIVE</Text>
+        </View>
+      </View>
+
+      <View style={styles.chatMessages}>
+        {messages.slice(-4).map((message) => (
+          <View
+            key={message.id}
+            style={[
+              styles.chatBubble,
+              message.sender === 'traveler' ? styles.travelerBubble : styles.guideBubble
+            ]}
+          >
+            {message.sender === 'guide' && (
+              <Text style={styles.messageSender}>ASHA · VERIFIED LOCAL</Text>
+            )}
+            <Text style={styles.chatText}>{message.text}</Text>
+          </View>
+        ))}
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickQuestionList}>
+        {quickQuestions.map((question) => (
+          <Pressable key={question} onPress={() => setDraft(question)} style={styles.quickQuestion}>
+            <Text style={styles.quickQuestionText}>{question}</Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+
+      <View style={styles.chatComposer}>
+        <TextInput
+          accessibilityLabel="Question for a local guide"
+          onChangeText={setDraft}
+          onSubmitEditing={sendQuestion}
+          placeholder="Ask a quick question..."
+          placeholderTextColor={colors.dim}
+          returnKeyType="send"
+          style={styles.chatInput}
+          value={draft}
+        />
+        <Pressable
+          accessibilityLabel="Send question"
+          accessibilityRole="button"
+          onPress={sendQuestion}
+          style={styles.chatSendButton}
+        >
+          <Ionicons name="send" size={18} color="#1a0f00" />
+        </Pressable>
+      </View>
+
+      <View style={styles.tipRow}>
+        <View style={styles.tipLabelWrap}>
+          <Ionicons name="heart-outline" size={17} color={colors.gold} />
+          <Text style={styles.tipLabel}>Thank your guide</Text>
+        </View>
+        {[50, 100, 200].map((tip) => (
+          <Pressable
+            key={tip}
+            onPress={() => setSelectedTip(tip)}
+            style={[styles.tipChip, selectedTip === tip && styles.tipChipSelected]}
+          >
+            <Text style={[styles.tipChipText, selectedTip === tip && styles.tipChipTextSelected]}>Rs. {tip}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -685,6 +804,36 @@ const styles = StyleSheet.create({
   foodDish: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 4 },
   foodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 6 },
   foodTip: { color: colors.dim, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 8 },
+  localChat: { backgroundColor: colors.surface, borderColor: 'rgba(62,207,178,0.28)', borderRadius: 18, borderWidth: 1, gap: spacing.md, overflow: 'hidden', padding: spacing.md },
+  guideHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
+  guideAvatar: { alignItems: 'center', backgroundColor: colors.terracotta, borderRadius: 21, height: 42, justifyContent: 'center', position: 'relative', width: 42 },
+  guideInitials: { color: colors.white, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
+  guideOnlineDot: { backgroundColor: colors.teal, borderColor: colors.surface, borderRadius: 6, borderWidth: 2, bottom: -1, height: 12, position: 'absolute', right: -1, width: 12 },
+  guideNameRow: { alignItems: 'center', flexDirection: 'row', gap: 5 },
+  guideName: { color: colors.text, fontFamily: fonts.accent, fontSize: 14, fontWeight: '900' },
+  guideMeta: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, marginTop: 2 },
+  liveGuideBadge: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 10, flexDirection: 'row', gap: 5, paddingHorizontal: 8, paddingVertical: 5 },
+  liveGuideDot: { backgroundColor: colors.teal, borderRadius: 4, height: 7, width: 7 },
+  liveGuideText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  chatMessages: { gap: spacing.sm },
+  chatBubble: { borderRadius: 14, maxWidth: '88%', paddingHorizontal: 12, paddingVertical: 10 },
+  travelerBubble: { alignSelf: 'flex-end', backgroundColor: colors.mountainBlue },
+  guideBubble: { alignSelf: 'flex-start', backgroundColor: colors.surface2, borderColor: colors.border, borderWidth: 1 },
+  messageSender: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginBottom: 4 },
+  chatText: { color: colors.white, fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
+  quickQuestionList: { gap: spacing.xs, paddingRight: spacing.sm },
+  quickQuestion: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 12, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
+  quickQuestionText: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, fontWeight: '700' },
+  chatComposer: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', minHeight: 48, paddingLeft: 12, paddingRight: 5 },
+  chatInput: { color: colors.text, flex: 1, fontFamily: fonts.body, fontSize: 12, minHeight: 44, paddingVertical: 8 },
+  chatSendButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 11, height: 38, justifyContent: 'center', width: 38 },
+  tipRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  tipLabelWrap: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: 6 },
+  tipLabel: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '800' },
+  tipChip: { borderColor: colors.border, borderRadius: 11, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 6 },
+  tipChipSelected: { backgroundColor: 'rgba(245,166,35,0.14)', borderColor: colors.gold },
+  tipChipText: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  tipChipTextSelected: { color: colors.goldLight },
   altitudePanel: { backgroundColor: colors.surface, borderColor: 'rgba(79,163,217,0.30)', borderRadius: 18, borderWidth: 1, gap: spacing.md, padding: spacing.md },
   altitudeHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   altitudeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
