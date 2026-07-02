@@ -86,6 +86,19 @@ export type PriceTool = {
   note: string;
 };
 
+export type DistrictBriefing = {
+  district: string;
+  province: string;
+  base: string;
+  elevation: string;
+  bestFor: string;
+  connectivity: 'Strong' | 'Mixed' | 'Limited';
+  transport: string;
+  etiquette: string;
+  safety: string;
+  icon: IconName;
+};
+
 export type ScamAlert = {
   title: string;
   location: string;
@@ -421,6 +434,69 @@ export const priceTools: PriceTool[] = [
     range: 'Rs. 500-1,500',
     phrase: 'Arko dekhaunu na.',
     note: 'Test the sound; decorative bowls should cost less than handmade bowls.'
+  }
+];
+
+export const districtBriefings: DistrictBriefing[] = [
+  {
+    district: 'Kathmandu',
+    province: 'Bagmati Province',
+    base: 'Thamel or Boudha',
+    elevation: 'About 1,400 m',
+    bestFor: 'Heritage, food, temples',
+    connectivity: 'Strong',
+    transport: 'Use ride apps or agree on a metered taxi before departure; allow extra time for traffic.',
+    etiquette: 'Walk clockwise around stupas and check signs before entering Hindu temple interiors.',
+    safety: 'Keep valuables close in crowded heritage areas and use official counters for permits or tickets.',
+    icon: 'business-outline'
+  },
+  {
+    district: 'Kaski',
+    province: 'Gandaki Province',
+    base: 'Pokhara Lakeside',
+    elevation: 'About 820 m',
+    bestFor: 'Lakes, day hikes, Annapurna access',
+    connectivity: 'Strong',
+    transport: 'Tourist buses arrive near Lakeside; confirm jeep routes and road conditions before trail transfers.',
+    etiquette: 'Ask before photographing village homes or ceremonies outside the main visitor areas.',
+    safety: 'Monsoon rain can disrupt roads and trails quickly; check local conditions before leaving Pokhara.',
+    icon: 'water-outline'
+  },
+  {
+    district: 'Solukhumbu',
+    province: 'Koshi Province',
+    base: 'Lukla or Namche Bazaar',
+    elevation: '2,860-3,440 m',
+    bestFor: 'Everest region trekking',
+    connectivity: 'Limited',
+    transport: 'Flights and mountain roads are weather-sensitive; keep buffer days and carry essential cash.',
+    etiquette: 'Pass mani walls and prayer stones on the left, moving clockwise where the path allows.',
+    safety: 'Ascend gradually, never climb higher with altitude symptoms, and keep your offline route available.',
+    icon: 'trail-sign-outline'
+  },
+  {
+    district: 'Mustang',
+    province: 'Gandaki Province',
+    base: 'Jomsom',
+    elevation: 'About 2,720 m',
+    bestFor: 'High desert, monasteries, road trips',
+    connectivity: 'Mixed',
+    transport: 'Strong afternoon winds and road conditions can delay flights, buses, and shared jeeps.',
+    etiquette: 'Ask before entering monastery rooms or photographing religious art and ceremonies.',
+    safety: 'Carry cash, sun and wind protection, and confirm whether your route needs a restricted-area permit.',
+    icon: 'partly-sunny-outline'
+  },
+  {
+    district: 'Chitwan',
+    province: 'Bagmati Province',
+    base: 'Sauraha',
+    elevation: 'About 150 m',
+    bestFor: 'Wildlife, Tharu culture, river trips',
+    connectivity: 'Strong',
+    transport: 'Tourist buses connect Sauraha with Kathmandu and Pokhara; arrange park activities locally.',
+    etiquette: 'Choose community-led cultural visits and ask before photographing residents or homes.',
+    safety: 'Follow guide instructions near the park, avoid walking alone at its edges, and prepare for heat.',
+    icon: 'leaf-outline'
   }
 ];
 

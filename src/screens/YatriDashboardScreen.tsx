@@ -7,6 +7,7 @@ import { YatriLogo } from '../components/YatriLogo';
 import { colors, fonts, spacing } from '../theme';
 import {
   discoverItems,
+  districtBriefings,
   etiquetteCards,
   festivals,
   filterChips,
@@ -94,6 +95,9 @@ export function YatriDashboardScreen() {
             </Pressable>
           ))}
         </View>
+
+        <SectionHeader label="Know before you go" title="Choose your district" />
+        <DistrictBriefingSelector />
 
         <SectionHeader label="Offline-first" title="Download before you lose signal" />
         <View style={styles.stack}>
@@ -216,6 +220,90 @@ export function YatriDashboardScreen() {
         <OfflineSos />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function DistrictBriefingSelector() {
+  const [selectedDistrict, setSelectedDistrict] = useState('Kathmandu');
+  const activeDistrict = districtBriefings.find((item) => item.district === selectedDistrict)!;
+  const connectivityColor = activeDistrict.connectivity === 'Strong'
+    ? colors.teal
+    : activeDistrict.connectivity === 'Mixed'
+      ? colors.gold
+      : colors.danger;
+
+  return (
+    <View style={styles.districtFeature}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.districtTabs}>
+        {districtBriefings.map((item) => {
+          const selected = item.district === selectedDistrict;
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              key={item.district}
+              onPress={() => setSelectedDistrict(item.district)}
+              style={[styles.districtTab, selected && styles.districtTabSelected]}
+            >
+              <Ionicons name={item.icon} size={16} color={selected ? '#1a0f00' : colors.muted} />
+              <Text style={[styles.districtTabText, selected && styles.districtTabTextSelected]}>{item.district}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.districtBriefing}>
+        <View style={styles.districtHeading}>
+          <View style={styles.districtIcon}>
+            <Ionicons name={activeDistrict.icon} size={24} color={colors.goldLight} />
+          </View>
+          <View style={styles.flex}>
+            <Text style={styles.districtName}>{activeDistrict.district}</Text>
+            <Text style={styles.districtProvince}>{activeDistrict.province}</Text>
+          </View>
+          <View style={styles.districtOfflineBadge}>
+            <Ionicons name="cloud-done-outline" size={14} color={colors.teal} />
+            <Text style={styles.districtOfflineText}>OFFLINE</Text>
+          </View>
+        </View>
+
+        <View style={styles.districtFacts}>
+          <View style={styles.districtFact}>
+            <Text style={styles.districtFactLabel}>BEST BASE</Text>
+            <Text style={styles.districtFactValue}>{activeDistrict.base}</Text>
+          </View>
+          <View style={styles.districtFact}>
+            <Text style={styles.districtFactLabel}>ELEVATION</Text>
+            <Text style={styles.districtFactValue}>{activeDistrict.elevation}</Text>
+          </View>
+          <View style={styles.districtFact}>
+            <Text style={styles.districtFactLabel}>SIGNAL</Text>
+            <Text style={[styles.districtFactValue, { color: connectivityColor }]}>{activeDistrict.connectivity}</Text>
+          </View>
+        </View>
+
+        <View style={styles.districtBestFor}>
+          <Ionicons name="sparkles-outline" size={16} color={colors.gold} />
+          <Text style={styles.districtBestForText}>{activeDistrict.bestFor}</Text>
+        </View>
+
+        <DistrictInfoRow icon="bus-outline" label="Getting around" text={activeDistrict.transport} />
+        <DistrictInfoRow icon="people-outline" label="Local respect" text={activeDistrict.etiquette} />
+        <DistrictInfoRow icon="shield-checkmark-outline" label="Safety note" text={activeDistrict.safety} last />
+      </View>
+    </View>
+  );
+}
+
+function DistrictInfoRow({ icon, label, text, last = false }: { icon: IconName; label: string; text: string; last?: boolean }) {
+  return (
+    <View style={[styles.districtInfoRow, last && styles.districtInfoRowLast]}>
+      <Ionicons name={icon} size={18} color={colors.mountainBlue} />
+      <View style={styles.flex}>
+        <Text style={styles.districtInfoLabel}>{label}</Text>
+        <Text style={styles.districtInfoText}>{text}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -704,6 +792,29 @@ const styles = StyleSheet.create({
   quickIcon: { alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', marginBottom: spacing.sm, width: 44 },
   quickTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
   quickSub: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, marginTop: 4, textAlign: 'center' },
+  districtFeature: { gap: spacing.sm },
+  districtTabs: { gap: spacing.xs, paddingRight: spacing.md },
+  districtTab: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: 6, minHeight: 40, paddingHorizontal: 12 },
+  districtTabSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
+  districtTabText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
+  districtTabTextSelected: { color: '#1a0f00' },
+  districtBriefing: { backgroundColor: colors.surface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, borderWidth: 1, overflow: 'hidden', padding: spacing.md },
+  districtHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  districtIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
+  districtName: { color: colors.text, fontFamily: fonts.display, fontSize: 22, fontWeight: '700' },
+  districtProvince: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, marginTop: 2 },
+  districtOfflineBadge: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.10)', borderRadius: 10, flexDirection: 'row', gap: 4, paddingHorizontal: 7, paddingVertical: 5 },
+  districtOfflineText: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
+  districtFacts: { borderBottomColor: colors.border, borderBottomWidth: 1, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', paddingVertical: spacing.md },
+  districtFact: { flex: 1, paddingRight: spacing.xs },
+  districtFactLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
+  districtFactValue: { color: colors.text, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900', lineHeight: 15, marginTop: 4 },
+  districtBestFor: { alignItems: 'center', flexDirection: 'row', gap: 7, paddingVertical: spacing.md },
+  districtBestForText: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
+  districtInfoRow: { alignItems: 'flex-start', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
+  districtInfoRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
+  districtInfoLabel: { color: colors.text, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
+  districtInfoText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginTop: 3 },
   sectionHeader: { marginBottom: spacing.md, marginTop: spacing.xl },
   sectionLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8, marginBottom: spacing.xs, textTransform: 'uppercase' },
   sectionTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 30, fontWeight: '700', lineHeight: 35 },
