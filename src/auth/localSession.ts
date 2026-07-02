@@ -1,4 +1,5 @@
 const SESSION_KEY = 'yatri_demo_session';
+const LOCATION_PROMPT_KEY = 'yatri_location_prompt_complete';
 
 function getStorage() {
   if (typeof globalThis === 'undefined' || !('localStorage' in globalThis)) {
@@ -18,4 +19,12 @@ export function rememberSession() {
 
 export function clearRememberedSession() {
   getStorage()?.removeItem(SESSION_KEY);
+}
+
+export function hasCompletedLocationPrompt() {
+  return getStorage()?.getItem(LOCATION_PROMPT_KEY) === 'complete';
+}
+
+export function rememberLocationPrompt() {
+  getStorage()?.setItem(LOCATION_PROMPT_KEY, 'complete');
 }

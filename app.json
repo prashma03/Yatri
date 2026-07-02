@@ -10,12 +10,19 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Yatri uses your location for nearby stays, navigation, district guidance, and SOS coordinates."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#07060f"
-      }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro"

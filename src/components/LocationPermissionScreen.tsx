@@ -1,0 +1,118 @@
+import { useState } from 'react';
+import { ImageBackground, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { YatriLogo } from './YatriLogo';
+import { colors, fonts, spacing } from '../theme';
+
+type LocationPermissionScreenProps = {
+  onComplete: () => void;
+};
+
+const backgroundImage = 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1600&q=85';
+
+export function LocationPermissionScreen({ onComplete }: LocationPermissionScreenProps) {
+  const [requesting, setRequesting] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const requestLocation = async () => {
+    setRequesting(true);
+    setMessage('');
+
+    if (Platform.OS === 'android') {
+      const result = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          title: 'Allow Yatri to use your location?',
+          message: 'Location powers nearby stays, navigation, district guidance, and SOS coordinates.',
+          buttonPositive: 'Allow',
+          buttonNegative: 'Not now'
+        }
+      );
+      setRequesting(false);
+      if (result === PermissionsAndroid.RESULTS.GRANTED) {
+        onComplete();
+      } else {
+        setMessage('Location access was declined. You can continue and enable it later in device settings.');
+      }
+      return;
+    }
+
+    const geolocation = typeof navigator !== 'undefined' ? navigator.geolocation : undefined;
+    if (!geolocation) {
+      setRequesting(false);
+      setMessage('Location services are not available on this device build yet. You can continue without them.');
+      return;
+    }
+
+    geolocation.getCurrentPosition(
+      () => {
+        setRequesting(false);
+        onComplete();
+      },
+      (error) => {
+        setRequesting(false);
+        setMessage(error.code === 1
+          ? 'Location access was declined. You can continue and enable it later in device settings.'
+          : 'Yatri could not get your location. Check device location services or continue without it.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  return (
+    <ImageBackground source={{ uri: backgroundImage }} style={styles.background}>
+      <LinearGradient colors={['rgba(7,6,15,0.36)', 'rgba(7,6,15,0.92)']} style={StyleSheet.absoluteFillObject} />
+      <SafeAreaView style={styles.safeArea}>
+        <YatriLogo compact />
+        <View style={styles.content}>
+          <View style={styles.locationIcon}>
+            <Ionicons name="location" size={32} color="#1a0f00" />
+          </View>
+          <Text style={styles.eyebrow}>ONE QUICK SETUP</Text>
+          <Text style={styles.title}>Let Yatri use your location?</Text>
+          <Text style={styles.body}>Your location helps Yatri find nearby stays, choose the right district guide, navigate safely, and prepare accurate SOS coordinates.</Text>
+
+          <View style={styles.privacyRow}>
+            <Ionicons name="shield-checkmark-outline" size={19} color={colors.teal} />
+            <Text style={styles.privacyText}>Used only while you use Yatri. You stay in control through device settings.</Text>
+          </View>
+
+          {message ? <Text style={styles.message}>{message}</Text> : null}
+
+          <Pressable
+            accessibilityRole="button"
+            disabled={requesting}
+            onPress={requestLocation}
+            style={({ pressed }) => [styles.allowButton, (pressed || requesting) && styles.buttonPressed]}
+          >
+            <Ionicons name="navigate" size={19} color="#1a0f00" />
+            <Text style={styles.allowText}>{requesting ? 'Requesting location...' : 'Allow location'}</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={onComplete} style={styles.notNowButton}>
+            <Text style={styles.notNowText}>Not now</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </ImageBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  background: { flex: 1 },
+  safeArea: { flex: 1, justifyContent: 'space-between', padding: spacing.lg },
+  content: { alignSelf: 'center', backgroundColor: 'rgba(12,10,25,0.94)', borderColor: colors.border, borderRadius: 18, borderWidth: 1, maxWidth: 560, padding: spacing.xl, width: '100%' },
+  locationIcon: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 24, height: 52, justifyContent: 'center', marginBottom: spacing.lg, width: 52 },
+  eyebrow: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8 },
+  title: { color: colors.white, fontFamily: fonts.display, fontSize: 34, fontWeight: '700', lineHeight: 40, marginTop: spacing.xs },
+  body: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 22, marginTop: spacing.md },
+  privacyRow: { alignItems: 'flex-start', borderBottomColor: colors.border, borderBottomWidth: 1, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', gap: spacing.sm, marginVertical: spacing.lg, paddingVertical: spacing.md },
+  privacyText: { color: colors.text, flex: 1, fontFamily: fonts.body, fontSize: 12, lineHeight: 18 },
+  message: { color: colors.goldLight, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginBottom: spacing.sm },
+  allowButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 14, flexDirection: 'row', gap: 8, justifyContent: 'center', minHeight: 50, paddingHorizontal: spacing.md },
+  allowText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  notNowButton: { alignItems: 'center', justifyContent: 'center', minHeight: 46, marginTop: spacing.xs },
+  notNowText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
+  buttonPressed: { opacity: 0.75 }
+});
