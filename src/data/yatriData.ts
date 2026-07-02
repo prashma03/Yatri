@@ -86,6 +86,16 @@ export type PriceTool = {
   note: string;
 };
 
+export type NearbyHotel = {
+  name: string;
+  area: string;
+  address: string;
+  distance: string;
+  phone: string;
+  displayPhone: string;
+  note: string;
+};
+
 export type DistrictBriefing = {
   district: string;
   province: string;
@@ -434,6 +444,36 @@ export const priceTools: PriceTool[] = [
     range: 'Rs. 500-1,500',
     phrase: 'Arko dekhaunu na.',
     note: 'Test the sound; decorative bowls should cost less than handmade bowls.'
+  }
+];
+
+export const nearbyHotels: NearbyHotel[] = [
+  {
+    name: 'KGH Thamel',
+    area: 'Saatghumti, Thamel',
+    address: 'Kathmandu Guest House, Saatghumti, Thamel, Kathmandu, Nepal',
+    distance: '0.3 km from Thamel center',
+    phone: '+97714700632',
+    displayPhone: '+977 1 470 0632',
+    note: 'Central garden property near the main Thamel walking streets.'
+  },
+  {
+    name: 'Aloft Kathmandu Thamel',
+    area: 'Chhaya Devi Complex, Amrit Marg',
+    address: 'Aloft Kathmandu Thamel, Chhaya Devi Complex, Amrit Marg, Kathmandu, Nepal',
+    distance: '0.5 km from Thamel center',
+    phone: '+97715252000',
+    displayPhone: '+977 1 525 2000',
+    note: 'Full-service hotel inside Chhaya Center in central Thamel.'
+  },
+  {
+    name: 'Hotel Yak & Yeti',
+    area: 'Durbar Marg',
+    address: 'Hotel Yak and Yeti, Paryatak Marg, Durbar Marg, Kathmandu, Nepal',
+    distance: '1.8 km from Thamel center',
+    phone: '+97714248999',
+    displayPhone: '+977 1 424 8999',
+    note: 'Heritage hotel near Durbar Marg and the palace museum.'
   }
 ];
 

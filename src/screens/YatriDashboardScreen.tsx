@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import {
   festivals,
   filterChips,
   foodCards,
+  nearbyHotels,
   offlinePacks,
   phrases,
   priceTools,
@@ -49,177 +50,431 @@ const modeConfig = {
 const activeMode: TravelMode = 'adventure';
 const active = modeConfig[activeMode];
 
+type DashboardPage = 'home' | 'explore' | 'safety' | 'local';
+type ConnectivityMode = 'online' | 'offline';
+
+const dashboardPages: { id: DashboardPage; label: string; icon: IconName; activeIcon: IconName }[] = [
+  { id: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
+  { id: 'explore', label: 'Explore', icon: 'compass-outline', activeIcon: 'compass' },
+  { id: 'safety', label: 'Safety', icon: 'shield-outline', activeIcon: 'shield' },
+  { id: 'local', label: 'Local', icon: 'people-outline', activeIcon: 'people' }
+];
+
 export function YatriDashboardScreen() {
+  const { width } = useWindowDimensions();
+  const isTablet = width >= 720;
+  const isDesktop = width >= 1024;
+  const [currentPage, setCurrentPage] = useState<DashboardPage>('home');
+  const [connectivity, setConnectivity] = useState<ConnectivityMode>(() =>
+    typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'online'
+  );
   const selectedDiscover = discoverItems.filter((item) => item.mode === activeMode);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const syncConnectivity = () => setConnectivity(navigator.onLine === false ? 'offline' : 'online');
+    window.addEventListener('online', syncConnectivity);
+    window.addEventListener('offline', syncConnectivity);
+    return () => {
+      window.removeEventListener('online', syncConnectivity);
+      window.removeEventListener('offline', syncConnectivity);
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.nav}>
-          <YatriLogo compact />
-          <View style={styles.exchangePill}>
-            <Text style={styles.exchangeLabel}>USD</Text>
-            <Text style={styles.exchangeValue}>Rs. 133.4</Text>
-          </View>
-        </View>
-
-        <ImageBackground source={{ uri: active.image }} style={styles.hero} imageStyle={styles.heroImage}>
-          <LinearGradient
-            colors={['rgba(7,6,15,0.05)', 'rgba(7,6,15,0.38)', 'rgba(7,6,15,0.94)']}
-            style={styles.heroGradient}
-          />
-          <View style={styles.heroTop}>
-            <Text style={styles.greeting}>Namaste, traveler</Text>
-            <Text style={styles.location}>Kathmandu ready - offline packs active</Text>
-          </View>
-          <View style={styles.heroCopy}>
-            <Text style={[styles.modeBadge, { color: active.secondary }]}>{active.label}</Text>
-            <Text style={styles.heroTitle}>Yatri helps you move through Nepal with confidence.</Text>
-            <Text style={styles.heroText}>{active.summary}</Text>
-          </View>
-        </ImageBackground>
-
-        <View style={styles.modeSwitch}>
-          <ModeButton mode="culture" selected={activeMode === 'culture'} />
-          <ModeButton mode="adventure" selected={activeMode === 'adventure'} />
-        </View>
-
-        <View style={styles.quickGrid}>
-          {quickActions.map((action) => (
-            <Pressable key={action.title} style={styles.quickAction}>
-              <View style={[styles.quickIcon, { backgroundColor: `${action.accent}22` }]}>
-                <Ionicons name={action.icon} size={22} color={action.accent} />
-              </View>
-              <Text style={styles.quickTitle}>{action.title}</Text>
-              <Text style={styles.quickSub}>{action.subtitle}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <SectionHeader label="Know before you go" title="Choose your district" />
-        <DistrictBriefingSelector />
-
-        <SectionHeader label="Offline-first" title="Download before you lose signal" />
-        <View style={styles.stack}>
-          {offlinePacks.map((pack) => (
-            <OfflinePackCard key={pack.title} pack={pack} />
-          ))}
-        </View>
-
-        <SectionHeader label="Happening soon" title="Festivals near you" />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
-          {festivals.map((festival) => (
-            <FestivalPhotoCard key={festival.name} festival={festival} />
-          ))}
-        </ScrollView>
-
-        <SectionHeader label="Discover Nepal" title="Mountain trails or cultural wonders" />
-        <View style={styles.filterWrap}>
-          {filterChips.map((chip) => (
-            <Text key={chip} style={styles.filterChip}>{chip}</Text>
-          ))}
-        </View>
-        <View style={styles.stack}>
-          {selectedDiscover.map((item) => (
-            <DiscoverCard key={item.title} item={item} />
-          ))}
-        </View>
-
-        <SectionHeader label="Trail safety" title="Altitude, weather, and live updates" />
-        <View style={styles.stack}>
-          {trailAlerts.map((alert) => (
-            <AlertCard key={alert.title} alert={alert} />
-          ))}
-        </View>
-        <SectionHeader label="Altitude safety" title="Daily symptom check-in" />
-        <AltitudeTracker />
-
-        <View style={styles.mapPanel}>
-          <View>
-            <Text style={styles.mapTitle}>Offline vector map preview</Text>
-            <Text style={styles.mapText}>Trails, water, teahouses, checkpoints</Text>
-          </View>
-          <Pressable style={styles.navigateButton}>
-            <Ionicons name="navigate-outline" size={16} color="#1a0f00" />
-            <Text style={styles.navigateText}>Navigate</Text>
-          </Pressable>
-        </View>
-        <View style={styles.stack}>
-          {trailUpdates.map((update) => (
-            <View key={update.route} style={styles.updateRow}>
-              <View style={styles.updateDot} />
-              <View style={styles.updateTextWrap}>
-                <Text style={styles.updateRoute}>{update.route}</Text>
-                <Text style={styles.updateText}>{update.update}</Text>
-              </View>
-              <Text style={styles.updateTime}>{update.time}</Text>
-            </View>
-          ))}
-        </View>
-
-        <SectionHeader label="Traveler safety" title="Live scam alert map" />
-        <ScamAlertMap />
-
-        <SectionHeader label="Local insight" title="Ask a verified local" />
-        <AskALocalChat />
-
-        <SectionHeader label="Speak and behave well" title="Phrasebook plus etiquette" />
-        <View style={styles.namasteCard}>
-          <View style={styles.namasteAnimation}>
-            <View style={styles.palmLeft} />
-            <View style={styles.palmRight} />
-          </View>
-          <View style={styles.namasteCopy}>
-            <Text style={styles.namasteTitle}>Namaste gesture coach</Text>
-            <Text style={styles.namasteText}>Palms together, slight bow, calm smile. Audio and looping motion slot are ready for the next build.</Text>
-          </View>
-          <View style={styles.playButton}>
-            <Ionicons name="volume-medium-outline" size={18} color={colors.gold} />
-          </View>
-        </View>
-        <View style={styles.stack}>
-          {phrases.map((phrase) => (
-            <View key={phrase.roman} style={styles.phraseCard}>
-              <Text style={styles.phraseNepali}>{phrase.nepali}</Text>
-              <View style={styles.flex}>
-                <Text style={styles.phraseEnglish}>{phrase.english}</Text>
-                <Text style={styles.phraseTip}>{phrase.roman} - {phrase.tip}</Text>
-              </View>
-            </View>
-          ))}
-          {etiquetteCards.map((card) => (
-            <InfoCard key={card.context} icon={card.icon} title={card.context} body={`${card.rule} ${card.detail}`} />
-          ))}
-        </View>
-
-        <SectionHeader label="Smart tools" title="Fair price, food decoder, and SOS" />
-        <View style={styles.stack}>
-          {priceTools.map((tool) => (
-            <View key={tool.item} style={styles.priceTool}>
+      <View style={[styles.responsiveShell, isDesktop && styles.responsiveShellDesktop]}>
+        {isDesktop && (
+          <DesktopNavigation currentPage={currentPage} connectivity={connectivity} onChange={setCurrentPage} />
+        )}
+        <View style={styles.responsiveMain}>
+          <View style={[styles.topBar, isDesktop && styles.topBarDesktop]}>
+            {isDesktop ? (
               <View>
-                <Text style={styles.priceToolItem}>{tool.item}</Text>
-                <Text style={styles.priceToolNote}>{tool.note}</Text>
+                <Text style={styles.desktopContext}>YATRI TRAVEL DESK</Text>
+                <Text style={styles.desktopPageName}>{dashboardPages.find((page) => page.id === currentPage)?.label}</Text>
               </View>
-              <View style={styles.priceRangeBox}>
-                <Text style={styles.priceRange}>{tool.range}</Text>
-                <Text style={styles.pricePhrase}>{tool.phrase}</Text>
+            ) : (
+              <YatriLogo compact />
+            )}
+            <View style={styles.exchangePill}>
+          <Text style={styles.exchangeLabel}>USD · NRB BUY</Text>
+          <Text style={styles.exchangeValue}>Rs. 152.10</Text>
+        </View>
+      </View>
+
+          <ScrollView
+            key={currentPage}
+            style={styles.screen}
+            contentContainerStyle={[styles.content, isTablet && styles.contentTablet, isDesktop && styles.contentDesktop]}
+        showsVerticalScrollIndicator={false}
+      >
+        {currentPage === 'home' && (
+          <>
+            <ImageBackground source={{ uri: active.image }} style={[styles.hero, isDesktop && styles.heroDesktop]} imageStyle={styles.heroImage}>
+              <LinearGradient
+                colors={['rgba(7,6,15,0.05)', 'rgba(7,6,15,0.38)', 'rgba(7,6,15,0.94)']}
+                style={styles.heroGradient}
+              />
+              <View style={styles.heroTop}>
+                <Text style={styles.greeting}>Namaste, traveler</Text>
+                <Text style={styles.location}>Kathmandu ready - offline packs active</Text>
+              </View>
+              <View style={styles.heroCopy}>
+                <Text style={[styles.modeBadge, { color: active.secondary }]}>{active.label}</Text>
+                <Text style={styles.heroTitle}>Yatri helps you move through Nepal with confidence.</Text>
+                <Text style={styles.heroText}>{active.summary}</Text>
+              </View>
+            </ImageBackground>
+
+            <View style={styles.modeSwitch}>
+              <ModeButton mode="culture" selected={activeMode === 'culture'} />
+              <ModeButton mode="adventure" selected={activeMode === 'adventure'} />
+            </View>
+
+            <ConnectivityControl mode={connectivity} onChange={setConnectivity} />
+
+            <View style={styles.quickGrid}>
+              {quickActions.map((action) => {
+                const targetPage: DashboardPage = action.title === 'SOS'
+                  ? 'safety'
+                  : action.title === 'Offline'
+                    ? 'home'
+                    : 'local';
+                return (
+                  <Pressable key={action.title} onPress={() => setCurrentPage(targetPage)} style={[styles.quickAction, isTablet && styles.quickActionTablet]}>
+                    <View style={[styles.quickIcon, { backgroundColor: `${action.accent}22` }]}>
+                      <Ionicons name={action.icon} size={22} color={action.accent} />
+                    </View>
+                    <Text style={styles.quickTitle}>{action.title}</Text>
+                    <Text style={styles.quickSub}>{action.subtitle}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {connectivity === 'online' ? (
+              <>
+                <SectionHeader label="Online nearby" title="Hotels around Thamel" />
+                <NearbyHotels />
+                <SectionHeader label="Know before you go" title="Choose your district" />
+                <DistrictBriefingSelector />
+              </>
+            ) : (
+              <>
+                <OfflineReadyBanner />
+                <SectionHeader label="Saved on this device" title="Your offline district guide" />
+                <DistrictBriefingSelector />
+                <SectionHeader label="Offline-first" title="Downloaded travel packs" />
+                <View style={styles.stack}>
+                  {offlinePacks.map((pack) => (
+                    <OfflinePackCard key={pack.title} pack={pack} />
+                  ))}
+                </View>
+              </>
+            )}
+          </>
+        )}
+
+        {currentPage === 'explore' && (
+          <>
+            <PageHeading eyebrow="Explore" title="Find your next Nepal experience" />
+            <SectionHeader label="Happening soon" title="Festivals near you" />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+              {festivals.map((festival) => (
+                <FestivalPhotoCard key={festival.name} festival={festival} />
+              ))}
+            </ScrollView>
+
+            <SectionHeader label="Discover Nepal" title="Mountain trails or cultural wonders" />
+            <View style={styles.filterWrap}>
+              {filterChips.map((chip) => (
+                <Text key={chip} style={styles.filterChip}>{chip}</Text>
+              ))}
+            </View>
+            <View style={styles.stack}>
+              {selectedDiscover.map((item) => (
+                <DiscoverCard key={item.title} item={item} />
+              ))}
+            </View>
+
+            <SectionHeader label="Trail updates" title="Routes and conditions" />
+            <View style={styles.mapPanel}>
+              <View style={styles.flex}>
+                <Text style={styles.mapTitle}>Offline vector map preview</Text>
+                <Text style={styles.mapText}>Trails, water, teahouses, checkpoints</Text>
+              </View>
+              <Pressable style={styles.navigateButton}>
+                <Ionicons name="navigate-outline" size={16} color="#1a0f00" />
+                <Text style={styles.navigateText}>Navigate</Text>
+              </Pressable>
+            </View>
+            <View style={styles.stack}>
+              {trailUpdates.map((update) => (
+                <View key={update.route} style={styles.updateRow}>
+                  <View style={styles.updateDot} />
+                  <View style={styles.updateTextWrap}>
+                    <Text style={styles.updateRoute}>{update.route}</Text>
+                    <Text style={styles.updateText}>{update.update}</Text>
+                  </View>
+                  <Text style={styles.updateTime}>{update.time}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {currentPage === 'safety' && (
+          <>
+            <PageHeading eyebrow="Safety" title="Alerts and emergency tools" />
+            <SectionHeader label="Trail safety" title="Weather and altitude alerts" />
+            <View style={styles.stack}>
+              {trailAlerts.map((alert) => (
+                <AlertCard key={alert.title} alert={alert} />
+              ))}
+            </View>
+
+            <SectionHeader label="Altitude safety" title="Daily symptom check-in" />
+            <AltitudeTracker />
+
+            <SectionHeader label="Traveler safety" title="Live scam alert map" />
+            <ScamAlertMap />
+
+            <SectionHeader label="Emergency" title="Offline help" />
+            <OfflineSos />
+          </>
+        )}
+
+        {currentPage === 'local' && (
+          <>
+            <PageHeading eyebrow="Local" title="Ask, speak, and spend confidently" />
+            <SectionHeader label="Local insight" title="Ask a verified local" />
+            <AskALocalChat />
+
+            <SectionHeader label="Speak and behave well" title="Phrasebook plus etiquette" />
+            <View style={styles.namasteCard}>
+              <View style={styles.namasteAnimation}>
+                <View style={styles.palmLeft} />
+                <View style={styles.palmRight} />
+              </View>
+              <View style={styles.namasteCopy}>
+                <Text style={styles.namasteTitle}>Namaste gesture coach</Text>
+                <Text style={styles.namasteText}>Palms together, slight bow, calm smile. Audio and looping motion slot are ready for the next build.</Text>
+              </View>
+              <View style={styles.playButton}>
+                <Ionicons name="volume-medium-outline" size={18} color={colors.gold} />
               </View>
             </View>
-          ))}
-        </View>
-        <View style={styles.foodGrid}>
-          {foodCards.map((food) => (
-            <View key={food.dish} style={styles.foodCard}>
-              <Text style={styles.foodRegion}>{food.region}</Text>
-              <Text style={styles.foodDish}>{food.dish}</Text>
-              <Text style={styles.foodText}>{food.flavors}</Text>
-              <Text style={styles.foodTip}>{food.orderTip}</Text>
+            <View style={styles.stack}>
+              {phrases.map((phrase) => (
+                <View key={phrase.roman} style={styles.phraseCard}>
+                  <Text style={styles.phraseNepali}>{phrase.nepali}</Text>
+                  <View style={styles.flex}>
+                    <Text style={styles.phraseEnglish}>{phrase.english}</Text>
+                    <Text style={styles.phraseTip}>{phrase.roman} - {phrase.tip}</Text>
+                  </View>
+                </View>
+              ))}
+              {etiquetteCards.map((card) => (
+                <InfoCard key={card.context} icon={card.icon} title={card.context} body={`${card.rule} ${card.detail}`} />
+              ))}
             </View>
-          ))}
+
+            <SectionHeader label="Smart tools" title="Fair price and food decoder" />
+            <View style={styles.stack}>
+              {priceTools.map((tool) => (
+                <View key={tool.item} style={styles.priceTool}>
+                  <View style={styles.flex}>
+                    <Text style={styles.priceToolItem}>{tool.item}</Text>
+                    <Text style={styles.priceToolNote}>{tool.note}</Text>
+                  </View>
+                  <View style={styles.priceRangeBox}>
+                    <Text style={styles.priceRange}>{tool.range}</Text>
+                    <Text style={styles.pricePhrase}>{tool.phrase}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+            <View style={styles.foodGrid}>
+              {foodCards.map((food) => (
+                <View key={food.dish} style={styles.foodCard}>
+                  <Text style={styles.foodRegion}>{food.region}</Text>
+                  <Text style={styles.foodDish}>{food.dish}</Text>
+                  <Text style={styles.foodText}>{food.flavors}</Text>
+                  <Text style={styles.foodTip}>{food.orderTip}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+          </ScrollView>
+
+          {!isDesktop && <BottomNavigation currentPage={currentPage} onChange={setCurrentPage} />}
         </View>
-        <OfflineSos />
-      </ScrollView>
+      </View>
     </SafeAreaView>
+  );
+}
+
+function DesktopNavigation({
+  connectivity,
+  currentPage,
+  onChange
+}: {
+  connectivity: ConnectivityMode;
+  currentPage: DashboardPage;
+  onChange: (page: DashboardPage) => void;
+}) {
+  return (
+    <View style={styles.desktopSidebar}>
+      <YatriLogo />
+      <View style={styles.desktopNavList}>
+        {dashboardPages.map((page) => {
+          const selected = currentPage === page.id;
+          return (
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              key={page.id}
+              onPress={() => onChange(page.id)}
+              style={[styles.desktopNavItem, selected && styles.desktopNavItemSelected]}
+            >
+              <Ionicons name={selected ? page.activeIcon : page.icon} size={20} color={selected ? '#1a0f00' : colors.muted} />
+              <Text style={[styles.desktopNavText, selected && styles.desktopNavTextSelected]}>{page.label}</Text>
+              {selected && <Ionicons name="chevron-forward" size={16} color="#1a0f00" />}
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={styles.desktopSidebarStatus}>
+        <View style={[styles.connectivityDot, { backgroundColor: connectivity === 'online' ? colors.teal : colors.gold }]} />
+        <View>
+          <Text style={styles.desktopStatusLabel}>{connectivity === 'online' ? 'CONNECTED' : 'OFFLINE READY'}</Text>
+          <Text style={styles.desktopStatusText}>{connectivity === 'online' ? 'Live services available' : 'Using saved travel data'}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function PageHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <View style={styles.pageHeading}>
+      <Text style={styles.pageEyebrow}>{eyebrow}</Text>
+      <Text style={styles.pageTitle}>{title}</Text>
+    </View>
+  );
+}
+
+function BottomNavigation({ currentPage, onChange }: { currentPage: DashboardPage; onChange: (page: DashboardPage) => void }) {
+  return (
+    <View style={styles.bottomNav}>
+      {dashboardPages.map((page) => {
+        const selected = currentPage === page.id;
+        return (
+          <Pressable
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            key={page.id}
+            onPress={() => onChange(page.id)}
+            style={styles.bottomNavItem}
+          >
+            <View style={[styles.bottomNavIcon, selected && styles.bottomNavIconSelected]}>
+              <Ionicons name={selected ? page.activeIcon : page.icon} size={20} color={selected ? '#1a0f00' : colors.muted} />
+            </View>
+            <Text style={[styles.bottomNavLabel, selected && styles.bottomNavLabelSelected]}>{page.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function ConnectivityControl({ mode, onChange }: { mode: ConnectivityMode; onChange: (mode: ConnectivityMode) => void }) {
+  return (
+    <View style={styles.connectivityBar}>
+      <View style={styles.connectivityCopy}>
+        <View style={[styles.connectivityDot, { backgroundColor: mode === 'online' ? colors.teal : colors.gold }]} />
+        <Text style={styles.connectivityLabel}>{mode === 'online' ? 'Connected' : 'Offline mode'}</Text>
+      </View>
+      <View style={styles.connectivitySwitch}>
+        {(['online', 'offline'] as ConnectivityMode[]).map((option) => {
+          const selected = mode === option;
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              key={option}
+              onPress={() => onChange(option)}
+              style={[styles.connectivityOption, selected && styles.connectivityOptionSelected]}
+            >
+              <Ionicons name={option === 'online' ? 'wifi' : 'cloud-offline-outline'} size={15} color={selected ? '#1a0f00' : colors.muted} />
+              <Text style={[styles.connectivityOptionText, selected && styles.connectivityOptionTextSelected]}>
+                {option === 'online' ? 'Online' : 'Offline'}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function NearbyHotels() {
+  const openNavigation = (address: string) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    Linking.openURL(url).catch(() => Alert.alert('Navigation unavailable', 'Unable to open maps on this device.'));
+  };
+
+  const callHotel = (phone: string, displayPhone: string) => {
+    Linking.openURL(`tel:${phone}`).catch(() => Alert.alert('Calling unavailable', `Call the hotel at ${displayPhone}.`));
+  };
+
+  return (
+    <View style={styles.hotelList}>
+      <View style={styles.hotelLocationNote}>
+        <Ionicons name="location-outline" size={16} color={colors.teal} />
+        <Text style={styles.hotelLocationText}>Distances shown from Thamel center</Text>
+        <Text style={styles.hotelLiveText}>LIVE</Text>
+      </View>
+      {nearbyHotels.map((hotel) => (
+        <View key={hotel.name} style={styles.hotelRow}>
+          <View style={styles.hotelIcon}>
+            <Ionicons name="bed-outline" size={21} color={colors.goldLight} />
+          </View>
+          <View style={styles.flex}>
+            <Text style={styles.hotelName}>{hotel.name}</Text>
+            <Text style={styles.hotelArea}>{hotel.area} · {hotel.distance}</Text>
+            <Text style={styles.hotelNote}>{hotel.note}</Text>
+            <View style={styles.hotelActions}>
+              <Pressable accessibilityRole="button" onPress={() => openNavigation(hotel.address)} style={styles.hotelNavigateButton}>
+                <Ionicons name="navigate" size={15} color="#1a0f00" />
+                <Text style={styles.hotelNavigateText}>Navigate</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => callHotel(hotel.phone, hotel.displayPhone)} style={styles.hotelCallButton}>
+                <Ionicons name="call-outline" size={15} color={colors.teal} />
+                <Text style={styles.hotelCallText}>Call</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function OfflineReadyBanner() {
+  return (
+    <View style={styles.offlineReadyBanner}>
+      <View style={styles.offlineReadyIcon}>
+        <Ionicons name="cloud-offline-outline" size={24} color={colors.goldLight} />
+      </View>
+      <View style={styles.flex}>
+        <Text style={styles.offlineReadyTitle}>You are offline, but Yatri is ready</Text>
+        <Text style={styles.offlineReadyText}>Saved district guidance, emergency tools, phrases, and downloaded packs remain available.</Text>
+      </View>
+    </View>
   );
 }
 
@@ -768,13 +1023,40 @@ function InfoCard({ icon, title, body }: { icon: IconName; title: string; body: 
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.bg },
+  responsiveShell: { flex: 1 },
+  responsiveShellDesktop: { flexDirection: 'row' },
+  responsiveMain: { flex: 1, minWidth: 0 },
   screen: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.md, paddingBottom: 48 },
-  nav: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
+  content: { alignSelf: 'center', padding: spacing.md, paddingBottom: spacing.xl, width: '100%' },
+  contentTablet: { padding: spacing.lg },
+  contentDesktop: { maxWidth: 1180, paddingHorizontal: 32, paddingVertical: spacing.lg },
+  desktopSidebar: { backgroundColor: colors.surface, borderRightColor: colors.border, borderRightWidth: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.lg, width: 246 },
+  desktopNavList: { gap: spacing.xs, marginTop: 42 },
+  desktopNavItem: { alignItems: 'center', borderRadius: 12, flexDirection: 'row', gap: spacing.sm, minHeight: 48, paddingHorizontal: 12 },
+  desktopNavItemSelected: { backgroundColor: colors.gold },
+  desktopNavText: { color: colors.muted, flex: 1, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  desktopNavTextSelected: { color: '#1a0f00' },
+  desktopSidebarStatus: { alignItems: 'center', borderColor: colors.border, borderRadius: 13, borderWidth: 1, bottom: spacing.lg, flexDirection: 'row', gap: spacing.sm, left: spacing.md, padding: spacing.sm, position: 'absolute', right: spacing.md },
+  desktopStatusLabel: { color: colors.text, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  desktopStatusText: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, marginTop: 2 },
+  topBar: { alignItems: 'center', backgroundColor: colors.bg, borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 68, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  topBarDesktop: { minHeight: 76, paddingHorizontal: 32 },
+  desktopContext: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', letterSpacing: 1.6 },
+  desktopPageName: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 2 },
+  pageHeading: { marginBottom: spacing.xs, paddingTop: spacing.sm },
+  pageEyebrow: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8, textTransform: 'uppercase' },
+  pageTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700', lineHeight: 38, marginTop: spacing.xs },
+  bottomNav: { alignItems: 'center', backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', minHeight: 68, paddingHorizontal: spacing.sm, paddingTop: 7 },
+  bottomNavItem: { alignItems: 'center', flex: 1, gap: 3, justifyContent: 'center', minHeight: 56 },
+  bottomNavIcon: { alignItems: 'center', borderRadius: 13, height: 30, justifyContent: 'center', width: 42 },
+  bottomNavIconSelected: { backgroundColor: colors.gold },
+  bottomNavLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  bottomNavLabelSelected: { color: colors.goldLight },
   exchangePill: { alignItems: 'flex-end', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
   exchangeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 10, fontWeight: '800', letterSpacing: 1.4 },
   exchangeValue: { color: colors.teal, fontFamily: fonts.accent, fontSize: 13, fontWeight: '800', marginTop: 2 },
   hero: { height: 500, justifyContent: 'space-between', overflow: 'hidden' },
+  heroDesktop: { height: 440 },
   heroImage: { borderRadius: 22 },
   heroGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 22 },
   heroTop: { padding: spacing.lg },
@@ -789,9 +1071,37 @@ const styles = StyleSheet.create({
   modeButtonText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
   quickAction: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, minHeight: 126, padding: spacing.md, width: '48.5%' },
+  quickActionTablet: { width: '23.5%' },
   quickIcon: { alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', marginBottom: spacing.sm, width: 44 },
   quickTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
   quickSub: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, marginTop: 4, textAlign: 'center' },
+  connectivityBar: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md, padding: 6, paddingLeft: 12 },
+  connectivityCopy: { alignItems: 'center', flexDirection: 'row', gap: 7 },
+  connectivityDot: { borderRadius: 5, height: 9, width: 9 },
+  connectivityLabel: { color: colors.text, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
+  connectivitySwitch: { flexDirection: 'row', gap: 4 },
+  connectivityOption: { alignItems: 'center', borderRadius: 11, flexDirection: 'row', gap: 5, minHeight: 34, paddingHorizontal: 9 },
+  connectivityOptionSelected: { backgroundColor: colors.gold },
+  connectivityOptionText: { color: colors.muted, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  connectivityOptionTextSelected: { color: '#1a0f00' },
+  hotelList: { gap: spacing.sm },
+  hotelLocationNote: { alignItems: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 2 },
+  hotelLocationText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 10 },
+  hotelLiveText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  hotelRow: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  hotelIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
+  hotelName: { color: colors.text, fontFamily: fonts.accent, fontSize: 14, fontWeight: '900' },
+  hotelArea: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '800', lineHeight: 14, marginTop: 3 },
+  hotelNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 5 },
+  hotelActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  hotelNavigateButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 11, flexDirection: 'row', gap: 5, minHeight: 34, paddingHorizontal: 10 },
+  hotelNavigateText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
+  hotelCallButton: { alignItems: 'center', borderColor: 'rgba(62,207,178,0.38)', borderRadius: 11, borderWidth: 1, flexDirection: 'row', gap: 5, minHeight: 34, paddingHorizontal: 12 },
+  hotelCallText: { color: colors.teal, fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
+  offlineReadyBanner: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.10)', borderColor: 'rgba(245,166,35,0.32)', borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl, padding: spacing.md },
+  offlineReadyIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.14)', borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
+  offlineReadyTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  offlineReadyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginTop: 3 },
   districtFeature: { gap: spacing.sm },
   districtTabs: { gap: spacing.xs, paddingRight: spacing.md },
   districtTab: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: 6, minHeight: 40, paddingHorizontal: 12 },
