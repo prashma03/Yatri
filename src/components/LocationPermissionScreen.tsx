@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { ImageBackground, PermissionsAndroid, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { YatriLogo } from './YatriLogo';
+import { getForegroundLocation } from '../services/location';
 import { colors, fonts, spacing } from '../theme';
 
 type LocationPermissionScreenProps = {
@@ -20,45 +21,18 @@ export function LocationPermissionScreen({ onComplete }: LocationPermissionScree
     setRequesting(true);
     setMessage('');
 
-    if (Platform.OS === 'android') {
-      const result = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Allow Yatri to use your location?',
-          message: 'Location powers nearby stays, navigation, district guidance, and SOS coordinates.',
-          buttonPositive: 'Allow',
-          buttonNegative: 'Not now'
-        }
-      );
-      setRequesting(false);
-      if (result === PermissionsAndroid.RESULTS.GRANTED) {
-        onComplete();
-      } else {
+    try {
+      const location = await getForegroundLocation(true);
+      if (!location) {
         setMessage('Location access was declined. You can continue and enable it later in device settings.');
+        return;
       }
-      return;
-    }
-
-    const geolocation = typeof navigator !== 'undefined' ? navigator.geolocation : undefined;
-    if (!geolocation) {
+      onComplete();
+    } catch {
+      setMessage('Yatri could not get your location. Check device location services or continue without it.');
+    } finally {
       setRequesting(false);
-      setMessage('Location services are not available on this device build yet. You can continue without them.');
-      return;
     }
-
-    geolocation.getCurrentPosition(
-      () => {
-        setRequesting(false);
-        onComplete();
-      },
-      (error) => {
-        setRequesting(false);
-        setMessage(error.code === 1
-          ? 'Location access was declined. You can continue and enable it later in device settings.'
-          : 'Yatri could not get your location. Check device location services or continue without it.');
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-    );
   };
 
   return (

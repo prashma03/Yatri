@@ -12,7 +12,7 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Yatri uses your location for nearby stays, navigation, district guidance, and SOS coordinates."
+        "NSLocationWhenInUseUsageDescription": "Yatri uses your location only while the app is open for nearby scam alerts and accurate SOS messages."
       }
     },
     "android": {
@@ -26,6 +26,24 @@
     },
     "web": {
       "bundler": "metro"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow Yatri to use your location while the app is open for nearby scam alerts and accurate SOS messages.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Yatri to attach a photo you choose to a community safety report.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
+    ]
   }
 }

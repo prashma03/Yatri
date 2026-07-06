@@ -1,17 +1,40 @@
 import { useEffect, useState } from 'react';
 import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
+import * as SMS from 'expo-sms';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { YatriLogo } from '../components/YatriLogo';
+import { loadTravelPreferences } from '../auth/localSession';
+import { formatCoordinates, formatLocationAge, getForegroundLocation, getSavedLocation, type SavedLocation } from '../services/location';
+import {
+  deleteCurrentAccount,
+  getCurrentRole,
+  getSavedDistrictPacks,
+  listPendingReports,
+  listSafetyReports,
+  listTrustedContacts,
+  moderateReport,
+  saveDistrictPack,
+  saveTrustedContact,
+  submitSafetyReport,
+  subscribeToSafetyReports,
+  syncPendingReports,
+  voteForReport,
+  type SafetyReport,
+  type TrustedContact
+} from '../services/mvpRepository';
 import { colors, fonts, spacing } from '../theme';
 import {
+  cultureFacts,
   discoverItems,
   districtBriefings,
   etiquetteCards,
   festivals,
   filterChips,
   foodCards,
+  foodPrices,
   nearbyHotels,
   offlinePacks,
   phrases,
@@ -20,10 +43,12 @@ import {
   scamAlerts,
   trailAlerts,
   trailUpdates,
+  transportPrices,
   type DiscoverItem,
   type Festival,
   type IconName,
   type OfflinePack,
+  type PriceItem,
   type ScamAlert,
   type TravelMode
 } from '../data/yatriData';
@@ -47,28 +72,57 @@ const modeConfig = {
   }
 };
 
-const activeMode: TravelMode = 'adventure';
-const active = modeConfig[activeMode];
-
-type DashboardPage = 'home' | 'explore' | 'safety' | 'local';
+type DashboardPage = 'home' | 'explore' | 'safety' | 'local' | 'prices' | 'moderation';
 type ConnectivityMode = 'online' | 'offline';
 
 const dashboardPages: { id: DashboardPage; label: string; icon: IconName; activeIcon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
   { id: 'explore', label: 'Explore', icon: 'compass-outline', activeIcon: 'compass' },
   { id: 'safety', label: 'Safety', icon: 'shield-outline', activeIcon: 'shield' },
-  { id: 'local', label: 'Local', icon: 'people-outline', activeIcon: 'people' }
+  { id: 'local', label: 'Local', icon: 'people-outline', activeIcon: 'people' },
+  { id: 'prices', label: 'Prices', icon: 'pricetag-outline', activeIcon: 'pricetag' }
 ];
 
-export function YatriDashboardScreen() {
+export function YatriDashboardScreen({
+  onSignOut,
+  userEmail
+}: {
+  onSignOut: () => void;
+  userEmail: string | null;
+}) {
   const { width } = useWindowDimensions();
   const isTablet = width >= 720;
   const isDesktop = width >= 1024;
+  const savedPreferences = loadTravelPreferences();
+  const recommendedMode: TravelMode = savedPreferences?.travelStyle === 'culture' || savedPreferences?.interests.includes('heritage') || savedPreferences?.interests.includes('festivals')
+    ? 'culture'
+    : 'adventure';
+  const [activeMode, setActiveMode] = useState<TravelMode>(recommendedMode);
+  const active = modeConfig[activeMode];
   const [currentPage, setCurrentPage] = useState<DashboardPage>('home');
+  const [priceFocus, setPriceFocus] = useState<'fair' | 'rides'>('fair');
+  const [isModerator, setIsModerator] = useState(false);
   const [connectivity, setConnectivity] = useState<ConnectivityMode>(() =>
     typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'online'
   );
   const selectedDiscover = discoverItems.filter((item) => item.mode === activeMode);
+
+  const confirmAccountDeletion = () => {
+    Alert.alert('Delete Yatri account?', 'This permanently removes your account, profile, reports, saved districts, and contacts. This cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete account',
+        style: 'destructive',
+        onPress: async () => {
+          try { await deleteCurrentAccount(); } catch (error) { Alert.alert('Account not deleted', error instanceof Error ? error.message : 'Please try again.'); }
+        }
+      }
+    ]);
+  };
+
+  useEffect(() => {
+    void getCurrentRole().then((role) => setIsModerator(role === 'moderator' || role === 'admin'));
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -81,6 +135,37 @@ export function YatriDashboardScreen() {
       window.removeEventListener('offline', syncConnectivity);
     };
   }, []);
+
+  const handleQuickAction = (title: string) => {
+    if (title === 'SOS') {
+      setCurrentPage('safety');
+      return;
+    }
+    if (title === 'Offline') {
+      setConnectivity('offline');
+      setCurrentPage('home');
+      return;
+    }
+    if (title === 'Ride Tips') {
+      setPriceFocus('rides');
+      setCurrentPage('prices');
+      return;
+    }
+
+    setPriceFocus('fair');
+    setCurrentPage('prices');
+  };
+
+  const openTrailNavigation = () => {
+    if (connectivity === 'offline') {
+      Alert.alert('Offline map selected', 'The downloaded trail map is ready for turn-by-turn navigation in the native map build.');
+      return;
+    }
+
+    Linking.openURL('https://www.google.com/maps/search/?api=1&query=Annapurna+Base+Camp+Nepal').catch(() => {
+      Alert.alert('Navigation unavailable', 'Unable to open maps on this device.');
+    });
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -98,10 +183,32 @@ export function YatriDashboardScreen() {
             ) : (
               <YatriLogo compact />
             )}
-            <View style={styles.exchangePill}>
-          <Text style={styles.exchangeLabel}>USD · NRB BUY</Text>
-          <Text style={styles.exchangeValue}>Rs. 152.10</Text>
-        </View>
+            <View style={styles.topBarActions}>
+              {isModerator && (
+                <Pressable accessibilityLabel="Open report moderation" accessibilityRole="button" onPress={() => setCurrentPage('moderation')} style={styles.signOutButton}>
+                  <Ionicons name="shield-checkmark-outline" size={19} color={colors.teal} />
+                </Pressable>
+              )}
+              <Pressable accessibilityRole="link" onPress={() => Linking.openURL('https://www.nrb.org.np/forex/')} style={styles.exchangePill}>
+                <Text style={styles.exchangeLabel}>OFFICIAL EXCHANGE RATE</Text>
+                <Text style={styles.exchangeValue}>Check Nepal Rastra Bank</Text>
+              </Pressable>
+              {userEmail && (
+                <Pressable accessibilityLabel="Delete account" accessibilityRole="button" onPress={confirmAccountDeletion} style={styles.signOutButton}>
+                  <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                </Pressable>
+              )}
+              {userEmail && (
+                <Pressable
+                  accessibilityLabel={`Sign out ${userEmail}`}
+                  accessibilityRole="button"
+                  onPress={onSignOut}
+                  style={styles.signOutButton}
+                >
+                  <Ionicons name="log-out-outline" size={19} color={colors.muted} />
+                </Pressable>
+              )}
+            </View>
       </View>
 
           <ScrollView
@@ -129,29 +236,28 @@ export function YatriDashboardScreen() {
             </ImageBackground>
 
             <View style={styles.modeSwitch}>
-              <ModeButton mode="culture" selected={activeMode === 'culture'} />
-              <ModeButton mode="adventure" selected={activeMode === 'adventure'} />
+              <ModeButton mode="culture" selected={activeMode === 'culture'} onPress={() => setActiveMode('culture')} />
+              <ModeButton mode="adventure" selected={activeMode === 'adventure'} onPress={() => setActiveMode('adventure')} />
             </View>
 
             <ConnectivityControl mode={connectivity} onChange={setConnectivity} />
 
             <View style={styles.quickGrid}>
-              {quickActions.map((action) => {
-                const targetPage: DashboardPage = action.title === 'SOS'
-                  ? 'safety'
-                  : action.title === 'Offline'
-                    ? 'home'
-                    : 'local';
-                return (
-                  <Pressable key={action.title} onPress={() => setCurrentPage(targetPage)} style={[styles.quickAction, isTablet && styles.quickActionTablet]}>
-                    <View style={[styles.quickIcon, { backgroundColor: `${action.accent}22` }]}>
-                      <Ionicons name={action.icon} size={22} color={action.accent} />
-                    </View>
-                    <Text style={styles.quickTitle}>{action.title}</Text>
-                    <Text style={styles.quickSub}>{action.subtitle}</Text>
-                  </Pressable>
-                );
-              })}
+              {quickActions.map((action) => (
+                <Pressable
+                  accessibilityLabel={action.title}
+                  accessibilityRole="button"
+                  key={action.title}
+                  onPress={() => handleQuickAction(action.title)}
+                  style={[styles.quickAction, isTablet && styles.quickActionTablet]}
+                >
+                  <View style={[styles.quickIcon, { backgroundColor: `${action.accent}22` }]}>
+                    <Ionicons name={action.icon} size={22} color={action.accent} />
+                  </View>
+                  <Text style={styles.quickTitle}>{action.title}</Text>
+                  <Text style={styles.quickSub}>{action.subtitle}</Text>
+                </Pressable>
+              ))}
             </View>
 
             {connectivity === 'online' ? (
@@ -205,7 +311,7 @@ export function YatriDashboardScreen() {
                 <Text style={styles.mapTitle}>Offline vector map preview</Text>
                 <Text style={styles.mapText}>Trails, water, teahouses, checkpoints</Text>
               </View>
-              <Pressable style={styles.navigateButton}>
+              <Pressable accessibilityRole="button" onPress={openTrailNavigation} style={styles.navigateButton}>
                 <Ionicons name="navigate-outline" size={16} color="#1a0f00" />
                 <Text style={styles.navigateText}>Navigate</Text>
               </Pressable>
@@ -249,39 +355,57 @@ export function YatriDashboardScreen() {
         {currentPage === 'local' && (
           <>
             <PageHeading eyebrow="Local" title="Ask, speak, and spend confidently" />
-            <SectionHeader label="Local insight" title="Ask a verified local" />
-            <AskALocalChat />
+            <SectionHeader label="Know Nepal" title="Culture bites and useful phrases" />
+            <CultureBites />
 
-            <SectionHeader label="Speak and behave well" title="Phrasebook plus etiquette" />
+            <SectionHeader label="Respectful travel" title="Everyday etiquette" />
             <View style={styles.namasteCard}>
               <View style={styles.namasteAnimation}>
                 <View style={styles.palmLeft} />
                 <View style={styles.palmRight} />
               </View>
               <View style={styles.namasteCopy}>
-                <Text style={styles.namasteTitle}>Namaste gesture coach</Text>
-                <Text style={styles.namasteText}>Palms together, slight bow, calm smile. Audio and looping motion slot are ready for the next build.</Text>
-              </View>
-              <View style={styles.playButton}>
-                <Ionicons name="volume-medium-outline" size={18} color={colors.gold} />
+                <Text style={styles.namasteTitle}>Namaste gesture</Text>
+                <Text style={styles.namasteText}>Bring your palms together at chest level, make a slight bow, and offer a calm smile.</Text>
               </View>
             </View>
             <View style={styles.stack}>
-              {phrases.map((phrase) => (
-                <View key={phrase.roman} style={styles.phraseCard}>
-                  <Text style={styles.phraseNepali}>{phrase.nepali}</Text>
-                  <View style={styles.flex}>
-                    <Text style={styles.phraseEnglish}>{phrase.english}</Text>
-                    <Text style={styles.phraseTip}>{phrase.roman} - {phrase.tip}</Text>
-                  </View>
-                </View>
-              ))}
               {etiquetteCards.map((card) => (
                 <InfoCard key={card.context} icon={card.icon} title={card.context} body={`${card.rule} ${card.detail}`} />
               ))}
             </View>
 
-            <SectionHeader label="Smart tools" title="Fair price and food decoder" />
+            <SectionHeader label="Taste Nepal" title="Regional food decoder" />
+            <View style={styles.foodGrid}>
+              {foodCards.map((food) => (
+                <View key={food.dish} style={styles.foodCard}>
+                  <Text style={styles.foodRegion}>{food.region}</Text>
+                  <Text style={styles.foodDish}>{food.dish}</Text>
+                  <Text style={styles.foodText}>{food.flavors}</Text>
+                  <Text style={styles.foodTip}>{food.orderTip}</Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {currentPage === 'moderation' && isModerator && <ModerationPanel />}
+
+        {currentPage === 'prices' && (
+          <>
+            <PageHeading
+              eyebrow={priceFocus === 'rides' ? 'Getting around' : 'Fair price guide'}
+              title={priceFocus === 'rides' ? 'Know your transport costs' : 'Know before you pay'}
+            />
+
+            {priceFocus === 'rides' && (
+              <>
+                <SectionHeader label="Ride guide" title="Typical transport prices" />
+                <ReferencePriceList items={transportPrices} icon="car-outline" />
+              </>
+            )}
+
+            <SectionHeader label="Check the range" title="Common tourist purchases" />
             <View style={styles.stack}>
               {priceTools.map((tool) => (
                 <View key={tool.item} style={styles.priceTool}>
@@ -296,16 +420,16 @@ export function YatriDashboardScreen() {
                 </View>
               ))}
             </View>
-            <View style={styles.foodGrid}>
-              {foodCards.map((food) => (
-                <View key={food.dish} style={styles.foodCard}>
-                  <Text style={styles.foodRegion}>{food.region}</Text>
-                  <Text style={styles.foodDish}>{food.dish}</Text>
-                  <Text style={styles.foodText}>{food.flavors}</Text>
-                  <Text style={styles.foodTip}>{food.orderTip}</Text>
-                </View>
-              ))}
-            </View>
+
+            <SectionHeader label="Everyday costs" title="Food price references" />
+            <ReferencePriceList items={foodPrices} icon="restaurant-outline" />
+
+            {priceFocus === 'fair' && (
+              <>
+                <SectionHeader label="Getting around" title="Transport price references" />
+                <ReferencePriceList items={transportPrices} icon="car-outline" />
+              </>
+            )}
           </>
         )}
           </ScrollView>
@@ -478,14 +602,47 @@ function OfflineReadyBanner() {
   );
 }
 
+function ReferencePriceList({ items, icon }: { items: PriceItem[]; icon: IconName }) {
+  return (
+    <View style={styles.stack}>
+      {items.map((item) => (
+        <View key={item.name} style={styles.referencePriceRow}>
+          <View style={styles.referencePriceIcon}>
+            <Ionicons name={icon} size={19} color={colors.teal} />
+          </View>
+          <View style={styles.flex}>
+            <Text style={styles.referencePriceName}>{item.name}</Text>
+            <Text style={styles.referencePriceNote}>{item.note}</Text>
+          </View>
+          <View style={styles.referencePriceValueWrap}>
+            <Text style={styles.referencePriceValue}>{item.price}</Text>
+            <Text style={[styles.referencePriceBadge, item.good && styles.referencePriceBadgeGood]}>{item.badge}</Text>
+          </View>
+        </View>
+      ))}
+      <Text style={styles.contentSource}>Community price reference—not an official tariff · reviewed July 5, 2026 · confirm locally before paying</Text>
+    </View>
+  );
+}
+
 function DistrictBriefingSelector() {
   const [selectedDistrict, setSelectedDistrict] = useState('Kathmandu');
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const activeDistrict = districtBriefings.find((item) => item.district === selectedDistrict)!;
   const connectivityColor = activeDistrict.connectivity === 'Strong'
     ? colors.teal
     : activeDistrict.connectivity === 'Mixed'
       ? colors.gold
       : colors.danger;
+
+  useEffect(() => {
+    void getSavedDistrictPacks().then((packs) => setSavedAt(packs[selectedDistrict]?.savedAt ?? null));
+  }, [selectedDistrict]);
+
+  const downloadPack = async () => {
+    const saved = await saveDistrictPack(selectedDistrict, activeDistrict);
+    setSavedAt(saved.savedAt);
+  };
 
   return (
     <View style={styles.districtFeature}>
@@ -516,10 +673,10 @@ function DistrictBriefingSelector() {
             <Text style={styles.districtName}>{activeDistrict.district}</Text>
             <Text style={styles.districtProvince}>{activeDistrict.province}</Text>
           </View>
-          <View style={styles.districtOfflineBadge}>
-            <Ionicons name="cloud-done-outline" size={14} color={colors.teal} />
-            <Text style={styles.districtOfflineText}>OFFLINE</Text>
-          </View>
+          <Pressable accessibilityRole="button" onPress={downloadPack} style={styles.districtOfflineBadge}>
+            <Ionicons name={savedAt ? 'cloud-done-outline' : 'cloud-download-outline'} size={14} color={colors.teal} />
+            <Text style={styles.districtOfflineText}>{savedAt ? 'SAVED' : 'DOWNLOAD'}</Text>
+          </Pressable>
         </View>
 
         <View style={styles.districtFacts}>
@@ -545,6 +702,7 @@ function DistrictBriefingSelector() {
         <DistrictInfoRow icon="bus-outline" label="Getting around" text={activeDistrict.transport} />
         <DistrictInfoRow icon="people-outline" label="Local respect" text={activeDistrict.etiquette} />
         <DistrictInfoRow icon="shield-checkmark-outline" label="Safety note" text={activeDistrict.safety} last />
+        <Text style={styles.districtFreshness}>{savedAt ? `Offline copy saved ${new Date(savedAt).toLocaleDateString()} · ` : ''}Yatri editorial review · July 5, 2026</Text>
       </View>
     </View>
   );
@@ -562,10 +720,10 @@ function DistrictInfoRow({ icon, label, text, last = false }: { icon: IconName; 
   );
 }
 
-function ModeButton({ mode, selected }: { mode: TravelMode; selected: boolean }) {
+function ModeButton({ mode, selected, onPress }: { mode: TravelMode; selected: boolean; onPress: () => void }) {
   const config = modeConfig[mode];
   return (
-    <Pressable style={[styles.modeButton, selected && { backgroundColor: `${config.accent}24`, borderColor: config.accent }]}>
+    <Pressable accessibilityRole="button" accessibilityState={{ selected }} onPress={onPress} style={[styles.modeButton, selected && { backgroundColor: `${config.accent}24`, borderColor: config.accent }]}>
       <Text style={[styles.modeButtonText, selected && { color: config.secondary }]}>{config.title}</Text>
     </Pressable>
   );
@@ -650,15 +808,100 @@ function scamRiskColor(risk: ScamAlert['risk']) {
 }
 
 function ScamAlertMap() {
-  const totalReports = scamAlerts.reduce((total, alert) => total + alert.reportCount, 0);
+  const reportTypes = [
+    { value: 'taxi_overcharge', label: 'Taxi overcharge' },
+    { value: 'fake_permit', label: 'Fake permit' },
+    { value: 'gem_scam', label: 'Gem scam' },
+    { value: 'aggressive_seller', label: 'Aggressive seller' },
+    { value: 'other', label: 'Other' }
+  ];
+  const [reports, setReports] = useState<SafetyReport[]>([]);
+  const [reporting, setReporting] = useState(false);
+  const [reportType, setReportType] = useState(reportTypes[0].value);
+  const [description, setDescription] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [reportLocation, setReportLocation] = useState<SavedLocation | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [statusText, setStatusText] = useState('Loading community reports…');
+
+  const loadReports = async () => {
+    try {
+      const synced = await syncPendingReports();
+      const live = await listSafetyReports();
+      setReports(live);
+      setStatusText(synced ? `Synced ${synced} offline report${synced === 1 ? '' : 's'}.` : live.length ? 'Live reports updated.' : 'No community reports in this area yet.');
+    } catch {
+      setStatusText('Offline: reports you submit will sync when a connection returns.');
+    }
+  };
+
+  useEffect(() => {
+    void loadReports();
+    return subscribeToSafetyReports(() => { void loadReports(); });
+  }, []);
+
+  const beginReport = async () => {
+    const location = await getForegroundLocation(true);
+    if (!location) {
+      Alert.alert('Location required', 'Allow foreground location so the report can be placed accurately. Yatri does not request background location.');
+      return;
+    }
+    setReportLocation(location);
+    setReporting(true);
+  };
+
+  const choosePhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7
+    });
+    if (!result.canceled) setPhotoUri(result.assets[0].uri);
+  };
+
+  const submitReport = async () => {
+    if (!reportLocation || description.trim().length < 10) {
+      Alert.alert('Add a little detail', 'Describe what happened in at least 10 characters. Do not include passport, payment-card, or other sensitive information.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const result = await submitSafetyReport({
+        category: reportType,
+        description,
+        latitude: reportLocation.latitude,
+        longitude: reportLocation.longitude,
+        district: 'Kathmandu',
+        photoUri
+      });
+      setReporting(false);
+      setDescription('');
+      setPhotoUri(null);
+      setStatusText(result.queued ? 'Saved offline. It will sync after you sign in and reconnect.' : result.duplicateId ? 'Matched an existing nearby report and added your confirmation.' : 'Community report submitted for moderation.');
+      await loadReports();
+    } catch (error) {
+      Alert.alert('Report not submitted', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmReport = async (reportId: string) => {
+    try {
+      await voteForReport(reportId);
+      await loadReports();
+    } catch (error) {
+      Alert.alert('Could not confirm report', error instanceof Error ? error.message : 'Please try again.');
+    }
+  };
 
   return (
     <>
       <View style={styles.scamMap}>
         <View style={styles.mapLiveRow}>
           <View style={styles.liveDot} />
-          <Text style={styles.liveLabel}>LIVE COMMUNITY REPORTS</Text>
-          <Text style={styles.liveCount}>{totalReports} nearby</Text>
+          <Text style={styles.liveLabel}>COMMUNITY SAFETY REPORTS</Text>
+          <Text style={styles.liveCount}>{reports.length} recent</Text>
         </View>
         <View style={[styles.mapRoad, styles.mapRoadOne]} />
         <View style={[styles.mapRoad, styles.mapRoadTwo]} />
@@ -666,54 +909,199 @@ function ScamAlertMap() {
         <Text style={[styles.mapPlace, styles.mapPlaceThamel]}>Thamel</Text>
         <Text style={[styles.mapPlace, styles.mapPlaceDurbar]}>Durbar Square</Text>
         <Text style={[styles.mapPlace, styles.mapPlaceAirport]}>Airport</Text>
-        {scamAlerts.map((alert) => {
-          const riskColor = scamRiskColor(alert.risk);
+        {reports.slice(0, 12).map((report) => {
+          const left = Math.max(7, Math.min(93, 50 + (report.longitude - 85.324) * 500));
+          const top = Math.max(20, Math.min(88, 55 - (report.latitude - 27.717) * 500));
+          const verified = report.verification_status === 'verified';
           return (
-            <View
-              key={alert.title}
-              style={[styles.scamPin, { backgroundColor: riskColor, borderColor: colors.white, left: alert.left, top: alert.top }]}
-            >
-              <Text style={styles.scamPinCount}>{alert.reportCount}</Text>
+            <View key={report.id} style={[styles.scamPin, { backgroundColor: verified ? colors.teal : colors.gold, borderColor: colors.white, left: `${left}%`, top: `${top}%` }]}>
+              <Text style={styles.scamPinCount}>{Math.max(1, report.vote_count + 1)}</Text>
             </View>
           );
         })}
-        <View style={styles.currentLocation}>
-          <Ionicons name="navigate" size={13} color={colors.white} />
-        </View>
+        {reportLocation && (
+          <View style={styles.currentLocation}>
+            <Ionicons name="navigate" size={13} color={colors.white} />
+          </View>
+        )}
       </View>
 
-      <View style={styles.scamLegend}>
-        {(['High', 'Medium', 'Low'] as ScamAlert['risk'][]).map((risk) => (
-          <View key={risk} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: scamRiskColor(risk) }]} />
-            <Text style={styles.legendText}>{risk} activity</Text>
-          </View>
-        ))}
-      </View>
+      <Text style={styles.reportStatusText}>{statusText}</Text>
 
       <View style={styles.stack}>
-        {scamAlerts.map((alert) => (
-          <View key={alert.location} style={styles.scamAlertRow}>
-            <View style={[styles.scamAlertIcon, { backgroundColor: `${scamRiskColor(alert.risk)}1f` }]}>
-              <Ionicons name="warning-outline" size={19} color={scamRiskColor(alert.risk)} />
-            </View>
-            <View style={styles.flex}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.scamAlertTitle}>{alert.title}</Text>
-                <Text style={styles.scamAlertTime}>{alert.time}</Text>
+        {reports.map((report) => {
+          const verified = report.verification_status === 'verified';
+          const label = reportTypes.find((type) => type.value === report.category)?.label ?? 'Safety report';
+          return (
+            <View key={report.id} style={styles.scamAlertRow}>
+              <View style={[styles.scamAlertIcon, { backgroundColor: verified ? 'rgba(62,207,178,0.12)' : 'rgba(245,166,35,0.12)' }]}>
+                <Ionicons name={verified ? 'shield-checkmark' : 'people'} size={19} color={verified ? colors.teal : colors.gold} />
               </View>
-              <Text style={styles.scamAlertLocation}>{alert.location} · {alert.reportCount} reports</Text>
-              <Text style={styles.cardText}>{alert.detail}</Text>
+              <View style={styles.flex}>
+                <View style={styles.rowBetween}>
+                  <Text style={styles.scamAlertTitle}>{label}</Text>
+                  <Text style={[styles.reportTrustBadge, verified && styles.reportTrustBadgeVerified]}>{verified ? 'VERIFIED ALERT' : 'COMMUNITY REPORT'}</Text>
+                </View>
+                <Text style={styles.scamAlertLocation}>{report.district ?? 'Nearby'} · {formatLocationAge(new Date(report.created_at).getTime())}</Text>
+                <Text style={styles.cardText}>{report.description}</Text>
+                <Pressable accessibilityRole="button" onPress={() => confirmReport(report.id)} style={styles.confirmReportButton}>
+                  <Ionicons name="checkmark-circle-outline" size={15} color={colors.teal} />
+                  <Text style={styles.confirmReportText}>I saw this too · {report.vote_count}</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
 
-      <Pressable style={styles.reportScamButton}>
-        <Ionicons name="add-circle-outline" size={19} color="#1a0f00" />
-        <Text style={styles.reportScamText}>Report suspicious activity</Text>
-      </Pressable>
+      {reporting && (
+        <View style={styles.scamReportPanel}>
+          <View style={styles.scamReportHeading}>
+            <View style={styles.flex}>
+              <Text style={styles.scamReportTitle}>What happened?</Text>
+              <Text style={styles.scamReportSubtitle}>Community reports remain unverified until a moderator confirms them.</Text>
+            </View>
+            <Pressable accessibilityLabel="Close scam report" accessibilityRole="button" onPress={() => setReporting(false)} style={styles.scamReportClose}>
+              <Ionicons name="close" size={18} color={colors.muted} />
+            </Pressable>
+          </View>
+          <View style={styles.scamReportTypes}>
+            {reportTypes.map((type) => {
+              const selected = reportType === type.value;
+              return (
+                <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected }} key={type.value} onPress={() => setReportType(type.value)} style={[styles.scamReportType, selected && styles.scamReportTypeSelected]}>
+                  <Text style={[styles.scamReportTypeText, selected && styles.scamReportTypeTextSelected]}>{type.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <TextInput
+            maxLength={1000}
+            multiline
+            onChangeText={setDescription}
+            placeholder="What happened? Include landmarks, not private personal details."
+            placeholderTextColor={colors.dim}
+            style={styles.scamDescriptionInput}
+            value={description}
+          />
+          <Pressable accessibilityRole="button" onPress={choosePhoto} style={styles.reportPhotoButton}>
+            <Ionicons name="image-outline" size={17} color={colors.goldLight} />
+            <Text style={styles.reportPhotoText}>{photoUri ? 'Photo attached' : 'Attach optional photo'}</Text>
+          </Pressable>
+          <Text style={styles.reportLocationText}>{reportLocation ? `GPS: ${formatCoordinates(reportLocation)} · foreground only` : 'Waiting for GPS'}</Text>
+          <Pressable accessibilityRole="button" disabled={submitting} onPress={submitReport} style={[styles.scamReportSubmit, submitting && styles.buttonPressed]}>
+            <Ionicons name="shield-checkmark-outline" size={17} color="#1a0f00" />
+            <Text style={styles.scamReportSubmitText}>{submitting ? 'Saving…' : 'Submit community report'}</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {!reporting && (
+        <Pressable accessibilityRole="button" onPress={beginReport} style={styles.reportScamButton}>
+          <Ionicons name="add-circle-outline" size={19} color="#1a0f00" />
+          <Text style={styles.reportScamText}>Report suspicious activity</Text>
+        </Pressable>
+      )}
     </>
+  );
+}
+
+function ModerationPanel() {
+  const [reports, setReports] = useState<SafetyReport[]>([]);
+  const [note, setNote] = useState('');
+
+  const load = async () => setReports(await listPendingReports());
+  useEffect(() => { void load(); }, []);
+
+  const decide = async (reportId: string, status: 'verified' | 'rejected') => {
+    try {
+      await moderateReport(reportId, status, note);
+      setNote('');
+      await load();
+    } catch (error) {
+      Alert.alert('Moderation failed', error instanceof Error ? error.message : 'Please try again.');
+    }
+  };
+
+  return (
+    <>
+      <PageHeading eyebrow="Admin moderation" title="Review community safety reports" />
+      <Text style={styles.moderationNotice}>Verification means a moderator checked available evidence. It does not guarantee every detail.</Text>
+      <TextInput maxLength={500} onChangeText={setNote} placeholder="Optional moderation note" placeholderTextColor={colors.dim} style={styles.contactInput} value={note} />
+      <View style={styles.stack}>
+        {reports.length ? reports.map((report) => (
+          <View key={report.id} style={styles.scamAlertRow}>
+            <View style={styles.flex}>
+              <Text style={styles.scamAlertTitle}>{report.category.replace(/_/g, ' ')}</Text>
+              <Text style={styles.scamAlertLocation}>{formatCoordinates({ latitude: report.latitude, longitude: report.longitude, accuracy: null, timestamp: new Date(report.created_at).getTime() })}</Text>
+              <Text style={styles.cardText}>{report.description}</Text>
+              <View style={styles.moderationActions}>
+                <Pressable onPress={() => decide(report.id, 'verified')} style={styles.verifyButton}><Text style={styles.verifyButtonText}>Verify</Text></Pressable>
+                <Pressable onPress={() => decide(report.id, 'rejected')} style={styles.rejectButton}><Text style={styles.rejectButtonText}>Reject</Text></Pressable>
+              </View>
+            </View>
+          </View>
+        )) : <Text style={styles.reportStatusText}>No reports waiting for review.</Text>}
+      </View>
+    </>
+  );
+}
+
+function CultureBites() {
+  const [view, setView] = useState<'facts' | 'phrases'>('facts');
+
+  return (
+    <View style={styles.cultureBites}>
+      <View style={styles.cultureBiteTabs}>
+        <Pressable
+          accessibilityRole="tab"
+          accessibilityState={{ selected: view === 'facts' }}
+          onPress={() => setView('facts')}
+          style={[styles.cultureBiteTab, view === 'facts' && styles.cultureBiteTabSelected]}
+        >
+          <Ionicons name="bulb-outline" size={17} color={view === 'facts' ? '#1a0f00' : colors.muted} />
+          <Text style={[styles.cultureBiteTabText, view === 'facts' && styles.cultureBiteTabTextSelected]}>Fun facts</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="tab"
+          accessibilityState={{ selected: view === 'phrases' }}
+          onPress={() => setView('phrases')}
+          style={[styles.cultureBiteTab, view === 'phrases' && styles.cultureBiteTabSelected]}
+        >
+          <Ionicons name="chatbubbles-outline" size={17} color={view === 'phrases' ? '#1a0f00' : colors.muted} />
+          <Text style={[styles.cultureBiteTabText, view === 'phrases' && styles.cultureBiteTabTextSelected]}>Common phrases</Text>
+        </Pressable>
+      </View>
+
+      {view === 'facts' ? (
+        <View style={styles.cultureFactList}>
+          {cultureFacts.map((fact) => (
+            <View key={fact.title} style={styles.cultureFactRow}>
+              <View style={styles.cultureFactIcon}>
+                <Ionicons name={fact.icon} size={20} color={colors.goldLight} />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.cultureFactTag}>{fact.tag}</Text>
+                <Text style={styles.cultureFactTitle}>{fact.title}</Text>
+                <Text style={styles.cultureFactText}>{fact.detail}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.stack}>
+          {phrases.map((phrase) => (
+            <View key={phrase.roman} style={styles.phraseCard}>
+              <Text style={styles.phraseNepali}>{phrase.nepali}</Text>
+              <View style={styles.flex}>
+                <Text style={styles.phraseEnglish}>{phrase.english}</Text>
+                <Text style={styles.phraseTip}>{phrase.roman} · {phrase.tip}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -921,31 +1309,59 @@ function AltitudeTracker() {
 }
 
 function OfflineSos() {
-  const coordinates = '27.7172 N, 85.3240 E';
-  const message = `SOS: I need help. My last saved GPS location is ${coordinates}. Map: https://maps.google.com/?q=27.7172,85.3240`;
+  const [location, setLocation] = useState<SavedLocation | null>(null);
+  const [contacts, setContacts] = useState<TrustedContact[]>([]);
+  const [editingContact, setEditingContact] = useState(false);
+  const [contactKind, setContactKind] = useState<'trusted' | 'embassy'>('trusted');
+  const [contactName, setContactName] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  const prepareSms = () => {
-    Alert.alert(
-      'Prepare emergency SMS?',
-      'Your location will open in Messages. Choose your saved embassy or trusted contact, then send.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Open Messages',
-          onPress: () => {
-            Linking.openURL(`sms:?body=${encodeURIComponent(message)}`).catch(() => {
-              Alert.alert('Messages unavailable', 'Copy the GPS coordinates shown here and send them by SMS.');
-            });
-          }
-        }
-      ]
-    );
+  useEffect(() => {
+    void getSavedLocation().then(setLocation);
+    void listTrustedContacts().then(setContacts);
+  }, []);
+
+  const refreshLocation = async () => {
+    setRefreshing(true);
+    try {
+      const current = await getForegroundLocation(true);
+      if (current) setLocation(current);
+      else Alert.alert('Location unavailable', 'Enable foreground location in device settings to create an accurate SOS message.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const prepareSms = async () => {
+    if (!location) {
+      Alert.alert('No GPS fix', 'Refresh your location before preparing an SOS message.');
+      return;
+    }
+    const available = await SMS.isAvailableAsync();
+    if (!available) {
+      Alert.alert('Messages unavailable', 'SMS must be tested on a physical phone. Your coordinates are shown so you can copy them manually.');
+      return;
+    }
+    const coordinates = formatCoordinates(location);
+    const message = `SOS: I need help. My last GPS fix is ${coordinates} (${formatLocationAge(location.timestamp)}). Map: https://maps.google.com/?q=${location.latitude},${location.longitude}`;
+    await SMS.sendSMSAsync(contacts.map((contact) => contact.phone), message);
+  };
+
+  const saveContact = async () => {
+    if (!contactName.trim() || !contactPhone.trim()) {
+      Alert.alert('Contact incomplete', 'Add a name and phone number.');
+      return;
+    }
+    await saveTrustedContact({ kind: contactKind, name: contactName.trim(), phone: contactPhone.trim() });
+    setContacts(await listTrustedContacts());
+    setContactName('');
+    setContactPhone('');
+    setEditingContact(false);
   };
 
   const callTouristPolice = () => {
-    Linking.openURL('tel:1144').catch(() => {
-      Alert.alert('Calling unavailable', 'Dial 1144 for Nepal Tourist Police.');
-    });
+    Linking.openURL('tel:1144').catch(() => Alert.alert('Calling unavailable', 'Dial 1144 for Nepal Tourist Police.'));
   };
 
   return (
@@ -956,54 +1372,67 @@ function OfflineSos() {
         </View>
         <View style={styles.flex}>
           <Text style={styles.sosTitle}>Offline GPS SOS</Text>
-          <Text style={styles.sosText}>Uses your last saved location and the phone network. Mobile data is not required.</Text>
+          <Text style={styles.sosText}>Uses a foreground GPS fix and the phone network. Yatri never sends the message automatically.</Text>
         </View>
-        <View style={styles.offlineBadge}>
-          <View style={styles.offlineStatusDot} />
-          <Text style={styles.offlineBadgeText}>READY</Text>
+        <View style={[styles.offlineBadge, !location && styles.offlineBadgeWaiting]}>
+          <View style={[styles.offlineStatusDot, !location && { backgroundColor: colors.gold }]} />
+          <Text style={[styles.offlineBadgeText, !location && { color: colors.gold }]}>{location ? 'READY' : 'GPS NEEDED'}</Text>
         </View>
       </View>
 
       <View style={styles.gpsFix}>
         <Ionicons name="location" size={20} color={colors.danger} />
         <View style={styles.flex}>
-          <Text style={styles.gpsLabel}>LAST GPS FIX · 2 MIN AGO</Text>
-          <Text style={styles.gpsCoordinates}>{coordinates}</Text>
-          <Text style={styles.gpsArea}>Kathmandu, Bagmati Province</Text>
+          <Text style={styles.gpsLabel}>{location ? `LAST GPS FIX · ${formatLocationAge(location.timestamp).toUpperCase()}` : 'NO SAVED GPS FIX'}</Text>
+          <Text style={styles.gpsCoordinates}>{location ? formatCoordinates(location) : 'Location not available'}</Text>
+          <Text style={styles.gpsArea}>{location?.accuracy ? `Accuracy approximately ${Math.round(location.accuracy)} m` : 'Refresh while outdoors for better accuracy.'}</Text>
         </View>
+        <Pressable accessibilityLabel="Refresh GPS location" accessibilityRole="button" disabled={refreshing} onPress={refreshLocation} style={styles.refreshLocationButton}>
+          <Ionicons name="refresh" size={18} color={colors.goldLight} />
+        </Pressable>
       </View>
 
       <View style={styles.sosRecipients}>
-        <View style={styles.recipientRow}>
-          <Ionicons name="business-outline" size={17} color={colors.goldLight} />
-          <Text style={styles.recipientText}>Embassy contact</Text>
-          <Text style={styles.recipientStatus}>Choose in Messages</Text>
-        </View>
-        <View style={styles.recipientRow}>
-          <Ionicons name="person-outline" size={17} color={colors.teal} />
-          <Text style={styles.recipientText}>Trusted contact</Text>
-          <Text style={styles.recipientStatus}>Choose in Messages</Text>
-        </View>
+        {contacts.length ? contacts.map((contact) => (
+          <View key={contact.id} style={styles.recipientRow}>
+            <Ionicons name={contact.kind === 'embassy' ? 'business-outline' : 'person-outline'} size={17} color={contact.kind === 'embassy' ? colors.goldLight : colors.teal} />
+            <Text style={styles.recipientText}>{contact.name}</Text>
+            <Text style={styles.recipientStatus}>{contact.phone}</Text>
+          </View>
+        )) : <Text style={styles.emptyContactsText}>Add an embassy or trusted contact before an emergency.</Text>}
       </View>
 
-      <Pressable
-        accessibilityLabel="Prepare emergency location SMS"
-        accessibilityRole="button"
-        onPress={prepareSms}
-        style={({ pressed }) => [styles.sosButton, pressed && styles.buttonPressed]}
-      >
+      {editingContact ? (
+        <View style={styles.contactEditor}>
+          <View style={styles.contactKindRow}>
+            {(['trusted', 'embassy'] as const).map((kind) => (
+              <Pressable key={kind} onPress={() => setContactKind(kind)} style={[styles.contactKindButton, contactKind === kind && styles.contactKindButtonActive]}>
+                <Text style={styles.contactKindText}>{kind === 'trusted' ? 'Trusted contact' : 'Embassy'}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <TextInput onChangeText={setContactName} placeholder="Contact name" placeholderTextColor={colors.dim} style={styles.contactInput} value={contactName} />
+          <TextInput keyboardType="phone-pad" onChangeText={setContactPhone} placeholder="Phone number" placeholderTextColor={colors.dim} style={styles.contactInput} value={contactPhone} />
+          <Pressable onPress={saveContact} style={styles.saveContactButton}><Text style={styles.saveContactText}>Save contact</Text></Pressable>
+        </View>
+      ) : (
+        <Pressable accessibilityRole="button" onPress={() => setEditingContact(true)} style={styles.addContactButton}>
+          <Ionicons name="person-add-outline" size={16} color={colors.goldLight} />
+          <Text style={styles.addContactText}>Add emergency contact</Text>
+        </Pressable>
+      )}
+
+      <Pressable accessibilityLabel="Prepare emergency location SMS" accessibilityRole="button" onPress={prepareSms} style={({ pressed }) => [styles.sosButton, pressed && styles.buttonPressed]}>
         <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.white} />
         <Text style={styles.sosButtonText}>Prepare location SMS</Text>
       </Pressable>
 
-      <Pressable
-        accessibilityLabel="Call Nepal Tourist Police at 1144"
-        accessibilityRole="button"
-        onPress={callTouristPolice}
-        style={styles.policeCallButton}
-      >
+      <Pressable accessibilityLabel="Call Nepal Tourist Police at 1144" accessibilityRole="button" onPress={callTouristPolice} style={styles.policeCallButton}>
         <Ionicons name="call-outline" size={17} color={colors.danger} />
         <Text style={styles.policeCallText}>Call Tourist Police · 1144</Text>
+      </Pressable>
+      <Pressable accessibilityRole="link" onPress={() => Linking.openURL('https://ntb.gov.np/plan-your-trip/before-you-come/tourist-police')}>
+        <Text style={styles.emergencySource}>Source: Nepal Tourism Board · reviewed July 5, 2026</Text>
       </Pressable>
     </View>
   );
@@ -1040,6 +1469,8 @@ const styles = StyleSheet.create({
   desktopStatusLabel: { color: colors.text, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   desktopStatusText: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, marginTop: 2 },
   topBar: { alignItems: 'center', backgroundColor: colors.bg, borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 68, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  topBarActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
+  signOutButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 16, borderWidth: 1, height: 42, justifyContent: 'center', width: 42 },
   topBarDesktop: { minHeight: 76, paddingHorizontal: 32 },
   desktopContext: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', letterSpacing: 1.6 },
   desktopPageName: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 2 },
@@ -1102,6 +1533,15 @@ const styles = StyleSheet.create({
   offlineReadyIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.14)', borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
   offlineReadyTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   offlineReadyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginTop: 3 },
+  referencePriceRow: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  referencePriceIcon: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
+  referencePriceName: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  referencePriceNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, lineHeight: 15, marginTop: 3 },
+  referencePriceValueWrap: { alignItems: 'flex-end', maxWidth: 120 },
+  referencePriceValue: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 12, fontWeight: '900', textAlign: 'right' },
+  referencePriceBadge: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginTop: 4, textTransform: 'uppercase' },
+  referencePriceBadgeGood: { color: colors.teal },
+  contentSource: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, lineHeight: 14, textAlign: 'right' },
   districtFeature: { gap: spacing.sm },
   districtTabs: { gap: spacing.xs, paddingRight: spacing.md },
   districtTab: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: 6, minHeight: 40, paddingHorizontal: 12 },
@@ -1125,6 +1565,7 @@ const styles = StyleSheet.create({
   districtInfoRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
   districtInfoLabel: { color: colors.text, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
   districtInfoText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginTop: 3 },
+  districtFreshness: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, marginTop: spacing.sm, textAlign: 'right' },
   sectionHeader: { marginBottom: spacing.md, marginTop: spacing.xl },
   sectionLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8, marginBottom: spacing.xs, textTransform: 'uppercase' },
   sectionTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 30, fontWeight: '700', lineHeight: 35 },
@@ -1198,6 +1639,33 @@ const styles = StyleSheet.create({
   scamAlertTitle: { color: colors.text, flex: 1, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900', paddingRight: spacing.sm },
   scamAlertTime: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '800' },
   scamAlertLocation: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 10, fontWeight: '800', marginTop: 3 },
+  moderationNotice: { backgroundColor: 'rgba(62,207,178,0.10)', borderColor: 'rgba(62,207,178,0.30)', borderRadius: 12, borderWidth: 1, color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginBottom: spacing.md, padding: spacing.sm },
+  moderationActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  verifyButton: { backgroundColor: colors.teal, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  verifyButtonText: { color: '#07130f', fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
+  rejectButton: { borderColor: colors.danger, borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
+  rejectButtonText: { color: colors.danger, fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
+  reportStatusText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginBottom: spacing.sm },
+  reportTrustBadge: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginLeft: spacing.sm },
+  reportTrustBadgeVerified: { color: colors.teal },
+  confirmReportButton: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 5, marginTop: spacing.sm },
+  confirmReportText: { color: colors.teal, fontFamily: fonts.accent, fontSize: 10, fontWeight: '800' },
+  scamDescriptionInput: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 12, borderWidth: 1, color: colors.text, fontFamily: fonts.body, fontSize: 12, minHeight: 96, padding: spacing.sm, textAlignVertical: 'top' },
+  reportPhotoButton: { alignItems: 'center', alignSelf: 'flex-start', borderColor: colors.border, borderRadius: 11, borderWidth: 1, flexDirection: 'row', gap: 7, paddingHorizontal: 10, paddingVertical: 8 },
+  reportPhotoText: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 10, fontWeight: '800' },
+  reportLocationText: { color: colors.dim, fontFamily: fonts.body, fontSize: 9 },
+  scamReportPanel: { backgroundColor: colors.surface, borderColor: 'rgba(255,93,108,0.35)', borderRadius: 14, borderWidth: 1, gap: spacing.sm, marginTop: spacing.sm, padding: spacing.md },
+  scamReportHeading: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
+  scamReportTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  scamReportSubtitle: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, marginTop: 3 },
+  scamReportClose: { alignItems: 'center', height: 32, justifyContent: 'center', width: 32 },
+  scamReportTypes: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  scamReportType: { borderColor: colors.border, borderRadius: 11, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
+  scamReportTypeSelected: { backgroundColor: 'rgba(255,93,108,0.14)', borderColor: colors.danger },
+  scamReportTypeText: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, fontWeight: '700' },
+  scamReportTypeTextSelected: { color: colors.white },
+  scamReportSubmit: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.gold, borderRadius: 12, flexDirection: 'row', gap: 6, minHeight: 38, paddingHorizontal: 12 },
+  scamReportSubmitText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
   reportScamButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.gold, borderRadius: 18, flexDirection: 'row', gap: 7, marginTop: spacing.sm, paddingHorizontal: 14, paddingVertical: 10 },
   reportScamText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
   namasteCard: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm, padding: spacing.md },
@@ -1225,6 +1693,18 @@ const styles = StyleSheet.create({
   foodDish: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 4 },
   foodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 6 },
   foodTip: { color: colors.dim, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 8 },
+  cultureBites: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, gap: spacing.md, padding: spacing.md },
+  cultureBiteTabs: { backgroundColor: colors.surface2, borderRadius: 13, flexDirection: 'row', gap: spacing.xs, padding: 5 },
+  cultureBiteTab: { alignItems: 'center', borderRadius: 10, flex: 1, flexDirection: 'row', gap: 6, justifyContent: 'center', minHeight: 38, paddingHorizontal: 8 },
+  cultureBiteTabSelected: { backgroundColor: colors.gold },
+  cultureBiteTabText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
+  cultureBiteTabTextSelected: { color: '#1a0f00' },
+  cultureFactList: { gap: spacing.xs },
+  cultureFactRow: { alignItems: 'flex-start', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
+  cultureFactIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
+  cultureFactTag: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', textTransform: 'uppercase' },
+  cultureFactTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900', marginTop: 2 },
+  cultureFactText: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, lineHeight: 16, marginTop: 3 },
   localChat: { backgroundColor: colors.surface, borderColor: 'rgba(62,207,178,0.28)', borderRadius: 18, borderWidth: 1, gap: spacing.md, overflow: 'hidden', padding: spacing.md },
   guideHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   guideAvatar: { alignItems: 'center', backgroundColor: colors.terracotta, borderRadius: 21, height: 42, justifyContent: 'center', position: 'relative', width: 42 },
@@ -1282,6 +1762,20 @@ const styles = StyleSheet.create({
   sosIcon: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
   sosTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 21, fontWeight: '700' },
   sosText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  refreshLocationButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 12, borderWidth: 1, height: 38, justifyContent: 'center', width: 38 },
+  offlineBadgeWaiting: { borderColor: 'rgba(245,166,35,0.30)' },
+  emptyContactsText: { color: colors.dim, fontFamily: fonts.body, fontSize: 11 },
+  addContactButton: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 7, paddingVertical: 6 },
+  addContactText: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 11, fontWeight: '800' },
+  contactEditor: { backgroundColor: 'rgba(7,6,15,0.36)', borderRadius: 14, gap: spacing.xs, padding: spacing.sm },
+  contactKindRow: { flexDirection: 'row', gap: spacing.xs },
+  contactKindButton: { borderColor: colors.border, borderRadius: 10, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 7 },
+  contactKindButtonActive: { backgroundColor: 'rgba(245,166,35,0.14)', borderColor: colors.gold },
+  contactKindText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 9, fontWeight: '800' },
+  contactInput: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 11, borderWidth: 1, color: colors.text, fontFamily: fonts.body, fontSize: 12, minHeight: 42, paddingHorizontal: spacing.sm },
+  saveContactButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.gold, borderRadius: 11, paddingHorizontal: 12, paddingVertical: 9 },
+  saveContactText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
+  emergencySource: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, textAlign: 'center', textDecorationLine: 'underline' },
   offlineBadge: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderColor: 'rgba(62,207,178,0.30)', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: 5, paddingHorizontal: 8, paddingVertical: 6 },
   offlineStatusDot: { backgroundColor: colors.teal, borderRadius: 4, height: 7, width: 7 },
   offlineBadgeText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },

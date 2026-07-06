@@ -4,23 +4,114 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { YatriLogo } from '../components/YatriLogo';
+import { getSupabaseConfigurationError, supabase } from '../auth/supabase';
 import { colors, fonts, spacing } from '../theme';
 
 type YatriLoginScreenProps = {
-  onContinue: (remember: boolean) => void;
+  onAuthenticated: (intent: 'sign-in' | 'sign-up') => void;
+  onGuestContinue: () => void;
 };
 
 const loginImage =
   'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1400&q=80';
 
-export function YatriLoginScreen({ onContinue }: YatriLoginScreenProps) {
+export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLoginScreenProps) {
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ kind: 'error' | 'success'; text: string } | null>(null);
   const isSignUp = mode === 'sign-up';
+
+  function changeMode(nextMode: 'sign-in' | 'sign-up') {
+    setMode(nextMode);
+    setMessage(null);
+  }
+
+  async function handleSubmit() {
+    setMessage(null);
+    const configurationError = getSupabaseConfigurationError();
+
+    if (!supabase || configurationError) {
+      setMessage({ kind: 'error', text: configurationError ?? 'Supabase is unavailable.' });
+      return;
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || password.length < 8 || (isSignUp && !name.trim())) {
+      setMessage({
+        kind: 'error',
+        text: isSignUp
+          ? 'Enter your name, a valid email, and a password with at least 8 characters.'
+          : 'Enter your email and a password with at least 8 characters.'
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    if (isSignUp) {
+      const { data, error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: { data: { full_name: name.trim() } }
+      });
+      setLoading(false);
+
+      if (error) {
+        setMessage({ kind: 'error', text: error.message });
+        return;
+      }
+
+      if (!data.session) {
+        setMessage({
+          kind: 'success',
+          text: 'Check your email to confirm your account, then return here to sign in.'
+        });
+        return;
+      }
+
+      onAuthenticated('sign-up');
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+    setLoading(false);
+
+    if (error) {
+      setMessage({ kind: 'error', text: error.message });
+      return;
+    }
+
+    onAuthenticated('sign-in');
+  }
+
+  async function handleForgotPassword() {
+    setMessage(null);
+    const configurationError = getSupabaseConfigurationError();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!supabase || configurationError) {
+      setMessage({ kind: 'error', text: configurationError ?? 'Supabase is unavailable.' });
+      return;
+    }
+
+    if (!normalizedEmail) {
+      setMessage({ kind: 'error', text: 'Enter your email first, then tap Forgot.' });
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
+    setLoading(false);
+    setMessage(
+      error
+        ? { kind: 'error', text: error.message }
+        : { kind: 'success', text: 'Password reset instructions are on their way.' }
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -48,13 +139,13 @@ export function YatriLoginScreen({ onContinue }: YatriLoginScreenProps) {
             <View style={styles.modeTabs}>
               <Pressable
                 style={[styles.modeTab, !isSignUp && styles.modeTabActive]}
-                onPress={() => setMode('sign-in')}
+                onPress={() => changeMode('sign-in')}
               >
                 <Text style={[styles.modeTabText, !isSignUp && styles.modeTabTextActive]}>Sign in</Text>
               </Pressable>
               <Pressable
                 style={[styles.modeTab, isSignUp && styles.modeTabActive]}
-                onPress={() => setMode('sign-up')}
+                onPress={() => changeMode('sign-up')}
               >
                 <Text style={[styles.modeTabText, isSignUp && styles.modeTabTextActive]}>Sign up</Text>
               </Pressable>
@@ -114,28 +205,43 @@ export function YatriLoginScreen({ onContinue }: YatriLoginScreenProps) {
             </View>
 
             <View style={styles.formRow}>
-              <Pressable style={styles.remember} onPress={() => setRemember((current) => !current)}>
-                <View style={[styles.checkbox, remember && styles.checkboxActive]}>
-                  {remember && <Ionicons name="checkmark" size={13} color="#1a0f00" />}
-                </View>
-                <Text style={styles.rememberText}>Remember me</Text>
+              <View style={styles.remember}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={colors.teal} />
+                <Text style={styles.rememberText}>Secure session</Text>
+              </View>
+              <Pressable disabled={loading} onPress={handleForgotPassword}>
+                <Text style={styles.linkText}>Forgot?</Text>
               </Pressable>
-              <Text style={styles.linkText}>Forgot?</Text>
             </View>
 
-            <Pressable style={styles.primaryButton} onPress={() => onContinue(remember)}>
-              <Text style={styles.primaryText}>{isSignUp ? 'Create account' : 'Sign in'}</Text>
-              <Ionicons name="arrow-forward" size={18} color="#1a0f00" />
+            {message && (
+              <View style={[styles.message, message.kind === 'error' ? styles.errorMessage : styles.successMessage]}>
+                <Ionicons
+                  name={message.kind === 'error' ? 'alert-circle-outline' : 'checkmark-circle-outline'}
+                  size={18}
+                  color={message.kind === 'error' ? colors.danger : colors.teal}
+                />
+                <Text style={styles.messageText}>{message.text}</Text>
+              </View>
+            )}
+
+            <Pressable
+              disabled={loading}
+              style={[styles.primaryButton, loading && styles.buttonDisabled]}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.primaryText}>{loading ? 'Please wait…' : isSignUp ? 'Create account' : 'Sign in'}</Text>
+              {!loading && <Ionicons name="arrow-forward" size={18} color="#1a0f00" />}
             </Pressable>
 
-            <Pressable style={styles.secondaryButton} onPress={() => onContinue(false)}>
+            <Pressable disabled={loading} style={styles.secondaryButton} onPress={onGuestContinue}>
               <Ionicons name="compass-outline" size={18} color={colors.text} />
               <Text style={styles.secondaryText}>Continue as guest</Text>
             </Pressable>
 
             <Text style={styles.terms}>
               {isSignUp
-                ? 'Real email verification will turn this into a secure account once Supabase or Firebase is connected.'
+                ? 'By creating an account, you agree to secure email verification and session storage.'
                 : 'New to Yatri? Tap Sign up to create an account and verify your email.'}
             </Text>
           </View>
@@ -297,6 +403,33 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontFamily: fonts.body,
     fontSize: 13
+  },
+  message: {
+    alignItems: 'flex-start',
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    padding: spacing.sm
+  },
+  errorMessage: {
+    backgroundColor: 'rgba(255,93,108,0.10)',
+    borderColor: 'rgba(255,93,108,0.35)'
+  },
+  successMessage: {
+    backgroundColor: 'rgba(62,207,178,0.10)',
+    borderColor: 'rgba(62,207,178,0.35)'
+  },
+  messageText: {
+    color: colors.text,
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 18
+  },
+  buttonDisabled: {
+    opacity: 0.65
   },
   linkText: {
     color: colors.gold,

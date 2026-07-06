@@ -58,6 +58,13 @@ export type TrailUpdate = {
   time: string;
 };
 
+export type CultureFact = {
+  title: string;
+  tag: string;
+  detail: string;
+  icon: IconName;
+};
+
 export type Phrase = {
   nepali: string;
   english: string;
@@ -171,22 +178,40 @@ export const features: Feature[] = [
 
 export const phrases: Phrase[] = [
   {
-    nepali: 'Namaste',
+    nepali: 'नमस्ते',
     english: 'Hello',
     roman: 'Namaste',
     tip: 'Bring both palms together at chest level.'
   },
   {
-    nepali: 'Dhanyabad',
+    nepali: 'धन्यवाद',
     english: 'Thank you',
     roman: 'Dhanyabad',
-    tip: 'Locals appreciate this small effort immediately.'
+    tip: 'A small effort that is warmly appreciated.'
   },
   {
-    nepali: 'Kati parcha?',
-    english: 'How much?',
+    nepali: 'कति पर्छ?',
+    english: 'How much does it cost?',
     roman: 'Kati parcha?',
     tip: 'Useful before taxis, markets, and small shops.'
+  },
+  {
+    nepali: 'मलाई मद्दत चाहियो',
+    english: 'I need help',
+    roman: 'Malai maddat chahiyo',
+    tip: 'Use clearly in an urgent or confusing situation.'
+  },
+  {
+    nepali: 'मैले बुझिनँ',
+    english: "I don't understand",
+    roman: 'Maile bujhina',
+    tip: 'Pair it with a polite smile and ask them to repeat.'
+  },
+  {
+    nepali: 'शौचालय कहाँ छ?',
+    english: 'Where is the restroom?',
+    roman: 'Shauchalaya kaha chha?',
+    tip: 'Helpful in bus parks, markets, and trail stops.'
   }
 ];
 
@@ -381,6 +406,33 @@ export const trailUpdates: TrailUpdate[] = [
     route: 'Jhinu bridge',
     update: 'Bridge open; avoid late crossing in heavy rain.',
     time: 'Yesterday'
+  }
+];
+
+export const cultureFacts: CultureFact[] = [
+  {
+    title: 'Eight Himalayan giants',
+    tag: 'Mountains',
+    detail: 'Eight of the world’s fourteen peaks above 8,000 meters rise in Nepal, including Everest.',
+    icon: 'triangle-outline'
+  },
+  {
+    title: 'Buddha’s birthplace',
+    tag: 'Lumbini',
+    detail: 'Lumbini is recognized as the birthplace of Siddhartha Gautama and has been a UNESCO World Heritage Site since 1997.',
+    icon: 'flower-outline'
+  },
+  {
+    title: 'Festivals through the year',
+    tag: 'Celebration',
+    detail: 'Nepal’s many communities mark the calendar with distinct festivals, music, food, processions, and family traditions.',
+    icon: 'sparkles-outline'
+  },
+  {
+    title: 'Many traditions, one Nepal',
+    tag: 'People',
+    detail: 'Customs vary widely by region and community, with Hindu, Buddhist, Kirat, Muslim, Christian, Bon, and other traditions present.',
+    icon: 'people-outline'
   }
 ];
 
