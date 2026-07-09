@@ -15,6 +15,7 @@ import { LocationPermissionScreen } from './src/components/LocationPermissionScr
 import { TravelPreferenceScreen } from './src/components/TravelPreferenceScreen';
 import { YatriDashboardScreen } from './src/screens/YatriDashboardScreen';
 import { YatriLoginScreen } from './src/screens/YatriLoginScreen';
+import { YatriAiChat } from './src/components/YatriAiChat';
 
 type AppStage = 'loading' | 'login' | 'preferences' | 'location' | 'dashboard';
 type LoginIntent = 'sign-in' | 'sign-up';
@@ -103,6 +104,7 @@ export default function App() {
       {stage === 'preferences' && <TravelPreferenceScreen onComplete={handlePreferencesComplete} />}
       {stage === 'location' && <LocationPermissionScreen onComplete={handleLocationComplete} />}
       {stage === 'dashboard' && <YatriDashboardScreen onSignOut={handleSignOut} userEmail={userEmail} />}
+      {stage === 'dashboard' && <YatriAiChat page={stage} />}
     </SafeAreaProvider>
   );
 }

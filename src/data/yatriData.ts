@@ -93,6 +93,21 @@ export type PriceTool = {
   note: string;
 };
 
+export type FairPriceCategory = 'Food' | 'Transport' | 'Shopping' | 'Permits' | 'Connectivity';
+
+export type FairPriceItem = {
+  item: string;
+  category: FairPriceCategory;
+  district: string;
+  low: number;
+  high: number;
+  unit: string;
+  phrase: string;
+  risk: 'Low' | 'Medium' | 'High';
+  tip: string;
+  source: string;
+};
+
 export type NearbyHotel = {
   name: string;
   area: string;
@@ -101,6 +116,11 @@ export type NearbyHotel = {
   phone: string;
   displayPhone: string;
   note: string;
+};
+
+export type DistrictDirectoryItem = {
+  district: string;
+  province: string;
 };
 
 export type DistrictBriefing = {
@@ -215,6 +235,30 @@ export const phrases: Phrase[] = [
   }
 ];
 
+export const fairPriceCatalog: FairPriceItem[] = [
+  { item: 'Momo, 10 pieces', category: 'Food', district: 'Kathmandu', low: 80, high: 160, unit: 'plate', phrase: 'Kati parcha?', risk: 'Low', tip: 'Street stalls are cheaper than tourist cafes; check menu price before ordering.', source: 'Community reference · Kathmandu local cafes' },
+  { item: 'Dal bhat set', category: 'Food', district: 'Kathmandu', low: 180, high: 350, unit: 'meal', phrase: 'Refill paucha?', risk: 'Low', tip: 'Local restaurants often include refills; tourist restaurants may charge more.', source: 'Community reference · city restaurants' },
+  { item: 'Bottled water 1L', category: 'Food', district: 'Kathmandu', low: 25, high: 60, unit: 'bottle', phrase: 'MRP kati ho?', risk: 'Medium', tip: 'Check printed MRP. Prices near tourist sites can be inflated.', source: 'Community reference · retail/MRP checks' },
+  { item: 'Milk tea', category: 'Food', district: 'Kathmandu', low: 25, high: 80, unit: 'cup', phrase: 'Chiya dinus na.', risk: 'Low', tip: 'Small local tea shops are much cheaper than cafes in tourist streets.', source: 'Community reference · tea shops' },
+  { item: 'Taxi: Airport to Thamel', category: 'Transport', district: 'Kathmandu', low: 700, high: 1200, unit: 'ride', phrase: 'Meter ma janu huncha?', risk: 'High', tip: 'Airport arrivals are high-risk for overcharging. Compare ride apps or official counters.', source: 'Community reference · traveler reports' },
+  { item: 'Taxi: Thamel to Boudha', category: 'Transport', district: 'Kathmandu', low: 500, high: 900, unit: 'ride', phrase: 'Ali sasto huncha?', risk: 'High', tip: 'Agree before entering or use Pathao/inDrive where available.', source: 'Community reference · Kathmandu rides' },
+  { item: 'Pathao bike', category: 'Transport', district: 'Kathmandu', low: 25, high: 45, unit: 'km', phrase: 'App price cha?', risk: 'Low', tip: 'Use app fare as anchor; surge and traffic can change the final cost.', source: 'Community reference · ride apps' },
+  { item: 'Local bus inside city', category: 'Transport', district: 'Kathmandu', low: 20, high: 60, unit: 'ride', phrase: 'Yo bus kaha jancha?', risk: 'Low', tip: 'Carry small notes. Ask route before boarding.', source: 'Community reference · public transport' },
+  { item: 'Tourist bus: Kathmandu to Pokhara', category: 'Transport', district: 'Kathmandu', low: 900, high: 1800, unit: 'seat', phrase: 'Ticket official ho?', risk: 'Medium', tip: 'Use known counters or hotel booking help; confirm pickup point and departure time.', source: 'Community reference · tourist bus counters' },
+  { item: 'Pashmina shawl', category: 'Shopping', district: 'Kathmandu', low: 2000, high: 5500, unit: 'piece', phrase: 'Yo genuine ho?', risk: 'High', tip: 'Compare several shops and ask about material. Very high pressure is a red flag.', source: 'Community reference · tourist markets' },
+  { item: 'Singing bowl', category: 'Shopping', district: 'Kathmandu', low: 600, high: 2500, unit: 'piece', phrase: 'Arko dekhaunu na.', risk: 'Medium', tip: 'Decorative bowls should cost less than handmade/heavy bowls. Test sound first.', source: 'Community reference · market checks' },
+  { item: 'Basic souvenir magnet/keyring', category: 'Shopping', district: 'Kathmandu', low: 100, high: 350, unit: 'piece', phrase: 'Discount huncha?', risk: 'Medium', tip: 'Bundle prices are usually better than buying one item at a tourist-shop first quote.', source: 'Community reference · souvenir shops' },
+  { item: 'Ncell/NTC SIM starter pack', category: 'Connectivity', district: 'Kathmandu', low: 100, high: 500, unit: 'SIM', phrase: 'Official rate kati ho?', risk: 'High', tip: 'Use official counters when possible and confirm data pack details before paying.', source: 'Community reference · SIM counters' },
+  { item: 'Heritage site guide approach', category: 'Shopping', district: 'Kathmandu', low: 500, high: 1500, unit: 'short tour', phrase: 'License cha?', risk: 'High', tip: 'Ask for guide ID/license and agree scope/time before starting.', source: 'Community reference · heritage areas' },
+  { item: 'Pokhara Lakeside taxi short ride', category: 'Transport', district: 'Kaski', low: 300, high: 700, unit: 'ride', phrase: 'Meter cha?', risk: 'Medium', tip: 'Agree fare first; tourist-zone prices can jump at night or rain.', source: 'Community reference · Pokhara rides' },
+  { item: 'Pokhara boat rental', category: 'Transport', district: 'Kaski', low: 700, high: 1800, unit: 'hour/boat', phrase: 'Life jacket cha?', risk: 'Medium', tip: 'Confirm duration, route, and life jacket before paying.', source: 'Community reference · lakeside operators' },
+  { item: 'Chitwan jeep safari seat', category: 'Transport', district: 'Chitwan', low: 1800, high: 3500, unit: 'person', phrase: 'Permit included cha?', risk: 'Medium', tip: 'Ask what is included: park fee, guide, pickup, and duration.', source: 'Community reference · Sauraha operators' },
+  { item: 'Trekking porter daily wage', category: 'Transport', district: 'Solukhumbu', low: 2500, high: 4500, unit: 'day', phrase: 'Insurance included cha?', risk: 'High', tip: 'Use ethical agencies and confirm insurance, load limit, food, and lodging.', source: 'Community reference · trekking agencies' },
+  { item: 'Restricted area permit check', category: 'Permits', district: 'Mustang', low: 0, high: 0, unit: 'official only', phrase: 'Official permit counter kaha cha?', risk: 'High', tip: 'Permit prices change and must be checked through official channels or licensed agencies.', source: 'Official check required · Department of Immigration' }
+];
+
+export const fairPriceSourceNote = 'Community price reference, not an official tariff · reviewed July 6, 2026 · verify locally before paying';
+
 export const foodPrices: PriceItem[] = [
   {
     name: 'Momo, 10 pieces',
@@ -265,39 +309,118 @@ export const transportPrices: PriceItem[] = [
 
 export const festivals: Festival[] = [
   {
-    name: 'Dashain',
-    date: 'Autumn',
-    description: 'Nepal’s biggest festival, with tika blessings, kites, and family feasts.',
+    name: 'Janai Purnima / Raksha Bandhan',
+    date: 'Aug 28, 2026',
+    description: 'Sacred-thread rituals, wrist bands, family visits, and kwati soup traditions.',
+    icon: 'ribbon',
+    countdown: 'Before Dashain',
+    crowd: 'Temples busy',
+    why: 'Important late-monsoon festival observed across Nepal before the autumn festival season peaks.',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80',
+    accent: '#85b7eb'
+  },
+  {
+    name: 'Gai Jatra',
+    date: 'Aug 29, 2026',
+    description: 'Kathmandu Valley processions remember loved ones with satire, music, and cow symbols.',
+    icon: 'cow',
+    countdown: 'Before Dashain',
+    crowd: 'Kathmandu crowds',
+    why: 'One of the most visible Newar festivals for travelers in Bhaktapur, Patan, and Kathmandu.',
+    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80',
+    accent: '#b65334'
+  },
+  {
+    name: 'Gaura Parba',
+    date: 'Sep 4, 2026',
+    description: 'Far-western Nepal celebrates Shiva and Parvati with songs, fasting, and community gatherings.',
+    icon: 'flower-tulip',
+    countdown: 'Before Dashain',
+    crowd: 'Regional festival',
+    why: 'Especially meaningful in Sudurpashchim and Karnali, so travelers should expect local programs.',
+    image: 'https://images.unsplash.com/photo-1600100594070-c16b588d42c9?auto=format&fit=crop&w=900&q=80',
+    accent: '#3ecfb2'
+  },
+  {
+    name: 'Krishna Janmashtami',
+    date: 'Sep 4, 2026',
+    description: 'Devotees visit Krishna temples, especially Patan Krishna Mandir, with evening worship.',
+    icon: 'hands-pray',
+    countdown: 'Before Dashain',
+    crowd: 'Temple queues',
+    why: 'A good day to plan extra time around Patan Durbar Square and major Krishna temples.',
+    image: 'https://images.unsplash.com/photo-1617469165786-8007eda3caa7?auto=format&fit=crop&w=900&q=80',
+    accent: '#f5a623'
+  },
+  {
+    name: 'Haritalika Teej',
+    date: 'Sep 14, 2026',
+    description: 'Women gather in red saris for fasting, songs, dancing, and Shiva temple visits.',
+    icon: 'dance-ballroom',
+    countdown: 'Before Dashain',
+    crowd: 'Very busy temples',
+    why: 'Expect crowds around Pashupatinath and major Shiva temples; dress and photograph respectfully.',
+    image: 'https://images.unsplash.com/photo-1606298855672-3efb63017be8?auto=format&fit=crop&w=900&q=80',
+    accent: '#ff8a9d'
+  },
+  {
+    name: 'Rishi Panchami',
+    date: 'Sep 16, 2026',
+    description: 'A quieter ritual day following Teej, with cleansing rites and temple visits.',
+    icon: 'water-outline',
+    countdown: 'Before Dashain',
+    crowd: 'Moderate temple crowds',
+    why: 'Useful context for travelers seeing continued Teej-related rituals after the main festival day.',
+    image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80',
+    accent: '#5ba7a4'
+  },
+  {
+    name: 'Indra Jatra',
+    date: 'Sep 25, 2026',
+    description: 'Kathmandu’s street festival with Kumari chariot processions and masked dances.',
+    icon: 'pillar',
+    countdown: 'Before Dashain',
+    crowd: 'High crowd',
+    why: 'It marks the start of Kathmandu’s biggest autumn festival stretch before Dashain.',
+    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80',
+    accent: '#b65334'
+  },
+  {
+    name: 'Dashain begins: Ghatasthapana',
+    date: 'Oct 11, 2026',
+    description: 'Dashain starts with jamara planting, temple visits, and preparations for family travel.',
     icon: 'kite',
-    countdown: 'Upcoming',
+    countdown: 'Major festival',
+    crowd: 'Travel rush begins',
+    why: 'Transport fills quickly as families travel home; tourists should book buses and flights early.',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80',
+    accent: '#f5a623'
+  },
+  {
+    name: 'Vijaya Dashami',
+    date: 'Oct 20, 2026',
+    description: 'The main Dashain tika day, with family blessings, jamara, feasts, and limited services.',
+    icon: 'kite',
+    countdown: 'Main Dashain day',
     crowd: 'Family festival',
-    why: 'Nepal’s biggest festival, with tika blessings, kites, and family feasts.',
+    why: 'Many shops and services close or run reduced hours; plan meals, cash, and transport ahead.',
     image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80',
     accent: '#f5a623'
   },
   {
     name: 'Tihar',
-    date: 'Autumn',
-    description: 'Festival of lights with marigolds, oil lamps, and Lakshmi worship.',
+    date: 'Nov 7-11, 2026',
+    description: 'Festival of lights with marigolds, oil lamps, animal worship, and Bhai Tika.',
     icon: 'string-lights',
-    countdown: 'Upcoming',
+    countdown: 'After Dashain',
     crowd: 'Evening lights',
-    why: 'Festival of lights with marigolds, oil lamps, and Lakshmi worship.',
+    why: 'A major post-Dashain festival; expect decorated homes, Deusi-Bhailo songs, and busy evenings.',
     image: 'https://images.unsplash.com/photo-1600100594070-c16b588d42c9?auto=format&fit=crop&w=900&q=80',
     accent: '#3ecfb2'
-  },
-  {
-    name: 'Indra Jatra',
-    date: 'Kathmandu',
-    description: 'Chariot processions, masked dances, and Durbar Square celebrations.',
-    icon: 'pillar',
-    countdown: 'Live route',
-    crowd: 'High crowd',
-    why: 'Chariot processions, masked dances, and Durbar Square celebrations.',
-    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80',
-    accent: '#b65334'
   }
 ];
+
+export const festivalContentSource = 'Reviewed July 6, 2026 · 2026 Nepal public holiday calendar; local dates may vary by lunar observance and community.';
 
 export const offlinePacks: OfflinePack[] = [
   {
@@ -527,6 +650,86 @@ export const nearbyHotels: NearbyHotel[] = [
     displayPhone: '+977 1 424 8999',
     note: 'Heritage hotel near Durbar Marg and the palace museum.'
   }
+];
+
+export const districtDirectory: DistrictDirectoryItem[] = [
+  { district: 'Achham', province: 'Sudurpashchim Province' },
+  { district: 'Arghakhanchi', province: 'Lumbini Province' },
+  { district: 'Baglung', province: 'Gandaki Province' },
+  { district: 'Baitadi', province: 'Sudurpashchim Province' },
+  { district: 'Bajhang', province: 'Sudurpashchim Province' },
+  { district: 'Bajura', province: 'Sudurpashchim Province' },
+  { district: 'Banke', province: 'Lumbini Province' },
+  { district: 'Bara', province: 'Madhesh Province' },
+  { district: 'Bardiya', province: 'Lumbini Province' },
+  { district: 'Bhaktapur', province: 'Bagmati Province' },
+  { district: 'Bhojpur', province: 'Koshi Province' },
+  { district: 'Chitwan', province: 'Bagmati Province' },
+  { district: 'Dadeldhura', province: 'Sudurpashchim Province' },
+  { district: 'Dailekh', province: 'Karnali Province' },
+  { district: 'Dang', province: 'Lumbini Province' },
+  { district: 'Darchula', province: 'Sudurpashchim Province' },
+  { district: 'Dhading', province: 'Bagmati Province' },
+  { district: 'Dhankuta', province: 'Koshi Province' },
+  { district: 'Dhanusha', province: 'Madhesh Province' },
+  { district: 'Dolakha', province: 'Bagmati Province' },
+  { district: 'Dolpa', province: 'Karnali Province' },
+  { district: 'Doti', province: 'Sudurpashchim Province' },
+  { district: 'Eastern Rukum', province: 'Lumbini Province' },
+  { district: 'Gorkha', province: 'Gandaki Province' },
+  { district: 'Gulmi', province: 'Lumbini Province' },
+  { district: 'Humla', province: 'Karnali Province' },
+  { district: 'Ilam', province: 'Koshi Province' },
+  { district: 'Jajarkot', province: 'Karnali Province' },
+  { district: 'Jhapa', province: 'Koshi Province' },
+  { district: 'Jumla', province: 'Karnali Province' },
+  { district: 'Kailali', province: 'Sudurpashchim Province' },
+  { district: 'Kalikot', province: 'Karnali Province' },
+  { district: 'Kanchanpur', province: 'Sudurpashchim Province' },
+  { district: 'Kapilvastu', province: 'Lumbini Province' },
+  { district: 'Kaski', province: 'Gandaki Province' },
+  { district: 'Kathmandu', province: 'Bagmati Province' },
+  { district: 'Kavrepalanchok', province: 'Bagmati Province' },
+  { district: 'Khotang', province: 'Koshi Province' },
+  { district: 'Lalitpur', province: 'Bagmati Province' },
+  { district: 'Lamjung', province: 'Gandaki Province' },
+  { district: 'Mahottari', province: 'Madhesh Province' },
+  { district: 'Makwanpur', province: 'Bagmati Province' },
+  { district: 'Manang', province: 'Gandaki Province' },
+  { district: 'Morang', province: 'Koshi Province' },
+  { district: 'Mugu', province: 'Karnali Province' },
+  { district: 'Mustang', province: 'Gandaki Province' },
+  { district: 'Myagdi', province: 'Gandaki Province' },
+  { district: 'Nawalpur', province: 'Gandaki Province' },
+  { district: 'Nuwakot', province: 'Bagmati Province' },
+  { district: 'Okhaldhunga', province: 'Koshi Province' },
+  { district: 'Palpa', province: 'Lumbini Province' },
+  { district: 'Panchthar', province: 'Koshi Province' },
+  { district: 'Parasi', province: 'Lumbini Province' },
+  { district: 'Parbat', province: 'Gandaki Province' },
+  { district: 'Parsa', province: 'Madhesh Province' },
+  { district: 'Pyuthan', province: 'Lumbini Province' },
+  { district: 'Ramechhap', province: 'Bagmati Province' },
+  { district: 'Rasuwa', province: 'Bagmati Province' },
+  { district: 'Rautahat', province: 'Madhesh Province' },
+  { district: 'Rolpa', province: 'Lumbini Province' },
+  { district: 'Rupandehi', province: 'Lumbini Province' },
+  { district: 'Salyan', province: 'Karnali Province' },
+  { district: 'Sankhuwasabha', province: 'Koshi Province' },
+  { district: 'Saptari', province: 'Madhesh Province' },
+  { district: 'Sarlahi', province: 'Madhesh Province' },
+  { district: 'Sindhuli', province: 'Bagmati Province' },
+  { district: 'Sindhupalchok', province: 'Bagmati Province' },
+  { district: 'Siraha', province: 'Madhesh Province' },
+  { district: 'Solukhumbu', province: 'Koshi Province' },
+  { district: 'Sunsari', province: 'Koshi Province' },
+  { district: 'Surkhet', province: 'Karnali Province' },
+  { district: 'Syangja', province: 'Gandaki Province' },
+  { district: 'Tanahun', province: 'Gandaki Province' },
+  { district: 'Taplejung', province: 'Koshi Province' },
+  { district: 'Tehrathum', province: 'Koshi Province' },
+  { district: 'Udayapur', province: 'Koshi Province' },
+  { district: 'Western Rukum', province: 'Karnali Province' }
 ];
 
 export const districtBriefings: DistrictBriefing[] = [

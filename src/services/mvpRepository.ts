@@ -142,9 +142,10 @@ export async function listSafetyReports() {
 }
 
 export function subscribeToSafetyReports(onChange: () => void) {
-  if (!supabase) return () => undefined;
-  const channel = supabase.channel('public-safety-reports').on('postgres_changes', { event: '*', schema: 'public', table: 'scam_reports' }, onChange).subscribe();
-  return () => { void supabase.removeChannel(channel); };
+  const client = supabase;
+  if (!client) return () => undefined;
+  const channel = client.channel('public-safety-reports').on('postgres_changes', { event: '*', schema: 'public', table: 'scam_reports' }, onChange).subscribe();
+  return () => { void client.removeChannel(channel); };
 }
 
 export async function voteForReport(reportId: string) {

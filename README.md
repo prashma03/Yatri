@@ -122,6 +122,28 @@ npx eas build --profile preview --platform ios
 
 Before TestFlight or Google Play internal testing, complete the checklist in `docs/BETA_CHECKLIST.md`, test SOS SMS/calling on physical Android and iOS devices, and fill Apple privacy plus Google Data Safety disclosures for account data, reports, contacts, photos, and foreground location.
 
+## Yatri AI assistant
+
+The app includes a floating Yatri AI chat on every non-loading page. It answers Nepal travel-safety questions about scams, fair prices, SOS steps, offline prep, phrases, and etiquette.
+
+The Expo app calls the Supabase Edge Function at `supabase/functions/travel-assistant`. If no trained model endpoint is configured, the chat uses a small built-in fallback so the UI still works.
+
+To connect the same trained model style you used for Materna, point the Edge Function at that model endpoint with Supabase secrets:
+
+```bash
+npx supabase secrets set YATRI_AI_ENDPOINT=https://your-trained-model-endpoint
+npx supabase secrets set YATRI_AI_API_KEY=your_private_model_key
+npx supabase secrets set YATRI_AI_MODEL=your_model_name
+```
+
+Deploy the assistant function. If your Expo app uses a new `sb_publishable_...` key instead of a legacy JWT anon key, deploy this public assistant with JWT verification disabled:
+
+```bash
+npx supabase functions deploy travel-assistant --project-ref xugaakqczxhrjzbnulut --no-verify-jwt
+```
+
+Do not put private AI keys in `.env` or in the mobile app. Keep them as Supabase secrets only.
+
 ## Verification
 
 Run the lightweight MVP checks with:

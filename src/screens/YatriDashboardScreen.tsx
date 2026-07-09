@@ -26,12 +26,17 @@ import {
   type TrustedContact
 } from '../services/mvpRepository';
 import { colors, fonts, spacing } from '../theme';
+import { districtSites, type DistrictSite } from '../data/districtSites';
 import {
   cultureFacts,
   discoverItems,
   districtBriefings,
+  districtDirectory,
   etiquetteCards,
+  fairPriceCatalog,
+  fairPriceSourceNote,
   festivals,
+  festivalContentSource,
   filterChips,
   foodCards,
   foodPrices,
@@ -45,6 +50,9 @@ import {
   trailUpdates,
   transportPrices,
   type DiscoverItem,
+  type DistrictBriefing,
+  type FairPriceCategory,
+  type FairPriceItem,
   type Festival,
   type IconName,
   type OfflinePack,
@@ -100,6 +108,7 @@ export function YatriDashboardScreen({
   const [activeMode, setActiveMode] = useState<TravelMode>(recommendedMode);
   const active = modeConfig[activeMode];
   const [currentPage, setCurrentPage] = useState<DashboardPage>('home');
+  const [selectedDistrict, setSelectedDistrict] = useState('Kathmandu');
   const [priceFocus, setPriceFocus] = useState<'fair' | 'rides'>('fair');
   const [isModerator, setIsModerator] = useState(false);
   const [connectivity, setConnectivity] = useState<ConnectivityMode>(() =>
@@ -219,7 +228,7 @@ export function YatriDashboardScreen({
       >
         {currentPage === 'home' && (
           <>
-            <ImageBackground source={{ uri: active.image }} style={[styles.hero, isDesktop && styles.heroDesktop]} imageStyle={styles.heroImage}>
+            <ImageBackground source={{ uri: active.image }} style={[styles.hero, isDesktop && styles.heroDesktop]} imageStyle={styles.heroImage as any}>
               <LinearGradient
                 colors={['rgba(7,6,15,0.05)', 'rgba(7,6,15,0.38)', 'rgba(7,6,15,0.94)']}
                 style={styles.heroGradient}
@@ -230,8 +239,8 @@ export function YatriDashboardScreen({
               </View>
               <View style={styles.heroCopy}>
                 <Text style={[styles.modeBadge, { color: active.secondary }]}>{active.label}</Text>
-                <Text style={styles.heroTitle}>Yatri helps you move through Nepal with confidence.</Text>
-                <Text style={styles.heroText}>{active.summary}</Text>
+                <Text style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}>Yatri helps you move through Nepal with confidence.</Text>
+                <Text style={[styles.heroText, isDesktop && styles.heroTextDesktop]}>{active.summary}</Text>
               </View>
             </ImageBackground>
 
@@ -262,16 +271,16 @@ export function YatriDashboardScreen({
 
             {connectivity === 'online' ? (
               <>
-                <SectionHeader label="Online nearby" title="Hotels around Thamel" />
-                <NearbyHotels />
                 <SectionHeader label="Know before you go" title="Choose your district" />
-                <DistrictBriefingSelector />
+                <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={setSelectedDistrict} />
+                <SectionHeader label="Online nearby" title={`Places to stay in ${selectedDistrict}`} />
+                <NearbyHotels selectedDistrict={selectedDistrict} />
               </>
             ) : (
               <>
                 <OfflineReadyBanner />
                 <SectionHeader label="Saved on this device" title="Your offline district guide" />
-                <DistrictBriefingSelector />
+                <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={setSelectedDistrict} />
                 <SectionHeader label="Offline-first" title="Downloaded travel packs" />
                 <View style={styles.stack}>
                   {offlinePacks.map((pack) => (
@@ -292,6 +301,7 @@ export function YatriDashboardScreen({
                 <FestivalPhotoCard key={festival.name} festival={festival} />
               ))}
             </ScrollView>
+            <Text style={styles.contentSourceNote}>{festivalContentSource}</Text>
 
             <SectionHeader label="Discover Nepal" title="Mountain trails or cultural wonders" />
             <View style={styles.filterWrap}>
@@ -394,42 +404,10 @@ export function YatriDashboardScreen({
         {currentPage === 'prices' && (
           <>
             <PageHeading
-              eyebrow={priceFocus === 'rides' ? 'Getting around' : 'Fair price guide'}
-              title={priceFocus === 'rides' ? 'Know your transport costs' : 'Know before you pay'}
+              eyebrow="Fair price guide"
+              title="Check before you pay"
             />
-
-            {priceFocus === 'rides' && (
-              <>
-                <SectionHeader label="Ride guide" title="Typical transport prices" />
-                <ReferencePriceList items={transportPrices} icon="car-outline" />
-              </>
-            )}
-
-            <SectionHeader label="Check the range" title="Common tourist purchases" />
-            <View style={styles.stack}>
-              {priceTools.map((tool) => (
-                <View key={tool.item} style={styles.priceTool}>
-                  <View style={styles.flex}>
-                    <Text style={styles.priceToolItem}>{tool.item}</Text>
-                    <Text style={styles.priceToolNote}>{tool.note}</Text>
-                  </View>
-                  <View style={styles.priceRangeBox}>
-                    <Text style={styles.priceRange}>{tool.range}</Text>
-                    <Text style={styles.pricePhrase}>{tool.phrase}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-
-            <SectionHeader label="Everyday costs" title="Food price references" />
-            <ReferencePriceList items={foodPrices} icon="restaurant-outline" />
-
-            {priceFocus === 'fair' && (
-              <>
-                <SectionHeader label="Getting around" title="Transport price references" />
-                <ReferencePriceList items={transportPrices} icon="car-outline" />
-              </>
-            )}
+            <FairPriceChecker selectedDistrict={selectedDistrict} priceFocus={priceFocus} onPriceFocusChange={setPriceFocus} />
           </>
         )}
           </ScrollView>
@@ -482,11 +460,32 @@ function DesktopNavigation({
   );
 }
 
-function PageHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+function WebFriendlyStrip() {
   return (
-    <View style={styles.pageHeading}>
-      <Text style={styles.pageEyebrow}>{eyebrow}</Text>
-      <Text style={styles.pageTitle}>{title}</Text>
+    <View style={styles.webFriendlyStrip}>
+      <View style={styles.webFriendlyItem}>
+        <Ionicons name="resize-outline" size={18} color={colors.goldLight} />
+        <Text style={styles.webFriendlyText}>Readable desktop layout</Text>
+      </View>
+      <View style={styles.webFriendlyItem}>
+        <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.teal} />
+        <Text style={styles.webFriendlyText}>AI help floats on every page</Text>
+      </View>
+      <View style={styles.webFriendlyItem}>
+        <Ionicons name="shield-checkmark-outline" size={18} color={colors.mountainBlue} />
+        <Text style={styles.webFriendlyText}>Safety tools stay one click away</Text>
+      </View>
+    </View>
+  );
+}
+
+function PageHeading({ eyebrow, title }: { eyebrow: string; title: string }) {
+  const { width } = useWindowDimensions();
+  const desktop = width >= 1024;
+  return (
+    <View style={[styles.pageHeading, desktop && styles.pageHeadingDesktop]}>
+      <Text style={[styles.pageEyebrow, desktop && styles.pageEyebrowDesktop]}>{eyebrow}</Text>
+      <Text style={[styles.pageTitle, desktop && styles.pageTitleDesktop]}>{title}</Text>
     </View>
   );
 }
@@ -545,13 +544,68 @@ function ConnectivityControl({ mode, onChange }: { mode: ConnectivityMode; onCha
   );
 }
 
-function NearbyHotels() {
+function getDistrictLodging(selectedDistrict: string) {
+  if (selectedDistrict === 'Kathmandu') {
+    return {
+      note: 'Distances shown from Thamel center',
+      live: true,
+      hotels: nearbyHotels
+    };
+  }
+
+  const directoryItem = districtDirectory.find((item) => item.district === selectedDistrict);
+  const detailed = districtBriefings.find((item) => item.district === selectedDistrict);
+  const base = detailed?.base ?? `${selectedDistrict} main bazaar`;
+  const province = directoryItem?.province ?? 'Nepal';
+  const mapDistrict = `${selectedDistrict}, ${province}, Nepal`;
+
+  return {
+    note: `Showing lodging searches for ${selectedDistrict}. Open map results and verify availability before traveling.`,
+    live: false,
+    hotels: [
+      {
+        name: `Hotels in ${selectedDistrict}`,
+        area: base,
+        address: `hotels in ${mapDistrict}`,
+        distance: province,
+        phone: '',
+        displayPhone: 'Search map results',
+        note: `Map search for hotels and lodges around ${selectedDistrict}. Confirm price, road access, and check-in time before departure.`
+      },
+      {
+        name: `Guesthouses in ${selectedDistrict}`,
+        area: selectedDistrict,
+        address: `guest house in ${mapDistrict}`,
+        distance: 'Local stays',
+        phone: '',
+        displayPhone: 'Ask locally',
+        note: 'Guesthouses are often the practical option outside major tourist hubs. Ask about hot water, meals, Wi-Fi, and cash payment.'
+      },
+      {
+        name: `Homestays near ${selectedDistrict}`,
+        area: 'Community stays',
+        address: `homestay near ${mapDistrict}`,
+        distance: 'Verify locally',
+        phone: '',
+        displayPhone: 'Confirm with host',
+        note: 'For rural areas, confirm food, transport, and phone signal before arriving late in the day.'
+      }
+    ]
+  };
+}
+
+function NearbyHotels({ selectedDistrict }: { selectedDistrict: string }) {
+  const lodging = getDistrictLodging(selectedDistrict);
   const openNavigation = (address: string) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     Linking.openURL(url).catch(() => Alert.alert('Navigation unavailable', 'Unable to open maps on this device.'));
   };
 
   const callHotel = (phone: string, displayPhone: string) => {
+    if (!phone) {
+      Alert.alert('Call locally', `No verified phone saved yet. ${displayPhone}.`);
+      return;
+    }
     Linking.openURL(`tel:${phone}`).catch(() => Alert.alert('Calling unavailable', `Call the hotel at ${displayPhone}.`));
   };
 
@@ -559,10 +613,10 @@ function NearbyHotels() {
     <View style={styles.hotelList}>
       <View style={styles.hotelLocationNote}>
         <Ionicons name="location-outline" size={16} color={colors.teal} />
-        <Text style={styles.hotelLocationText}>Distances shown from Thamel center</Text>
-        <Text style={styles.hotelLiveText}>LIVE</Text>
+        <Text style={styles.hotelLocationText}>{lodging.note}</Text>
+        <Text style={styles.hotelLiveText}>{lodging.live ? 'LIVE' : 'GUIDE'}</Text>
       </View>
-      {nearbyHotels.map((hotel) => (
+      {lodging.hotels.map((hotel) => (
         <View key={hotel.name} style={styles.hotelRow}>
           <View style={styles.hotelIcon}>
             <Ionicons name="bed-outline" size={21} color={colors.goldLight} />
@@ -574,11 +628,11 @@ function NearbyHotels() {
             <View style={styles.hotelActions}>
               <Pressable accessibilityRole="button" onPress={() => openNavigation(hotel.address)} style={styles.hotelNavigateButton}>
                 <Ionicons name="navigate" size={15} color="#1a0f00" />
-                <Text style={styles.hotelNavigateText}>Navigate</Text>
+                <Text style={styles.hotelNavigateText}>Search map</Text>
               </Pressable>
               <Pressable accessibilityRole="button" onPress={() => callHotel(hotel.phone, hotel.displayPhone)} style={styles.hotelCallButton}>
                 <Ionicons name="call-outline" size={15} color={colors.teal} />
-                <Text style={styles.hotelCallText}>Call</Text>
+                <Text style={styles.hotelCallText}>{hotel.phone ? 'Call' : 'Ask locally'}</Text>
               </Pressable>
             </View>
           </View>
@@ -602,6 +656,127 @@ function OfflineReadyBanner() {
   );
 }
 
+function FairPriceChecker({
+  selectedDistrict,
+  priceFocus,
+  onPriceFocusChange
+}: {
+  selectedDistrict: string;
+  priceFocus: 'fair' | 'rides';
+  onPriceFocusChange: (focus: 'fair' | 'rides') => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<FairPriceCategory | 'All'>(priceFocus === 'rides' ? 'Transport' : 'All');
+  const [quotedPrice, setQuotedPrice] = useState('');
+  const categories: (FairPriceCategory | 'All')[] = ['All', 'Food', 'Transport', 'Shopping', 'Permits', 'Connectivity'];
+  const normalizedQuery = query.trim().toLowerCase();
+  const districtItems = fairPriceCatalog.filter((item) => item.district === selectedDistrict || item.district === 'Kathmandu');
+  const filtered = districtItems.filter((item) => {
+    const categoryMatch = category === 'All' || item.category === category;
+    const queryMatch = !normalizedQuery || item.item.toLowerCase().includes(normalizedQuery) || item.tip.toLowerCase().includes(normalizedQuery) || item.category.toLowerCase().includes(normalizedQuery);
+    return categoryMatch && queryMatch;
+  });
+  const featured = filtered[0] ?? districtItems[0] ?? fairPriceCatalog[0];
+  const quoted = Number(quotedPrice.replace(/[^0-9.]/g, ''));
+  const hasQuote = Number.isFinite(quoted) && quoted > 0;
+  const verdict = !hasQuote
+    ? { label: 'Enter a quoted price', color: colors.muted, detail: 'Yatri will compare it with the selected fair range.' }
+    : featured.high === 0
+      ? { label: 'Check official price', color: colors.gold, detail: 'This item needs an official counter or licensed agency check.' }
+      : quoted <= featured.high
+        ? { label: 'Looks within range', color: colors.teal, detail: 'Still confirm what is included before paying.' }
+        : quoted <= featured.high * 1.35
+          ? { label: 'Slightly high', color: colors.gold, detail: 'Ask politely for a lower price or compare another seller.' }
+          : { label: 'Likely overcharge', color: colors.danger, detail: 'Step away, compare alternatives, or use an official counter/app.' };
+
+  const chooseCategory = (next: FairPriceCategory | 'All') => {
+    setCategory(next);
+    if (next === 'Transport') onPriceFocusChange('rides');
+    else if (priceFocus === 'rides') onPriceFocusChange('fair');
+  };
+
+  return (
+    <View style={styles.priceChecker}>
+      <View style={styles.priceHeroCard}>
+        <View style={styles.priceHeroIcon}>
+          <Ionicons name="calculator-outline" size={24} color="#1a0f00" />
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.priceHeroTitle}>Fair price checker</Text>
+          <Text style={styles.priceHeroText}>Search common Nepal travel costs, compare a quoted price, and get a quick overcharge warning.</Text>
+        </View>
+      </View>
+
+      <View style={styles.priceSearchBox}>
+        <Ionicons name="search-outline" size={18} color={colors.muted} />
+        <TextInput accessibilityLabel="Search fair prices" onChangeText={setQuery} placeholder="Search taxi, momo, SIM, pashmina..." placeholderTextColor={colors.dim} style={styles.priceSearchInput} value={query} />
+        {query.length > 0 && (
+          <Pressable accessibilityLabel="Clear price search" onPress={() => setQuery('')} style={styles.districtClearButton}>
+            <Ionicons name="close" size={16} color={colors.dim} />
+          </Pressable>
+        )}
+      </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.priceCategoryList}>
+        {categories.map((option) => {
+          const selected = category === option;
+          return (
+            <Pressable key={option} onPress={() => chooseCategory(option)} style={[styles.priceCategoryChip, selected && styles.priceCategoryChipSelected]}>
+              <Text style={[styles.priceCategoryText, selected && styles.priceCategoryTextSelected]}>{option}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.priceCompareCard}>
+        <View style={styles.priceCompareHeader}>
+          <View style={styles.flex}>
+            <Text style={styles.priceCompareLabel}>COMPARE AGAINST</Text>
+            <Text style={styles.priceCompareItem}>{featured.item}</Text>
+            <Text style={styles.priceCompareRange}>{featured.high === 0 ? 'Official price required' : 'Rs. ' + featured.low.toLocaleString() + '-' + featured.high.toLocaleString() + ' / ' + featured.unit}</Text>
+          </View>
+          <View style={[styles.priceRiskBadge, featured.risk === 'High' && styles.priceRiskHigh, featured.risk === 'Medium' && styles.priceRiskMedium]}>
+            <Text style={styles.priceRiskText}>{featured.risk} RISK</Text>
+          </View>
+        </View>
+        <View style={styles.priceQuoteRow}>
+          <TextInput accessibilityLabel="Quoted price in rupees" keyboardType="numeric" onChangeText={setQuotedPrice} placeholder="Quoted Rs." placeholderTextColor={colors.dim} style={styles.priceQuoteInput} value={quotedPrice} />
+          <View style={[styles.priceVerdict, { borderColor: `${verdict.color}66` }] }>
+            <Text style={[styles.priceVerdictLabel, { color: verdict.color }]}>{verdict.label}</Text>
+            <Text style={styles.priceVerdictText}>{verdict.detail}</Text>
+          </View>
+        </View>
+        <Text style={styles.pricePhraseLarge}>Say: “{featured.phrase}”</Text>
+        <Text style={styles.priceTip}>{featured.tip}</Text>
+      </View>
+
+      <View style={styles.priceResultsHeader}>
+        <Text style={styles.priceResultsTitle}>{filtered.length} price references</Text>
+        <Text style={styles.priceResultsDistrict}>{selectedDistrict} + common Nepal tourist prices</Text>
+      </View>
+
+      <View style={styles.stack}>
+        {filtered.map((item) => (
+          <Pressable key={`${item.district}-${item.item}`} onPress={() => { setQuery(item.item); setCategory(item.category); setQuotedPrice(''); }} style={styles.fairPriceRow}>
+            <View style={styles.fairPriceIcon}>
+              <Ionicons name={item.category === 'Transport' ? 'car-outline' : item.category === 'Food' ? 'restaurant-outline' : item.category === 'Connectivity' ? 'phone-portrait-outline' : item.category === 'Permits' ? 'document-text-outline' : 'bag-outline'} size={20} color={colors.teal} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.fairPriceName}>{item.item}</Text>
+              <Text style={styles.fairPriceMeta}>{item.category} · {item.district} · {item.source}</Text>
+              <Text style={styles.fairPriceTip}>{item.tip}</Text>
+            </View>
+            <View style={styles.fairPriceRangeBox}>
+              <Text style={styles.fairPriceRange}>{item.high === 0 ? 'Official' : 'Rs. ' + item.low.toLocaleString() + '-' + item.high.toLocaleString()}</Text>
+              <Text style={styles.fairPriceUnit}>{item.unit}</Text>
+            </View>
+          </Pressable>
+        ))}
+      </View>
+      <Text style={styles.contentSource}>{fairPriceSourceNote}</Text>
+    </View>
+  );
+}
 function ReferencePriceList({ items, icon }: { items: PriceItem[]; icon: IconName }) {
   return (
     <View style={styles.stack}>
@@ -625,44 +800,100 @@ function ReferencePriceList({ items, icon }: { items: PriceItem[]; icon: IconNam
   );
 }
 
-function DistrictBriefingSelector() {
-  const [selectedDistrict, setSelectedDistrict] = useState('Kathmandu');
+function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { selectedDistrict: string; onSelectDistrict: (district: string) => void }) {
+  const [districtSearch, setDistrictSearch] = useState('');
   const [savedAt, setSavedAt] = useState<string | null>(null);
-  const activeDistrict = districtBriefings.find((item) => item.district === selectedDistrict)!;
+  const selectedDirectoryItem = districtDirectory.find((item) => item.district === selectedDistrict) ?? districtDirectory.find((item) => item.district === 'Kathmandu')!;
+  const detailedBriefing = districtBriefings.find((item) => item.district === selectedDistrict);
+  const famousSites = districtSites.filter((site) => site.district === selectedDistrict);
+  const activeDistrict: DistrictBriefing = detailedBriefing ?? {
+    district: selectedDirectoryItem.district,
+    province: selectedDirectoryItem.province,
+    base: 'District headquarters or main bazaar',
+    elevation: 'Varies by route',
+    bestFor: 'Save this district for offline notes, emergency contacts, and scam reports as Yatri adds richer local guidance.',
+    connectivity: 'Mixed',
+    transport: 'Confirm road conditions, fares, and last departures locally before leaving the main town.',
+    etiquette: 'Ask before photographing people, homes, ceremonies, or religious spaces; follow local signs and host guidance.',
+    safety: 'Use official counters where available, keep emergency contacts saved, and report suspicious activity with location details.',
+    icon: 'map-outline'
+  };
   const connectivityColor = activeDistrict.connectivity === 'Strong'
     ? colors.teal
     : activeDistrict.connectivity === 'Mixed'
       ? colors.gold
       : colors.danger;
+  const normalizedSearch = districtSearch.trim().toLowerCase();
+  const filteredDistricts = districtDirectory.filter((item) => {
+    if (!normalizedSearch) return true;
+    return item.district.toLowerCase().includes(normalizedSearch) || item.province.toLowerCase().includes(normalizedSearch);
+  });
 
   useEffect(() => {
     void getSavedDistrictPacks().then((packs) => setSavedAt(packs[selectedDistrict]?.savedAt ?? null));
   }, [selectedDistrict]);
 
   const downloadPack = async () => {
-    const saved = await saveDistrictPack(selectedDistrict, activeDistrict);
+    const saved = await saveDistrictPack(selectedDistrict, { ...activeDistrict, famousSites });
     setSavedAt(saved.savedAt);
   };
 
   return (
     <View style={styles.districtFeature}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.districtTabs}>
-        {districtBriefings.map((item) => {
-          const selected = item.district === selectedDistrict;
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              key={item.district}
-              onPress={() => setSelectedDistrict(item.district)}
-              style={[styles.districtTab, selected && styles.districtTabSelected]}
-            >
-              <Ionicons name={item.icon} size={16} color={selected ? '#1a0f00' : colors.muted} />
-              <Text style={[styles.districtTabText, selected && styles.districtTabTextSelected]}>{item.district}</Text>
+      <View style={styles.districtSearchPanel}>
+        <View style={styles.districtSearchHeader}>
+          <View>
+            <Text style={styles.districtSearchLabel}>SEARCH ALL 77 DISTRICTS</Text>
+            <Text style={styles.districtSearchHint}>Kathmandu is selected by default. Type letters like “ka”, “mu”, or “ru”.</Text>
+          </View>
+          <View style={styles.districtCountBadge}>
+            <Text style={styles.districtCountText}>{filteredDistricts.length}/77</Text>
+          </View>
+        </View>
+
+        <View style={styles.districtSearchBox}>
+          <Ionicons name="search-outline" size={18} color={colors.muted} />
+          <TextInput
+            accessibilityLabel="Search Nepal districts"
+            autoCapitalize="words"
+            onChangeText={setDistrictSearch}
+            placeholder="Search district or province..."
+            placeholderTextColor={colors.dim}
+            style={styles.districtSearchInput}
+            value={districtSearch}
+          />
+          {districtSearch.length > 0 && (
+            <Pressable accessibilityLabel="Clear district search" onPress={() => setDistrictSearch('')} style={styles.districtClearButton}>
+              <Ionicons name="close" size={16} color={colors.dim} />
             </Pressable>
-          );
-        })}
-      </ScrollView>
+          )}
+        </View>
+
+        <ScrollView style={styles.districtList} contentContainerStyle={styles.districtListContent} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+          {filteredDistricts.map((item) => {
+            const selected = item.district === selectedDistrict;
+            const hasGuide = districtSites.some((site) => site.district === item.district);
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                key={item.district}
+                onPress={() => onSelectDistrict(item.district)}
+                style={[styles.districtListItem, selected && styles.districtListItemSelected]}
+              >
+                <View style={[styles.districtListIcon, selected && styles.districtListIconSelected]}>
+                  <Text style={[styles.districtInitial, selected && styles.districtInitialSelected]}>{item.district.charAt(0)}</Text>
+                </View>
+                <View style={styles.flex}>
+                  <Text style={[styles.districtListName, selected && styles.districtListNameSelected]}>{item.district}</Text>
+                  <Text style={styles.districtListProvince}>{item.province}</Text>
+                </View>
+                {hasGuide && <Text style={styles.districtGuideBadge}>GUIDE</Text>}
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       <View style={styles.districtBriefing}>
         <View style={styles.districtHeading}>
@@ -678,6 +909,13 @@ function DistrictBriefingSelector() {
             <Text style={styles.districtOfflineText}>{savedAt ? 'SAVED' : 'DOWNLOAD'}</Text>
           </Pressable>
         </View>
+
+        {!detailedBriefing && (
+          <View style={styles.districtStarterNotice}>
+            <Ionicons name="information-circle-outline" size={17} color={colors.goldLight} />
+            <Text style={styles.districtStarterText}>Core travel notes for this district; its famous-site guide is ready below.</Text>
+          </View>
+        )}
 
         <View style={styles.districtFacts}>
           <View style={styles.districtFact}>
@@ -702,7 +940,55 @@ function DistrictBriefingSelector() {
         <DistrictInfoRow icon="bus-outline" label="Getting around" text={activeDistrict.transport} />
         <DistrictInfoRow icon="people-outline" label="Local respect" text={activeDistrict.etiquette} />
         <DistrictInfoRow icon="shield-checkmark-outline" label="Safety note" text={activeDistrict.safety} last />
-        <Text style={styles.districtFreshness}>{savedAt ? `Offline copy saved ${new Date(savedAt).toLocaleDateString()} · ` : ''}Yatri editorial review · July 5, 2026</Text>
+        <View style={styles.famousSitesSection}>
+          <View style={styles.famousSitesHeading}>
+            <View style={styles.flex}>
+              <Text style={styles.famousSitesEyebrow}>FAMOUS SITES</Text>
+              <Text style={styles.famousSitesTitle}>What to see in {selectedDistrict}</Text>
+            </View>
+            <View style={styles.famousSitesCount}><Text style={styles.famousSitesCountText}>{famousSites.length}</Text></View>
+          </View>
+          <ScrollView horizontal contentContainerStyle={styles.famousSitesList} showsHorizontalScrollIndicator={false}>
+            {famousSites.map((site) => <DistrictSiteCard key={`${site.district}-${site.name}`} site={site} />)}
+          </ScrollView>
+        </View>
+        <Text style={styles.districtFreshness}>{savedAt ? `Offline copy saved ${new Date(savedAt).toLocaleDateString()} · ` : ''}Yatri district directory · 77 districts · reviewed July 6, 2026</Text>
+      </View>
+    </View>
+  );
+}
+
+function DistrictSiteCard({ site }: { site: DistrictSite }) {
+  const openMap = () => {
+    const query = encodeURIComponent(`${site.name}, ${site.district}, Nepal`);
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`)
+      .catch(() => Alert.alert('Map unavailable', `Search for ${site.name} in ${site.district}.`));
+  };
+
+  return (
+    <View style={styles.famousSiteCard}>
+      <ImageBackground source={{ uri: site.image }} style={styles.famousSitePhoto} imageStyle={styles.famousSiteImage as any}>
+        <LinearGradient colors={['transparent', 'rgba(4,12,18,0.96)']} style={styles.famousSiteGradient} />
+        <View style={styles.famousSitePhotoCopy}>
+          <Text style={styles.famousSitePlace}>{site.place}</Text>
+          <Text style={styles.famousSiteName}>{site.name}</Text>
+        </View>
+      </ImageBackground>
+      <View style={styles.famousSiteBody}>
+        <Text style={styles.famousSiteExperience}>{site.experience}</Text>
+        <View style={styles.famousSiteMetaRow}>
+          <Ionicons name="sunny-outline" size={17} color={colors.gold} />
+          <View style={styles.flex}><Text style={styles.famousSiteMetaLabel}>BEST TIME</Text><Text style={styles.famousSiteMetaText}>{site.bestTime}</Text></View>
+        </View>
+        <View style={styles.famousSiteMetaRow}>
+          <Ionicons name="heart-outline" size={17} color={colors.teal} />
+          <View style={styles.flex}><Text style={styles.famousSiteMetaLabel}>TRAVEL RESPECTFULLY</Text><Text style={styles.famousSiteMetaText}>{site.respect}</Text></View>
+        </View>
+        <Pressable accessibilityRole="link" onPress={openMap} style={styles.famousSiteMapButton}>
+          <Ionicons name="navigate-outline" size={17} color="#1a0f00" />
+          <Text style={styles.famousSiteMapText}>View on map</Text>
+        </Pressable>
+        <Text style={styles.famousSiteImageNote}>{site.imageNote}</Text>
       </View>
     </View>
   );
@@ -730,10 +1016,12 @@ function ModeButton({ mode, selected, onPress }: { mode: TravelMode; selected: b
 }
 
 function SectionHeader({ label, title }: { label: string; title: string }) {
+  const { width } = useWindowDimensions();
+  const desktop = width >= 1024;
   return (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionLabel}>{label}</Text>
-      <Text style={styles.sectionTitle}>{title}</Text>
+    <View style={[styles.sectionHeader, desktop && styles.sectionHeaderDesktop]}>
+      <Text style={[styles.sectionLabel, desktop && styles.sectionLabelDesktop]}>{label}</Text>
+      <Text style={[styles.sectionTitle, desktop && styles.sectionTitleDesktop]}>{title}</Text>
     </View>
   );
 }
@@ -758,14 +1046,16 @@ function OfflinePackCard({ pack }: { pack: OfflinePack }) {
 }
 
 function FestivalPhotoCard({ festival }: { festival: Festival }) {
+  const { width } = useWindowDimensions();
+  const desktop = width >= 1024;
   return (
-    <ImageBackground source={{ uri: festival.image }} style={styles.festivalPhoto} imageStyle={styles.festivalImage}>
+    <ImageBackground source={{ uri: festival.image }} style={[styles.festivalPhoto, desktop && styles.festivalPhotoDesktop]} imageStyle={styles.festivalImage as any}>
       <LinearGradient colors={['rgba(7,6,15,0.08)', 'rgba(7,6,15,0.86)']} style={styles.photoGradient} />
       <Text style={[styles.countdown, { backgroundColor: festival.accent }]}>{festival.countdown}</Text>
       <View style={styles.festivalCopy}>
-        <Text style={styles.festivalCrowd}>{festival.crowd}</Text>
-        <Text style={styles.festivalName}>{festival.name}</Text>
-        <Text style={styles.festivalWhy}>{festival.why}</Text>
+        <Text style={[styles.festivalCrowd, desktop && styles.festivalCrowdDesktop]}>{festival.crowd}</Text>
+        <Text style={[styles.festivalName, desktop && styles.festivalNameDesktop]}>{festival.name}</Text>
+        <Text style={[styles.festivalWhy, desktop && styles.festivalWhyDesktop]}>{festival.why}</Text>
       </View>
     </ImageBackground>
   );
@@ -773,7 +1063,7 @@ function FestivalPhotoCard({ festival }: { festival: Festival }) {
 
 function DiscoverCard({ item }: { item: DiscoverItem }) {
   return (
-    <ImageBackground source={{ uri: item.image }} style={styles.discoverCard} imageStyle={styles.discoverImage}>
+    <ImageBackground source={{ uri: item.image }} style={styles.discoverCard} imageStyle={styles.discoverImage as any}>
       <LinearGradient colors={['rgba(7,6,15,0.10)', 'rgba(7,6,15,0.90)']} style={styles.photoGradient} />
       <View style={styles.discoverCopy}>
         <Text style={styles.discoverTag}>{item.tag}</Text>
@@ -1360,8 +1650,8 @@ function OfflineSos() {
     setEditingContact(false);
   };
 
-  const callTouristPolice = () => {
-    Linking.openURL('tel:1144').catch(() => Alert.alert('Calling unavailable', 'Dial 1144 for Nepal Tourist Police.'));
+  const callEmergencyService = (number: string, label: string) => {
+    Linking.openURL(`tel:${number}`).catch(() => Alert.alert('Calling unavailable', `Dial ${number} for ${label}.`));
   };
 
   return (
@@ -1427,14 +1717,49 @@ function OfflineSos() {
         <Text style={styles.sosButtonText}>Prepare location SMS</Text>
       </Pressable>
 
-      <Pressable accessibilityLabel="Call Nepal Tourist Police at 1144" accessibilityRole="button" onPress={callTouristPolice} style={styles.policeCallButton}>
-        <Ionicons name="call-outline" size={17} color={colors.danger} />
-        <Text style={styles.policeCallText}>Call Tourist Police · 1144</Text>
-      </Pressable>
-      <Pressable accessibilityRole="link" onPress={() => Linking.openURL('https://ntb.gov.np/plan-your-trip/before-you-come/tourist-police')}>
-        <Text style={styles.emergencySource}>Source: Nepal Tourism Board · reviewed July 5, 2026</Text>
+      <View style={styles.emergencyServices}>
+        <Text style={styles.emergencyServicesTitle}>ONE-TAP EMERGENCY CALLS</Text>
+        <EmergencyCallButton
+          icon="shield-outline"
+          label="Local Police"
+          note="Nationwide police control"
+          number="100"
+          onPress={() => callEmergencyService('100', 'Nepal Police')}
+        />
+        <EmergencyCallButton
+          icon="medkit-outline"
+          label="Ambulance"
+          note="Nearest available ambulance service"
+          number="102"
+          onPress={() => callEmergencyService('102', 'Nepal Ambulance Service')}
+        />
+        <EmergencyCallButton
+          icon="people-outline"
+          label="Tourist Police"
+          note="Tourist assistance and reporting"
+          number="1144"
+          onPress={() => callEmergencyService('1144', 'Nepal Tourist Police')}
+        />
+        <Text style={styles.emergencyAvailability}>Short-code coverage can vary in remote areas. If a call fails, ask a hotel, guide, health post, or nearby resident for the closest local station or ambulance.</Text>
+      </View>
+      <Pressable accessibilityRole="link" onPress={() => Linking.openURL('https://www.nepalpolice.gov.np/safety-and-security/safety-and-security-tips/')}>
+        <Text style={styles.emergencySource}>Official sources: Nepal Police and Ministry of Health HEOC · verified July 6, 2026</Text>
       </Pressable>
     </View>
+  );
+}
+
+function EmergencyCallButton({ icon, label, note, number, onPress }: { icon: IconName; label: string; note: string; number: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityLabel={`Call ${label} at ${number}`} accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.emergencyCallCard, pressed && styles.buttonPressed]}>
+      <View style={styles.emergencyCallIcon}><Ionicons name={icon} size={22} color={colors.white} /></View>
+      <View style={styles.flex}>
+        <Text style={styles.emergencyCallLabel}>{label}</Text>
+        <Text style={styles.emergencyCallNote}>{note}</Text>
+      </View>
+      <Text style={styles.emergencyCallNumber}>{number}</Text>
+      <Ionicons name="call" size={19} color={colors.danger} />
+    </Pressable>
   );
 }
 
@@ -1458,12 +1783,15 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { alignSelf: 'center', padding: spacing.md, paddingBottom: spacing.xl, width: '100%' },
   contentTablet: { padding: spacing.lg },
-  contentDesktop: { maxWidth: 1180, paddingHorizontal: 32, paddingVertical: spacing.lg },
+  contentDesktop: { maxWidth: 1440, paddingHorizontal: 56, paddingVertical: 42 },
+  webFriendlyStrip: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.035)', borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
+  webFriendlyItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, minHeight: 34 },
+  webFriendlyText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 17, fontWeight: '800' },
   desktopSidebar: { backgroundColor: colors.surface, borderRightColor: colors.border, borderRightWidth: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.lg, width: 246 },
   desktopNavList: { gap: spacing.xs, marginTop: 42 },
   desktopNavItem: { alignItems: 'center', borderRadius: 12, flexDirection: 'row', gap: spacing.sm, minHeight: 48, paddingHorizontal: 12 },
   desktopNavItemSelected: { backgroundColor: colors.gold },
-  desktopNavText: { color: colors.muted, flex: 1, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  desktopNavText: { color: colors.muted, flex: 1, fontFamily: fonts.accent, fontSize: 17, fontWeight: '900' },
   desktopNavTextSelected: { color: '#1a0f00' },
   desktopSidebarStatus: { alignItems: 'center', borderColor: colors.border, borderRadius: 13, borderWidth: 1, bottom: spacing.lg, flexDirection: 'row', gap: spacing.sm, left: spacing.md, padding: spacing.sm, position: 'absolute', right: spacing.md },
   desktopStatusLabel: { color: colors.text, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
@@ -1473,10 +1801,24 @@ const styles = StyleSheet.create({
   signOutButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 16, borderWidth: 1, height: 42, justifyContent: 'center', width: 42 },
   topBarDesktop: { minHeight: 76, paddingHorizontal: 32 },
   desktopContext: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', letterSpacing: 1.6 },
-  desktopPageName: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 2 },
+  desktopPageName: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700', marginTop: 2 },
   pageHeading: { marginBottom: spacing.xs, paddingTop: spacing.sm },
   pageEyebrow: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8, textTransform: 'uppercase' },
   pageTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700', lineHeight: 38, marginTop: spacing.xs },
+  pageHeadingDesktop: { marginBottom: spacing.md, paddingTop: spacing.lg },
+  pageEyebrowDesktop: { fontSize: 14, letterSpacing: 2.4 },
+  pageTitleDesktop: { fontSize: 64, lineHeight: 72, maxWidth: 980 },
+  greetingDesktop: { fontSize: 28 },
+  locationDesktop: { fontSize: 13 },
+  heroTitleDesktop: { fontSize: 72, lineHeight: 78, maxWidth: 760 },
+  heroTextDesktop: { fontSize: 24, lineHeight: 36, maxWidth: 720 },
+  sectionHeaderDesktop: { marginTop: 46 },
+  sectionLabelDesktop: { fontSize: 14, letterSpacing: 2.4 },
+  sectionTitleDesktop: { fontSize: 56, lineHeight: 64, maxWidth: 980 },
+  festivalPhotoDesktop: { height: 370, width: 360 },
+  festivalCrowdDesktop: { fontSize: 12 },
+  festivalNameDesktop: { fontSize: 40, lineHeight: 46 },
+  festivalWhyDesktop: { fontSize: 18, lineHeight: 27 },
   bottomNav: { alignItems: 'center', backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', minHeight: 68, paddingHorizontal: spacing.sm, paddingTop: 7 },
   bottomNavItem: { alignItems: 'center', flex: 1, gap: 3, justifyContent: 'center', minHeight: 56 },
   bottomNavIcon: { alignItems: 'center', borderRadius: 13, height: 30, justifyContent: 'center', width: 42 },
@@ -1487,7 +1829,7 @@ const styles = StyleSheet.create({
   exchangeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 10, fontWeight: '800', letterSpacing: 1.4 },
   exchangeValue: { color: colors.teal, fontFamily: fonts.accent, fontSize: 13, fontWeight: '800', marginTop: 2 },
   hero: { height: 500, justifyContent: 'space-between', overflow: 'hidden' },
-  heroDesktop: { height: 440 },
+  heroDesktop: { height: 520 },
   heroImage: { borderRadius: 22 },
   heroGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 22 },
   heroTop: { padding: spacing.lg },
@@ -1504,8 +1846,8 @@ const styles = StyleSheet.create({
   quickAction: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, minHeight: 126, padding: spacing.md, width: '48.5%' },
   quickActionTablet: { width: '23.5%' },
   quickIcon: { alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', marginBottom: spacing.sm, width: 44 },
-  quickTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
-  quickSub: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, marginTop: 4, textAlign: 'center' },
+  quickTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  quickSub: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, marginTop: 4, textAlign: 'center' },
   connectivityBar: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md, padding: 6, paddingLeft: 12 },
   connectivityCopy: { alignItems: 'center', flexDirection: 'row', gap: 7 },
   connectivityDot: { borderRadius: 5, height: 9, width: 9 },
@@ -1517,13 +1859,13 @@ const styles = StyleSheet.create({
   connectivityOptionTextSelected: { color: '#1a0f00' },
   hotelList: { gap: spacing.sm },
   hotelLocationNote: { alignItems: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 2 },
-  hotelLocationText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 10 },
+  hotelLocationText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 15 },
   hotelLiveText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   hotelRow: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   hotelIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
-  hotelName: { color: colors.text, fontFamily: fonts.accent, fontSize: 14, fontWeight: '900' },
-  hotelArea: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '800', lineHeight: 14, marginTop: 3 },
-  hotelNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 5 },
+  hotelName: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  hotelArea: { color: colors.teal, fontFamily: fonts.label, fontSize: 13, fontWeight: '800', lineHeight: 14, marginTop: 3 },
+  hotelNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 5 },
   hotelActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   hotelNavigateButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 11, flexDirection: 'row', gap: 5, minHeight: 34, paddingHorizontal: 10 },
   hotelNavigateText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
@@ -1535,10 +1877,10 @@ const styles = StyleSheet.create({
   offlineReadyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginTop: 3 },
   referencePriceRow: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   referencePriceIcon: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
-  referencePriceName: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
-  referencePriceNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, lineHeight: 15, marginTop: 3 },
+  referencePriceName: { color: colors.text, fontFamily: fonts.accent, fontSize: 17, fontWeight: '900' },
+  referencePriceNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 22, marginTop: 3 },
   referencePriceValueWrap: { alignItems: 'flex-end', maxWidth: 120 },
-  referencePriceValue: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 12, fontWeight: '900', textAlign: 'right' },
+  referencePriceValue: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 16, fontWeight: '900', textAlign: 'right' },
   referencePriceBadge: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginTop: 4, textTransform: 'uppercase' },
   referencePriceBadgeGood: { color: colors.teal },
   contentSource: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, lineHeight: 14, textAlign: 'right' },
@@ -1548,23 +1890,68 @@ const styles = StyleSheet.create({
   districtTabSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
   districtTabText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
   districtTabTextSelected: { color: '#1a0f00' },
+  districtSearchPanel: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 18, borderWidth: 1, gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
+  districtSearchHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
+  districtSearchLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
+  districtSearchHint: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 16, marginTop: 4, maxWidth: 560 },
+  districtCountBadge: { backgroundColor: 'rgba(62,207,178,0.12)', borderColor: 'rgba(62,207,178,0.32)', borderRadius: 12, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
+  districtCountText: { color: colors.teal, fontFamily: fonts.label, fontSize: 10, fontWeight: '900' },
+  districtSearchBox: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 48, paddingHorizontal: 12 },
+  districtSearchInput: { color: colors.text, flex: 1, fontFamily: fonts.body, fontSize: 17, minHeight: 44, paddingVertical: 8 },
+  districtClearButton: { alignItems: 'center', height: 32, justifyContent: 'center', width: 32 },
+  districtList: { maxHeight: 260 },
+  districtListContent: { gap: spacing.xs, paddingBottom: 2 },
+  districtListItem: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.025)', borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 54, paddingHorizontal: 10, paddingVertical: 8 },
+  districtListItemSelected: { backgroundColor: 'rgba(245,166,35,0.14)', borderColor: colors.gold },
+  districtListIcon: { alignItems: 'center', backgroundColor: colors.surface2, borderRadius: 14, height: 34, justifyContent: 'center', width: 34 },
+  districtListIconSelected: { backgroundColor: colors.gold },
+  districtInitial: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  districtInitialSelected: { color: '#1a0f00' },
+  districtListName: { color: colors.text, fontFamily: fonts.accent, fontSize: 16, fontWeight: '900' },
+  districtListNameSelected: { color: colors.goldLight },
+  districtListProvince: { color: colors.muted, fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
+  districtGuideBadge: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
+  districtStarterNotice: { alignItems: 'flex-start', backgroundColor: 'rgba(245,166,35,0.10)', borderColor: 'rgba(245,166,35,0.28)', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.md, padding: spacing.sm },
+  districtStarterText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 17 },
   districtBriefing: { backgroundColor: colors.surface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, borderWidth: 1, overflow: 'hidden', padding: spacing.md },
   districtHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   districtIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
-  districtName: { color: colors.text, fontFamily: fonts.display, fontSize: 22, fontWeight: '700' },
-  districtProvince: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, marginTop: 2 },
+  districtName: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700' },
+  districtProvince: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, marginTop: 2 },
   districtOfflineBadge: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.10)', borderRadius: 10, flexDirection: 'row', gap: 4, paddingHorizontal: 7, paddingVertical: 5 },
   districtOfflineText: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
   districtFacts: { borderBottomColor: colors.border, borderBottomWidth: 1, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', paddingVertical: spacing.md },
   districtFact: { flex: 1, paddingRight: spacing.xs },
-  districtFactLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
-  districtFactValue: { color: colors.text, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900', lineHeight: 15, marginTop: 4 },
+  districtFactLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 12, fontWeight: '900' },
+  districtFactValue: { color: colors.text, fontFamily: fonts.accent, fontSize: 16, fontWeight: '900', lineHeight: 22, marginTop: 4 },
   districtBestFor: { alignItems: 'center', flexDirection: 'row', gap: 7, paddingVertical: spacing.md },
   districtBestForText: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
   districtInfoRow: { alignItems: 'flex-start', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
   districtInfoRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
-  districtInfoLabel: { color: colors.text, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
-  districtInfoText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginTop: 3 },
+  districtInfoLabel: { color: colors.text, fontFamily: fonts.accent, fontSize: 16, fontWeight: '900' },
+  districtInfoText: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 3 },
+  famousSitesSection: { borderTopColor: colors.border, borderTopWidth: 1, marginHorizontal: -spacing.md, marginTop: spacing.lg, paddingTop: spacing.lg },
+  famousSitesHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md },
+  famousSitesEyebrow: { color: colors.teal, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
+  famousSitesTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 27, fontWeight: '700', marginTop: 4 },
+  famousSitesCount: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 15, height: 32, justifyContent: 'center', width: 32 },
+  famousSitesCountText: { color: colors.teal, fontFamily: fonts.label, fontSize: 12, fontWeight: '900' },
+  famousSitesList: { gap: spacing.md, padding: spacing.md },
+  famousSiteCard: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 18, borderWidth: 1, overflow: 'hidden', width: 340 },
+  famousSitePhoto: { height: 210, justifyContent: 'flex-end' },
+  famousSiteImage: { borderTopLeftRadius: 17, borderTopRightRadius: 17 },
+  famousSiteGradient: { ...StyleSheet.absoluteFillObject },
+  famousSitePhotoCopy: { padding: spacing.md },
+  famousSitePlace: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' },
+  famousSiteName: { color: colors.white, fontFamily: fonts.display, fontSize: 29, fontWeight: '700', lineHeight: 34, marginTop: 4 },
+  famousSiteBody: { gap: spacing.md, padding: spacing.md },
+  famousSiteExperience: { color: colors.text, fontFamily: fonts.body, fontSize: 17, lineHeight: 25 },
+  famousSiteMetaRow: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
+  famousSiteMetaLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  famousSiteMetaText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 21, marginTop: 3 },
+  famousSiteMapButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.gold, borderRadius: 12, flexDirection: 'row', gap: 7, minHeight: 42, paddingHorizontal: 14 },
+  famousSiteMapText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 14, fontWeight: '900' },
+  famousSiteImageNote: { color: colors.dim, fontFamily: fonts.body, fontSize: 9 },
   districtFreshness: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, marginTop: spacing.sm, textAlign: 'right' },
   sectionHeader: { marginBottom: spacing.md, marginTop: spacing.xl },
   sectionLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8, marginBottom: spacing.xs, textTransform: 'uppercase' },
@@ -1574,8 +1961,8 @@ const styles = StyleSheet.create({
   rowBetween: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   offlineCard: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   offlineIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 15, height: 46, justifyContent: 'center', width: 46 },
-  cardTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 14, fontWeight: '900' },
-  cardText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  cardTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 20, fontWeight: '900' },
+  cardText: { color: colors.muted, fontFamily: fonts.body, fontSize: 18, lineHeight: 28, marginTop: 4 },
   packSize: { color: colors.dim, fontFamily: fonts.label, fontSize: 11, fontWeight: '800' },
   progressTrack: { backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 99, height: 7, marginTop: spacing.sm, overflow: 'hidden' },
   progressFill: { backgroundColor: colors.gold, borderRadius: 99, height: 7 },
@@ -1590,14 +1977,14 @@ const styles = StyleSheet.create({
   festivalName: { color: colors.white, fontFamily: fonts.display, fontSize: 27, fontWeight: '700', marginTop: 4 },
   festivalWhy: { color: 'rgba(255,255,255,0.72)', fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
   filterWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
-  filterChip: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, color: colors.muted, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800', overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 8 },
+  filterChip: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, color: colors.muted, fontFamily: fonts.accent, fontSize: 14, fontWeight: '800', overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 8 },
   discoverCard: { height: 260, justifyContent: 'flex-end', overflow: 'hidden' },
   discoverImage: { borderRadius: 18 },
   discoverCopy: { padding: spacing.md },
   discoverTag: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4, textTransform: 'uppercase' },
   discoverTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 30, fontWeight: '700', marginTop: 4 },
   discoverLocation: { color: 'rgba(255,255,255,0.66)', fontFamily: fonts.label, fontSize: 12, marginTop: 2 },
-  discoverSummary: { color: 'rgba(255,255,255,0.74)', fontFamily: fonts.body, fontSize: 13, lineHeight: 19, marginTop: 8 },
+  discoverSummary: { color: 'rgba(255,255,255,0.74)', fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 8 },
   discoverMeta: { color: colors.teal, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900', marginTop: 8 },
   alertCard: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   alertUrgent: { borderColor: 'rgba(255,93,108,0.35)' },
@@ -1605,7 +1992,7 @@ const styles = StyleSheet.create({
   alertStatus: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
   mapPanel: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: 'rgba(79,163,217,0.30)', borderRadius: 18, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', marginVertical: spacing.sm, padding: spacing.md },
   mapTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
-  mapText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, marginTop: 4 },
+  mapText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, marginTop: 4 },
   navigateButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 18, flexDirection: 'row', gap: 5, paddingHorizontal: 12, paddingVertical: 9 },
   navigateText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
   updateRow: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
@@ -1678,9 +2065,48 @@ const styles = StyleSheet.create({
   playButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 18, borderWidth: 1, height: 36, justifyContent: 'center', width: 36 },
   phraseCard: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   phraseNepali: { color: colors.goldLight, fontFamily: fonts.display, fontSize: 18, fontWeight: '700', minWidth: 86 },
-  phraseEnglish: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
-  phraseTip: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 2 },
+  phraseEnglish: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  phraseTip: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 2 },
   infoCard: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  priceChecker: { gap: spacing.md },
+  priceHeroCard: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderColor: 'rgba(245,166,35,0.32)', borderRadius: 18, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  priceHeroIcon: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 18, height: 48, justifyContent: 'center', width: 48 },
+  priceHeroTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 25, fontWeight: '700' },
+  priceHeroText: { color: colors.muted, fontFamily: fonts.body, fontSize: 18, lineHeight: 28, marginTop: 3 },
+  priceSearchBox: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 52, paddingHorizontal: 12 },
+  priceSearchInput: { color: colors.text, flex: 1, fontFamily: fonts.body, fontSize: 16, minHeight: 48, paddingVertical: 8 },
+  priceCategoryList: { gap: spacing.xs, paddingVertical: 2 },
+  priceCategoryChip: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, paddingHorizontal: 13, paddingVertical: 9 },
+  priceCategoryChipSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
+  priceCategoryText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
+  priceCategoryTextSelected: { color: '#1a0f00' },
+  priceCompareCard: { backgroundColor: colors.surface, borderColor: 'rgba(62,207,178,0.30)', borderRadius: 18, borderWidth: 1, gap: spacing.md, padding: spacing.md },
+  priceCompareHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
+  priceCompareLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
+  priceCompareItem: { color: colors.text, fontFamily: fonts.accent, fontSize: 20, fontWeight: '900', marginTop: 4 },
+  priceCompareRange: { color: colors.teal, fontFamily: fonts.display, fontSize: 24, fontWeight: '700', marginTop: 6 },
+  priceRiskBadge: { backgroundColor: 'rgba(62,207,178,0.12)', borderColor: 'rgba(62,207,178,0.35)', borderRadius: 12, borderWidth: 1, paddingHorizontal: 9, paddingVertical: 7 },
+  priceRiskMedium: { backgroundColor: 'rgba(245,166,35,0.12)', borderColor: 'rgba(245,166,35,0.35)' },
+  priceRiskHigh: { backgroundColor: 'rgba(255,93,108,0.12)', borderColor: 'rgba(255,93,108,0.38)' },
+  priceRiskText: { color: colors.text, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
+  priceQuoteRow: { alignItems: 'stretch', flexDirection: 'row', gap: spacing.sm },
+  priceQuoteInput: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 14, borderWidth: 1, color: colors.text, fontFamily: fonts.accent, fontSize: 18, minHeight: 64, paddingHorizontal: spacing.md, width: 140 },
+  priceVerdict: { backgroundColor: 'rgba(255,255,255,0.035)', borderRadius: 14, borderWidth: 1, flex: 1, justifyContent: 'center', padding: spacing.sm },
+  priceVerdictLabel: { fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
+  priceVerdictText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 3 },
+  pricePhraseLarge: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
+  priceTip: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
+  priceResultsHeader: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
+  priceResultsTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 24, fontWeight: '700' },
+  priceResultsDistrict: { color: colors.dim, fontFamily: fonts.body, fontSize: 12, textAlign: 'right' },
+  fairPriceRow: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  fairPriceIcon: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
+  fairPriceName: { color: colors.text, fontFamily: fonts.accent, fontSize: 19, fontWeight: '900' },
+  fairPriceMeta: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 12, fontWeight: '800', lineHeight: 14, marginTop: 3 },
+  fairPriceTip: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 5 },
+  fairPriceRangeBox: { alignItems: 'flex-end', minWidth: 96 },
+  fairPriceRange: { color: colors.teal, fontFamily: fonts.label, fontSize: 13, fontWeight: '900', textAlign: 'right' },
+  fairPriceUnit: { color: colors.dim, fontFamily: fonts.body, fontSize: 10, marginTop: 4, textAlign: 'right' },
   priceTool: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between', padding: spacing.md },
   priceToolItem: { color: colors.text, fontFamily: fonts.accent, fontSize: 14, fontWeight: '900' },
   priceToolNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4, maxWidth: 280 },
@@ -1703,8 +2129,8 @@ const styles = StyleSheet.create({
   cultureFactRow: { alignItems: 'flex-start', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
   cultureFactIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
   cultureFactTag: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', textTransform: 'uppercase' },
-  cultureFactTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900', marginTop: 2 },
-  cultureFactText: { color: colors.muted, fontFamily: fonts.body, fontSize: 10, lineHeight: 16, marginTop: 3 },
+  cultureFactTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 17, fontWeight: '900', marginTop: 2 },
+  cultureFactText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: 3 },
   localChat: { backgroundColor: colors.surface, borderColor: 'rgba(62,207,178,0.28)', borderRadius: 18, borderWidth: 1, gap: spacing.md, overflow: 'hidden', padding: spacing.md },
   guideHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   guideAvatar: { alignItems: 'center', backgroundColor: colors.terracotta, borderRadius: 21, height: 42, justifyContent: 'center', position: 'relative', width: 42 },
@@ -1760,8 +2186,8 @@ const styles = StyleSheet.create({
   sosPanel: { backgroundColor: 'rgba(255,93,108,0.10)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, borderWidth: 1, gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
   sosHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   sosIcon: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
-  sosTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 21, fontWeight: '700' },
-  sosText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  sosTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 32, fontWeight: '700' },
+  sosText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: 4 },
   refreshLocationButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 12, borderWidth: 1, height: 38, justifyContent: 'center', width: 38 },
   offlineBadgeWaiting: { borderColor: 'rgba(245,166,35,0.30)' },
   emptyContactsText: { color: colors.dim, fontFamily: fonts.body, fontSize: 11 },
@@ -1781,15 +2207,30 @@ const styles = StyleSheet.create({
   offlineBadgeText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   gpsFix: { alignItems: 'center', backgroundColor: 'rgba(7,6,15,0.46)', borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   gpsLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
-  gpsCoordinates: { color: colors.white, fontFamily: fonts.accent, fontSize: 17, fontWeight: '900', marginTop: 3 },
+  gpsCoordinates: { color: colors.white, fontFamily: fonts.accent, fontSize: 24, fontWeight: '900', marginTop: 3 },
   gpsArea: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, marginTop: 2 },
   sosRecipients: { gap: spacing.xs },
   recipientRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, minHeight: 30 },
-  recipientText: { color: colors.text, flex: 1, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
+  recipientText: { color: colors.text, flex: 1, fontFamily: fonts.accent, fontSize: 17, fontWeight: '800' },
   recipientStatus: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '800' },
   sosButton: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, flexDirection: 'row', gap: 8, justifyContent: 'center', minHeight: 48, paddingHorizontal: 16, paddingVertical: 12 },
   buttonPressed: { opacity: 0.78 },
   sosButtonText: { color: colors.white, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
-  policeCallButton: { alignItems: 'center', flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 38 },
-  policeCallText: { color: colors.danger, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' }
+  emergencyServices: { backgroundColor: 'rgba(7,6,15,0.36)', borderColor: colors.border, borderRadius: 16, borderWidth: 1, gap: spacing.xs, padding: spacing.sm },
+  emergencyServicesTitle: { color: colors.dim, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.3, marginBottom: 3 },
+  emergencyCallCard: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: 'rgba(255,93,108,0.22)', borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 64, padding: spacing.sm },
+  emergencyCallIcon: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
+  emergencyCallLabel: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  emergencyCallNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 2 },
+  emergencyCallNumber: { color: colors.danger, fontFamily: fonts.display, fontSize: 27, fontWeight: '700' },
+  emergencyAvailability: { color: colors.dim, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, paddingHorizontal: 3, paddingTop: 4 },
+  contentSourceNote: {
+    color: colors.muted,
+    fontFamily: fonts.body,
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: spacing.md,
+    marginTop: -spacing.xs
+  },
+
 });

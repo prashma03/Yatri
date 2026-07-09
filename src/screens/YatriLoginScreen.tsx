@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ImageBackground, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,8 @@ const loginImage =
   'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1400&q=80';
 
 export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLoginScreenProps) {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
   const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -120,40 +122,40 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
           colors={['rgba(7,6,15,0.45)', 'rgba(7,6,15,0.84)', colors.bg]}
           style={styles.gradient}
         />
-        <View style={styles.content}>
+        <View style={[styles.content, isDesktop && styles.contentDesktop]}>
           <View style={styles.logoWrap}>
             <YatriLogo />
           </View>
 
-          <View style={styles.heroCopy}>
-            <Text style={styles.eyebrow}>Offline Nepal companion</Text>
-            <Text style={styles.title}>{isSignUp ? 'Create your Yatri account.' : 'Sign in before the trail goes quiet.'}</Text>
-            <Text style={styles.subtitle}>
+          <View style={[styles.heroCopy, isDesktop && styles.heroCopyDesktop]}>
+            <Text style={[styles.eyebrow, isDesktop && styles.eyebrowDesktop]}>Offline Nepal companion</Text>
+            <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{isSignUp ? 'Create your Yatri account.' : 'Sign in before the trail goes quiet.'}</Text>
+            <Text style={[styles.subtitle, isDesktop && styles.subtitleDesktop]}>
               {isSignUp
                 ? 'Verify your email later to sync offline packs, saved trails, and emergency details across devices.'
                 : 'Keep saved phrases, fair prices, emergency contacts, and offline packs synced for your journey.'}
             </Text>
           </View>
 
-          <View style={styles.form}>
+          <View style={[styles.form, isDesktop && styles.formDesktop]}>
             <View style={styles.modeTabs}>
               <Pressable
                 style={[styles.modeTab, !isSignUp && styles.modeTabActive]}
                 onPress={() => changeMode('sign-in')}
               >
-                <Text style={[styles.modeTabText, !isSignUp && styles.modeTabTextActive]}>Sign in</Text>
+                <Text style={[styles.modeTabText, isDesktop && styles.modeTabTextDesktop, !isSignUp && styles.modeTabTextActive]}>Sign in</Text>
               </Pressable>
               <Pressable
                 style={[styles.modeTab, isSignUp && styles.modeTabActive]}
                 onPress={() => changeMode('sign-up')}
               >
-                <Text style={[styles.modeTabText, isSignUp && styles.modeTabTextActive]}>Sign up</Text>
+                <Text style={[styles.modeTabText, isDesktop && styles.modeTabTextDesktop, isSignUp && styles.modeTabTextActive]}>Sign up</Text>
               </Pressable>
             </View>
 
             {isSignUp && (
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Name</Text>
+                <Text style={[styles.label, isDesktop && styles.labelDesktop]}>Name</Text>
                 <View style={styles.inputShell}>
                   <Ionicons name="person-outline" size={18} color={colors.dim} />
                   <TextInput
@@ -161,7 +163,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
                     onChangeText={setName}
                     placeholder="Your name"
                     placeholderTextColor={colors.dim}
-                    style={styles.input}
+                    style={[styles.input, isDesktop && styles.inputDesktop]}
                     value={name}
                   />
                 </View>
@@ -169,7 +171,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={[styles.label, isDesktop && styles.labelDesktop]}>Email</Text>
               <View style={styles.inputShell}>
                 <Ionicons name="mail-outline" size={18} color={colors.dim} />
                 <TextInput
@@ -179,14 +181,14 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
                   onChangeText={setEmail}
                   placeholder="you@example.com"
                   placeholderTextColor={colors.dim}
-                  style={styles.input}
+                  style={[styles.input, isDesktop && styles.inputDesktop]}
                   value={email}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={[styles.label, isDesktop && styles.labelDesktop]}>Password</Text>
               <View style={styles.inputShell}>
                 <Ionicons name="lock-closed-outline" size={18} color={colors.dim} />
                 <TextInput
@@ -195,7 +197,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
                   placeholder="At least 8 characters"
                   placeholderTextColor={colors.dim}
                   secureTextEntry={!showPassword}
-                  style={styles.input}
+                  style={[styles.input, isDesktop && styles.inputDesktop]}
                   value={password}
                 />
                 <Pressable onPress={() => setShowPassword((current) => !current)} accessibilityLabel="Toggle password visibility">
@@ -207,10 +209,10 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
             <View style={styles.formRow}>
               <View style={styles.remember}>
                 <Ionicons name="shield-checkmark-outline" size={18} color={colors.teal} />
-                <Text style={styles.rememberText}>Secure session</Text>
+                <Text style={[styles.rememberText, isDesktop && styles.rememberTextDesktop]}>Secure session</Text>
               </View>
               <Pressable disabled={loading} onPress={handleForgotPassword}>
-                <Text style={styles.linkText}>Forgot?</Text>
+                <Text style={[styles.linkText, isDesktop && styles.linkTextDesktop]}>Forgot?</Text>
               </Pressable>
             </View>
 
@@ -221,7 +223,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
                   size={18}
                   color={message.kind === 'error' ? colors.danger : colors.teal}
                 />
-                <Text style={styles.messageText}>{message.text}</Text>
+                <Text style={[styles.messageText, isDesktop && styles.messageTextDesktop]}>{message.text}</Text>
               </View>
             )}
 
@@ -236,10 +238,10 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
 
             <Pressable disabled={loading} style={styles.secondaryButton} onPress={onGuestContinue}>
               <Ionicons name="compass-outline" size={18} color={colors.text} />
-              <Text style={styles.secondaryText}>Continue as guest</Text>
+              <Text style={[styles.secondaryText, isDesktop && styles.secondaryTextDesktop]}>Continue as guest</Text>
             </Pressable>
 
-            <Text style={styles.terms}>
+            <Text style={[styles.terms, isDesktop && styles.termsDesktop]}>
               {isSignUp
                 ? 'By creating an account, you agree to secure email verification and session storage.'
                 : 'New to Yatri? Tap Sign up to create an account and verify your email.'}
@@ -271,6 +273,21 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingBottom: spacing.lg
   },
+  contentDesktop: { alignItems: 'center', flexDirection: 'row', gap: 56, justifyContent: 'center', paddingHorizontal: 64 },
+  heroCopyDesktop: { flex: 1, marginTop: 0, maxWidth: 680, paddingBottom: 0 },
+  eyebrowDesktop: { fontSize: 14, letterSpacing: 2.6 },
+  titleDesktop: { fontSize: 68, lineHeight: 74, maxWidth: 680 },
+  subtitleDesktop: { fontSize: 21, lineHeight: 33, maxWidth: 620 },
+  formDesktop: { maxWidth: 520, padding: 28, width: 520 },
+  modeTabTextDesktop: { fontSize: 16 },
+  labelDesktop: { fontSize: 13 },
+  inputDesktop: { fontSize: 18, minHeight: 54 },
+  rememberTextDesktop: { fontSize: 16 },
+  linkTextDesktop: { fontSize: 16 },
+  messageTextDesktop: { fontSize: 15, lineHeight: 22 },
+  primaryTextDesktop: { fontSize: 18 },
+  secondaryTextDesktop: { fontSize: 17 },
+  termsDesktop: { fontSize: 14, lineHeight: 21 },
   logoWrap: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(7,6,15,0.76)',
