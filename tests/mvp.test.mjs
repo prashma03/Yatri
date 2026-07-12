@@ -11,6 +11,17 @@ test('report trust states and row-level security are present', () => {
   assert.match(schema, /enable row level security/);
   assert.match(schema, /reports authenticated insert/);
   assert.match(schema, /reports moderator update/);
+  assert.match(schema, /moderated_at/);
+  assert.match(schema, /moderated_by/);
+  assert.match(schema, /moderation_note is null and moderated_at is null and moderated_by is null/);
+});
+
+test('report abuse flags are protected for policing workflow', () => {
+  assert.match(schema, /create table if not exists public.report_flags/);
+  assert.match(schema, /report_flags enable row level security/);
+  assert.match(schema, /flags own insert/);
+  assert.match(schema, /flags own read or moderator/);
+  assert.match(schema, /flags moderator delete/);
 });
 
 test('only foreground location is configured', () => {

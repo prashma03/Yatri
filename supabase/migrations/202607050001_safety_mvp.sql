@@ -21,6 +21,8 @@ create table if not exists public.scam_reports (
   photo_path text,
   verification_status text not null default 'community' check (verification_status in ('community', 'verified', 'rejected')),
   moderation_note text,
+  moderated_at timestamptz,
+  moderated_by uuid references auth.users(id) on delete set null,
   vote_count integer not null default 0 check (vote_count >= 0),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -28,6 +30,8 @@ create table if not exists public.scam_reports (
 
 create index if not exists scam_reports_nearby_idx on public.scam_reports (created_at desc, category);
 create index if not exists scam_reports_coordinates_idx on public.scam_reports (latitude, longitude);
+alter table public.scam_reports add column if not exists moderated_at timestamptz;
+alter table public.scam_reports add column if not exists moderated_by uuid references auth.users(id) on delete set null;
 
 create table if not exists public.report_votes (
   report_id uuid not null references public.scam_reports(id) on delete cascade,
@@ -35,6 +39,16 @@ create table if not exists public.report_votes (
   created_at timestamptz not null default now(),
   primary key (report_id, user_id)
 );
+
+create table if not exists public.report_flags (
+  report_id uuid not null references public.scam_reports(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  reason text not null default 'misleading_or_abusive' check (reason in ('misleading_or_abusive', 'duplicate', 'private_information', 'spam')),
+  details text check (details is null or char_length(details) <= 500),
+  created_at timestamptz not null default now(),
+  primary key (report_id, user_id)
+);
+create index if not exists report_flags_report_idx on public.report_flags (report_id, created_at desc);
 
 create table if not exists public.saved_districts (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -92,6 +106,7 @@ create trigger on_auth_user_created after insert on auth.users for each row exec
 alter table public.profiles enable row level security;
 alter table public.scam_reports enable row level security;
 alter table public.report_votes enable row level security;
+alter table public.report_flags enable row level security;
 alter table public.saved_districts enable row level security;
 alter table public.trusted_contacts enable row level security;
 alter table public.content_items enable row level security;
@@ -100,11 +115,15 @@ create policy "profiles own read" on public.profiles for select using (id = auth
 create policy "profiles own update" on public.profiles for update using (id = auth.uid()) with check (id = auth.uid() and role = (select role from public.profiles where id = auth.uid()));
 create policy "reports public safety read" on public.scam_reports for select using (verification_status <> 'rejected');
 create policy "reports authenticated insert" on public.scam_reports for insert to authenticated with check (reporter_id = auth.uid() and verification_status = 'community');
-create policy "reports owner update pending" on public.scam_reports for update to authenticated using (reporter_id = auth.uid() and verification_status = 'community') with check (reporter_id = auth.uid() and verification_status = 'community');
+create policy "reports owner update pending" on public.scam_reports for update to authenticated using (reporter_id = auth.uid() and verification_status = 'community') with check (reporter_id = auth.uid() and verification_status = 'community' and moderation_note is null and moderated_at is null and moderated_by is null);
 create policy "reports moderator update" on public.scam_reports for update to authenticated using (public.is_moderator()) with check (public.is_moderator());
 create policy "votes public read" on public.report_votes for select using (true);
 create policy "votes own insert" on public.report_votes for insert to authenticated with check (user_id = auth.uid());
 create policy "votes own delete" on public.report_votes for delete to authenticated using (user_id = auth.uid());
+create policy "flags own read or moderator" on public.report_flags for select to authenticated using (user_id = auth.uid() or public.is_moderator());
+create policy "flags own insert" on public.report_flags for insert to authenticated with check (user_id = auth.uid());
+create policy "flags own update" on public.report_flags for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "flags moderator delete" on public.report_flags for delete to authenticated using (public.is_moderator());
 create policy "saved districts own all" on public.saved_districts for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "contacts own all" on public.trusted_contacts for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "published content read" on public.content_items for select using (published or public.is_moderator());

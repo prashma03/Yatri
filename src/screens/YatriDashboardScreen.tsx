@@ -10,6 +10,7 @@ import { loadTravelPreferences } from '../auth/localSession';
 import { formatCoordinates, formatLocationAge, getForegroundLocation, getSavedLocation, type SavedLocation } from '../services/location';
 import {
   deleteCurrentAccount,
+  flagSafetyReport,
   getCurrentRole,
   getSavedDistrictPacks,
   listPendingReports,
@@ -1185,6 +1186,15 @@ function ScamAlertMap() {
     }
   };
 
+  const flagReport = async (reportId: string) => {
+    try {
+      await flagSafetyReport(reportId);
+      Alert.alert('Report flagged', 'Thanks. A moderator will review this community report.');
+    } catch (error) {
+      Alert.alert('Could not flag report', error instanceof Error ? error.message : 'Please try again.');
+    }
+  };
+
   return (
     <>
       <View style={styles.scamMap}>
@@ -1234,10 +1244,16 @@ function ScamAlertMap() {
                 </View>
                 <Text style={styles.scamAlertLocation}>{report.district ?? 'Nearby'} · {formatLocationAge(new Date(report.created_at).getTime())}</Text>
                 <Text style={styles.cardText}>{report.description}</Text>
-                <Pressable accessibilityRole="button" onPress={() => confirmReport(report.id)} style={styles.confirmReportButton}>
-                  <Ionicons name="checkmark-circle-outline" size={15} color={colors.teal} />
-                  <Text style={styles.confirmReportText}>I saw this too · {report.vote_count}</Text>
-                </Pressable>
+                <View style={styles.reportActionRow}>
+                  <Pressable accessibilityRole="button" onPress={() => confirmReport(report.id)} style={styles.confirmReportButton}>
+                    <Ionicons name="checkmark-circle-outline" size={15} color={colors.teal} />
+                    <Text style={styles.confirmReportText}>I saw this too · {report.vote_count}</Text>
+                  </Pressable>
+                  <Pressable accessibilityRole="button" onPress={() => flagReport(report.id)} style={styles.confirmReportButton}>
+                    <Ionicons name="flag-outline" size={15} color={colors.danger} />
+                    <Text style={styles.flagReportText}>Flag</Text>
+                  </Pressable>
+                </View>
               </View>
             </View>
           );
@@ -1319,11 +1335,14 @@ function ModerationPanel() {
       <Text style={styles.moderationNotice}>Verification means a moderator checked available evidence. It does not guarantee every detail.</Text>
       <TextInput maxLength={500} onChangeText={setNote} placeholder="Optional moderation note" placeholderTextColor={colors.dim} style={styles.contactInput} value={note} />
       <View style={styles.stack}>
-        {reports.length ? reports.map((report) => (
+        {reports.length ? reports.map((report) => {
+          const flagCount = report.report_flags?.length ?? 0;
+          return (
           <View key={report.id} style={styles.scamAlertRow}>
             <View style={styles.flex}>
               <Text style={styles.scamAlertTitle}>{report.category.replace(/_/g, ' ')}</Text>
               <Text style={styles.scamAlertLocation}>{formatCoordinates({ latitude: report.latitude, longitude: report.longitude, accuracy: null, timestamp: new Date(report.created_at).getTime() })}</Text>
+              {flagCount > 0 && <Text style={styles.moderationFlagText}>{flagCount} traveler flag{flagCount === 1 ? '' : 's'} for moderator review</Text>}
               <Text style={styles.cardText}>{report.description}</Text>
               <View style={styles.moderationActions}>
                 <Pressable onPress={() => decide(report.id, 'verified')} style={styles.verifyButton}><Text style={styles.verifyButtonText}>Verify</Text></Pressable>
@@ -1331,7 +1350,8 @@ function ModerationPanel() {
               </View>
             </View>
           </View>
-        )) : <Text style={styles.reportStatusText}>No reports waiting for review.</Text>}
+        );
+        }) : <Text style={styles.reportStatusText}>No reports waiting for review.</Text>}
       </View>
     </>
   );
@@ -2028,6 +2048,7 @@ const styles = StyleSheet.create({
   scamAlertLocation: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 10, fontWeight: '800', marginTop: 3 },
   moderationNotice: { backgroundColor: 'rgba(62,207,178,0.10)', borderColor: 'rgba(62,207,178,0.30)', borderRadius: 12, borderWidth: 1, color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginBottom: spacing.md, padding: spacing.sm },
   moderationActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  moderationFlagText: { color: colors.danger, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', marginTop: 5 },
   verifyButton: { backgroundColor: colors.teal, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
   verifyButtonText: { color: '#07130f', fontFamily: fonts.accent, fontSize: 10, fontWeight: '900' },
   rejectButton: { borderColor: colors.danger, borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
@@ -2035,8 +2056,10 @@ const styles = StyleSheet.create({
   reportStatusText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 17, marginBottom: spacing.sm },
   reportTrustBadge: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginLeft: spacing.sm },
   reportTrustBadgeVerified: { color: colors.teal },
-  confirmReportButton: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 5, marginTop: spacing.sm },
+  reportActionRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.sm },
+  confirmReportButton: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 5 },
   confirmReportText: { color: colors.teal, fontFamily: fonts.accent, fontSize: 10, fontWeight: '800' },
+  flagReportText: { color: colors.danger, fontFamily: fonts.accent, fontSize: 10, fontWeight: '800' },
   scamDescriptionInput: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 12, borderWidth: 1, color: colors.text, fontFamily: fonts.body, fontSize: 12, minHeight: 96, padding: spacing.sm, textAlignVertical: 'top' },
   reportPhotoButton: { alignItems: 'center', alignSelf: 'flex-start', borderColor: colors.border, borderRadius: 11, borderWidth: 1, flexDirection: 'row', gap: 7, paddingHorizontal: 10, paddingVertical: 8 },
   reportPhotoText: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 10, fontWeight: '800' },

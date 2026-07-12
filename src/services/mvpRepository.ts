@@ -17,8 +17,12 @@ export type SafetyReport = {
   district: string | null;
   photo_path: string | null;
   verification_status: ReportStatus;
+  moderation_note?: string | null;
+  moderated_at?: string | null;
+  moderated_by?: string | null;
   vote_count: number;
   created_at: string;
+  report_flags?: { reason: string; details: string | null; created_at: string }[];
 };
 
 export type NewSafetyReport = {
@@ -156,6 +160,17 @@ export async function voteForReport(reportId: string) {
   if (error) throw error;
 }
 
+export async function flagSafetyReport(reportId: string, reason = 'misleading_or_abusive') {
+  if (!supabase) throw new Error('Supabase is not configured.');
+  const userId = await currentUserId();
+  if (!userId) throw new Error('Sign in to flag a community report.');
+  if (!(await isOnline())) throw new Error('Flag reports when you are back online.');
+  const { error } = await supabase
+    .from('report_flags')
+    .upsert({ report_id: reportId, user_id: userId, reason });
+  if (error) throw error;
+}
+
 export async function saveDistrictPack(district: string, payload: unknown) {
   const packs = await readJson<Record<string, { savedAt: string; payload: unknown }>>(PACKS_KEY, {});
   packs[district] = { savedAt: new Date().toISOString(), payload };
@@ -213,14 +228,24 @@ export async function getCurrentRole() {
 
 export async function listPendingReports() {
   if (!supabase) return [] as SafetyReport[];
-  const { data, error } = await supabase.from('scam_reports').select('*').eq('verification_status', 'community').order('created_at', { ascending: false });
+  const { data, error } = await supabase
+    .from('scam_reports')
+    .select('*, report_flags(reason, details, created_at)')
+    .eq('verification_status', 'community')
+    .order('created_at', { ascending: false });
   if (error) throw error;
   return data as SafetyReport[];
 }
 
 export async function moderateReport(reportId: string, status: 'verified' | 'rejected', note: string) {
   if (!supabase) throw new Error('Supabase is not configured.');
-  const { error } = await supabase.from('scam_reports').update({ verification_status: status, moderation_note: note.trim() || null }).eq('id', reportId);
+  const userId = await currentUserId();
+  const { error } = await supabase.from('scam_reports').update({
+    verification_status: status,
+    moderation_note: note.trim() || null,
+    moderated_at: new Date().toISOString(),
+    moderated_by: userId
+  }).eq('id', reportId);
   if (error) throw error;
 }
 
