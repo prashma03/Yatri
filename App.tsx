@@ -69,6 +69,10 @@ export default function App() {
 
   function handleGuestContinue() {
     setShowGuestPrompt(true);
+    if (!hasCompletedTravelPreferences()) {
+      setStage('preferences');
+      return;
+    }
     proceedAfterPreferences();
   }
 
@@ -122,7 +126,7 @@ export default function App() {
         <View style={styles.modalBackdrop}>
           <View style={styles.guestPrompt}>
             <Text style={styles.guestEyebrow}>Guest mode</Text>
-            <Text style={styles.guestTitle}>Sign in to unlock Yatri’s best features.</Text>
+            <Text style={styles.guestTitle}>Sign in to unlock Yatri's best features.</Text>
             <Text style={styles.guestText}>
               Keep exploring now, or sign in to sync saved districts, submit safety reports, confirm community alerts, and keep your emergency contacts with your account.
             </Text>
