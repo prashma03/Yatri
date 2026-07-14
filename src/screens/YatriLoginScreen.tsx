@@ -128,7 +128,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
           </View>
 
           <View style={[styles.heroCopy, isDesktop && styles.heroCopyDesktop]}>
-            <Text style={[styles.eyebrow, isDesktop && styles.eyebrowDesktop]}>Offline Nepal companion</Text>
+            <Text style={[styles.eyebrow, isDesktop && styles.eyebrowDesktop]}>Explore Nepal with confidence</Text>
             <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{isSignUp ? 'Create your Yatri account.' : 'Sign in before the trail goes quiet.'}</Text>
             <Text style={[styles.subtitle, isDesktop && styles.subtitleDesktop]}>
               {isSignUp

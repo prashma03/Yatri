@@ -6,7 +6,7 @@ import * as SMS from 'expo-sms';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { YatriLogo } from '../components/YatriLogo';
-import { loadTravelPreferences } from '../auth/localSession';
+import { loadTravelPreferences, type TravelerPreferences } from '../auth/localSession';
 import { formatCoordinates, formatLocationAge, getForegroundLocation, getSavedLocation, type SavedLocation } from '../services/location';
 import {
   deleteCurrentAccount,
@@ -92,6 +92,133 @@ const dashboardPages: { id: DashboardPage; label: string; icon: IconName; active
   { id: 'prices', label: 'Prices', icon: 'pricetag-outline', activeIcon: 'pricetag' }
 ];
 
+type PersonalizedAction = {
+  label: string;
+  page: DashboardPage;
+  icon: IconName;
+  priceFocus?: 'fair' | 'rides';
+};
+
+type PersonalizedPlan = {
+  label: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  cards: { icon: IconName; title: string; body: string; accent: string }[];
+  actions: PersonalizedAction[];
+};
+
+function getRecommendedMode(preferences: TravelerPreferences | null): TravelMode {
+  if (
+    preferences?.travelStyle === 'culture' ||
+    preferences?.interests.includes('heritage') ||
+    preferences?.interests.includes('festivals') ||
+    preferences?.interests.includes('food')
+  ) {
+    return 'culture';
+  }
+
+  return 'adventure';
+}
+
+function getPersonalizedPlan(preferences: TravelerPreferences | null): PersonalizedPlan {
+  const interests = preferences?.interests ?? [];
+  const wantsFood = interests.includes('food');
+  const wantsCulture = preferences?.travelStyle === 'culture' || interests.includes('heritage') || interests.includes('festivals');
+  const wantsNature = preferences?.travelStyle === 'nature' || interests.includes('trekking') || interests.includes('wildlife');
+  const wantsWellness = interests.includes('wellness');
+  const paceLabel = preferences?.pace === 'relaxed' ? 'slow days' : preferences?.pace === 'active' ? 'full days' : 'flexible days';
+
+  if (wantsFood && wantsCulture) {
+    return {
+      label: 'Built from your choices',
+      title: 'Local culture + food path',
+      summary: `Yatri will prioritize neighborhood food, respectful local encounters, phrase help, and fair prices for ${paceLabel}.`,
+      tags: ['Local people', 'Local food', paceLabel],
+      cards: [
+        { icon: 'restaurant-outline', title: 'Eat where locals eat', body: 'Start with momo, dal bhat, milk tea, and regional dishes before tourist restaurants.', accent: colors.gold },
+        { icon: 'people-outline', title: 'Meet respectfully', body: 'Use etiquette cards and simple Nepali phrases before temples, markets, and family-run places.', accent: colors.teal },
+        { icon: 'pricetag-outline', title: 'Avoid tourist markup', body: 'Food and taxi price checks are moved closer so you can compare before paying.', accent: colors.mountainBlue }
+      ],
+      actions: [
+        { label: 'Open local guide', page: 'local', icon: 'people-outline' },
+        { label: 'Check food prices', page: 'prices', icon: 'restaurant-outline', priceFocus: 'fair' },
+        { label: 'Find districts', page: 'explore', icon: 'compass-outline' }
+      ]
+    };
+  }
+
+  if (wantsFood) {
+    return {
+      label: 'Food-first Yatri',
+      title: 'Taste Nepal with confidence',
+      summary: `Yatri will surface regional food, ordering phrases, and fair meal prices for ${paceLabel}.`,
+      tags: ['Local food', 'Fair prices', paceLabel],
+      cards: [
+        { icon: 'restaurant-outline', title: 'Regional food decoder', body: 'See what to order, what flavors to expect, and what to ask for.', accent: colors.gold },
+        { icon: 'chatbubbles-outline', title: 'Ordering phrases', body: 'Keep simple Nepali phrases ready for tea shops, markets, and local restaurants.', accent: colors.teal },
+        { icon: 'calculator-outline', title: 'Meal price checks', body: 'Compare momo, dal bhat, bottled water, and tea against local ranges.', accent: colors.mountainBlue }
+      ],
+      actions: [
+        { label: 'Open food guide', page: 'local', icon: 'restaurant-outline' },
+        { label: 'Check meal prices', page: 'prices', icon: 'calculator-outline', priceFocus: 'fair' }
+      ]
+    };
+  }
+
+  if (wantsCulture) {
+    return {
+      label: 'Culture-aware Yatri',
+      title: 'Move through local spaces respectfully',
+      summary: `Yatri will emphasize festivals, temple etiquette, heritage walks, and useful phrases for ${paceLabel}.`,
+      tags: ['Heritage', 'Festivals', paceLabel],
+      cards: [
+        { icon: 'sparkles-outline', title: 'Festival context', body: 'Understand what is happening nearby before entering crowded celebration areas.', accent: colors.gold },
+        { icon: 'footsteps-outline', title: 'Etiquette first', body: 'Know when to remove shoes, walk clockwise, and ask before photos.', accent: colors.teal },
+        { icon: 'chatbubbles-outline', title: 'Phrase help', body: 'Use quick Nepali phrases to make small interactions warmer.', accent: colors.mountainBlue }
+      ],
+      actions: [
+        { label: 'Open culture guide', page: 'local', icon: 'people-outline' },
+        { label: 'Explore festivals', page: 'explore', icon: 'sparkles-outline' }
+      ]
+    };
+  }
+
+  if (wantsNature || wantsWellness) {
+    return {
+      label: 'Nature-aware Yatri',
+      title: wantsWellness ? 'A calmer Nepal rhythm' : 'Adventure without guessing',
+      summary: `Yatri will emphasize route conditions, safety check-ins, quiet places, and offline packs for ${paceLabel}.`,
+      tags: [wantsWellness ? 'Wellness' : 'Nature', 'Safety', paceLabel],
+      cards: [
+        { icon: 'trail-sign-outline', title: 'Route readiness', body: 'Trail alerts and saved maps stay close before you leave town.', accent: colors.mountainBlue },
+        { icon: 'pulse-outline', title: 'Health check-ins', body: 'Altitude and safety tools stay one tap away during longer travel days.', accent: colors.danger },
+        { icon: 'leaf-outline', title: 'Quiet discovery', body: 'Nature picks and slower places move higher in Explore.', accent: colors.forest }
+      ],
+      actions: [
+        { label: 'Open safety tools', page: 'safety', icon: 'shield-outline' },
+        { label: 'Explore nature', page: 'explore', icon: 'leaf-outline' }
+      ]
+    };
+  }
+
+  return {
+    label: 'Personalize Yatri',
+    title: 'Tell Yatri what kind of Nepal you want',
+    summary: 'Choose food, culture, nature, safety, or pace preferences so the dashboard reshapes around your trip.',
+    tags: ['Food', 'Culture', 'Safety'],
+    cards: [
+      { icon: 'restaurant-outline', title: 'Food', body: 'Regional dishes, ordering tips, and meal price checks.', accent: colors.gold },
+      { icon: 'people-outline', title: 'Culture', body: 'Etiquette, phrases, festivals, and local context.', accent: colors.teal },
+      { icon: 'shield-outline', title: 'Safety', body: 'Alerts, SOS, fair prices, and scam reports.', accent: colors.danger }
+    ],
+    actions: [
+      { label: 'Explore local tools', page: 'local', icon: 'people-outline' },
+      { label: 'Open safety', page: 'safety', icon: 'shield-outline' }
+    ]
+  };
+}
+
 export function YatriDashboardScreen({
   onSignOut,
   userEmail
@@ -103,9 +230,8 @@ export function YatriDashboardScreen({
   const isTablet = width >= 720;
   const isDesktop = width >= 1024;
   const savedPreferences = loadTravelPreferences();
-  const recommendedMode: TravelMode = savedPreferences?.travelStyle === 'culture' || savedPreferences?.interests.includes('heritage') || savedPreferences?.interests.includes('festivals')
-    ? 'culture'
-    : 'adventure';
+  const recommendedMode = getRecommendedMode(savedPreferences);
+  const personalizedPlan = getPersonalizedPlan(savedPreferences);
   const [activeMode, setActiveMode] = useState<TravelMode>(recommendedMode);
   const active = modeConfig[activeMode];
   const [currentPage, setCurrentPage] = useState<DashboardPage>('home');
@@ -164,6 +290,11 @@ export function YatriDashboardScreen({
 
     setPriceFocus('fair');
     setCurrentPage('prices');
+  };
+
+  const handlePersonalizedAction = (action: PersonalizedAction) => {
+    if (action.priceFocus) setPriceFocus(action.priceFocus);
+    setCurrentPage(action.page);
   };
 
   const openTrailNavigation = () => {
@@ -240,8 +371,8 @@ export function YatriDashboardScreen({
               </View>
               <View style={styles.heroCopy}>
                 <Text style={[styles.modeBadge, { color: active.secondary }]}>{active.label}</Text>
-                <Text style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}>Yatri helps you move through Nepal with confidence.</Text>
-                <Text style={[styles.heroText, isDesktop && styles.heroTextDesktop]}>{active.summary}</Text>
+                <Text style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}>{personalizedPlan.title}</Text>
+                <Text style={[styles.heroText, isDesktop && styles.heroTextDesktop]}>{personalizedPlan.summary}</Text>
               </View>
             </ImageBackground>
 
@@ -269,6 +400,8 @@ export function YatriDashboardScreen({
                 </Pressable>
               ))}
             </View>
+
+            <PersonalizedForYou plan={personalizedPlan} onAction={handlePersonalizedAction} />
 
             {connectivity === 'online' ? (
               <>
@@ -366,8 +499,24 @@ export function YatriDashboardScreen({
         {currentPage === 'local' && (
           <>
             <PageHeading eyebrow="Local" title="Ask, speak, and spend confidently" />
-            <SectionHeader label="Know Nepal" title="Culture bites and useful phrases" />
-            <CultureBites />
+            {savedPreferences?.interests.includes('food') && (
+              <>
+                <SectionHeader label="Taste Nepal" title="Regional food decoder" />
+                <View style={styles.foodGrid}>
+                  {foodCards.map((food) => (
+                    <View key={food.dish} style={styles.foodCard}>
+                      <Text style={styles.foodRegion}>{food.region}</Text>
+                      <Text style={styles.foodDish}>{food.dish}</Text>
+                      <Text style={styles.foodText}>{food.flavors}</Text>
+                      <Text style={styles.foodTip}>{food.orderTip}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            <SectionHeader label="Know Nepal" title={savedPreferences?.interests.includes('food') ? 'Phrases for ordering and meeting people' : 'Culture bites and useful phrases'} />
+            <CultureBites initialView={savedPreferences?.interests.includes('food') ? 'phrases' : 'facts'} />
 
             <SectionHeader label="Respectful travel" title="Everyday etiquette" />
             <View style={styles.namasteCard}>
@@ -386,17 +535,21 @@ export function YatriDashboardScreen({
               ))}
             </View>
 
-            <SectionHeader label="Taste Nepal" title="Regional food decoder" />
-            <View style={styles.foodGrid}>
-              {foodCards.map((food) => (
-                <View key={food.dish} style={styles.foodCard}>
-                  <Text style={styles.foodRegion}>{food.region}</Text>
-                  <Text style={styles.foodDish}>{food.dish}</Text>
-                  <Text style={styles.foodText}>{food.flavors}</Text>
-                  <Text style={styles.foodTip}>{food.orderTip}</Text>
+            {!savedPreferences?.interests.includes('food') && (
+              <>
+                <SectionHeader label="Taste Nepal" title="Regional food decoder" />
+                <View style={styles.foodGrid}>
+                  {foodCards.map((food) => (
+                    <View key={food.dish} style={styles.foodCard}>
+                      <Text style={styles.foodRegion}>{food.region}</Text>
+                      <Text style={styles.foodDish}>{food.dish}</Text>
+                      <Text style={styles.foodText}>{food.flavors}</Text>
+                      <Text style={styles.foodTip}>{food.orderTip}</Text>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
+              </>
+            )}
           </>
         )}
 
@@ -1077,6 +1230,56 @@ function DiscoverCard({ item }: { item: DiscoverItem }) {
   );
 }
 
+function PersonalizedForYou({
+  onAction,
+  plan
+}: {
+  onAction: (action: PersonalizedAction) => void;
+  plan: PersonalizedPlan;
+}) {
+  return (
+    <View style={styles.personalizedPanel}>
+      <View style={styles.personalizedHeader}>
+        <View style={styles.personalizedIcon}>
+          <Ionicons name="sparkles-outline" size={22} color={colors.goldLight} />
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.personalizedLabel}>{plan.label}</Text>
+          <Text style={styles.personalizedTitle}>{plan.title}</Text>
+          <Text style={styles.personalizedSummary}>{plan.summary}</Text>
+        </View>
+      </View>
+
+      <View style={styles.personalizedTagRow}>
+        {plan.tags.map((tag) => (
+          <Text key={tag} style={styles.personalizedTag}>{tag}</Text>
+        ))}
+      </View>
+
+      <View style={styles.personalizedCardGrid}>
+        {plan.cards.map((card) => (
+          <View key={card.title} style={styles.personalizedCard}>
+            <View style={[styles.personalizedCardIcon, { backgroundColor: `${card.accent}24` }]}>
+              <Ionicons name={card.icon} size={20} color={card.accent} />
+            </View>
+            <Text style={styles.personalizedCardTitle}>{card.title}</Text>
+            <Text style={styles.personalizedCardBody}>{card.body}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.personalizedActions}>
+        {plan.actions.map((action) => (
+          <Pressable accessibilityRole="button" key={action.label} onPress={() => onAction(action)} style={styles.personalizedActionButton}>
+            <Ionicons name={action.icon} size={17} color="#1a0f00" />
+            <Text style={styles.personalizedActionText}>{action.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function AlertCard({ alert }: { alert: { title: string; location: string; status: string; detail: string; icon: IconName; urgent?: boolean } }) {
   return (
     <View style={[styles.alertCard, alert.urgent && styles.alertUrgent]}>
@@ -1357,8 +1560,8 @@ function ModerationPanel() {
   );
 }
 
-function CultureBites() {
-  const [view, setView] = useState<'facts' | 'phrases'>('facts');
+function CultureBites({ initialView = 'facts' }: { initialView?: 'facts' | 'phrases' }) {
+  const [view, setView] = useState<'facts' | 'phrases'>(initialView);
 
   return (
     <View style={styles.cultureBites}>
@@ -1868,6 +2071,22 @@ const styles = StyleSheet.create({
   quickIcon: { alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', marginBottom: spacing.sm, width: 44 },
   quickTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
   quickSub: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, marginTop: 4, textAlign: 'center' },
+  personalizedPanel: { backgroundColor: 'rgba(62,207,178,0.08)', borderColor: 'rgba(62,207,178,0.28)', borderRadius: 22, borderWidth: 1, gap: spacing.md, marginTop: spacing.lg, overflow: 'hidden', padding: spacing.lg },
+  personalizedHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md },
+  personalizedIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.14)', borderRadius: 18, height: 52, justifyContent: 'center', width: 52 },
+  personalizedLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 1.7, textTransform: 'uppercase' },
+  personalizedTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 36, fontWeight: '700', lineHeight: 42, marginTop: 4 },
+  personalizedSummary: { color: colors.muted, fontFamily: fonts.body, fontSize: 17, lineHeight: 26, marginTop: spacing.xs, maxWidth: 880 },
+  personalizedTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  personalizedTag: { backgroundColor: 'rgba(245,166,35,0.12)', borderColor: 'rgba(245,166,35,0.28)', borderRadius: 999, borderWidth: 1, color: colors.goldLight, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 7, textTransform: 'uppercase' },
+  personalizedCardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  personalizedCard: { backgroundColor: 'rgba(7,6,15,0.42)', borderColor: colors.border, borderRadius: 16, borderWidth: 1, flex: 1, minWidth: 220, padding: spacing.md },
+  personalizedCardIcon: { alignItems: 'center', borderRadius: 14, height: 42, justifyContent: 'center', marginBottom: spacing.sm, width: 42 },
+  personalizedCardTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  personalizedCardBody: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: 5 },
+  personalizedActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  personalizedActionButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 14, flexDirection: 'row', gap: 7, minHeight: 46, paddingHorizontal: 14 },
+  personalizedActionText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   connectivityBar: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md, padding: 6, paddingLeft: 12 },
   connectivityCopy: { alignItems: 'center', flexDirection: 'row', gap: 7 },
   connectivityDot: { borderRadius: 5, height: 9, width: 9 },
