@@ -17,7 +17,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#07060f"
+        "foregroundImage": "./assets/yatri-adaptive-icon.png",
+        "backgroundColor": "#f7efd8"
       },
       "permissions": [
         "ACCESS_COARSE_LOCATION",
@@ -25,7 +26,8 @@
       ]
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/yatri-icon.png"
     },
     "plugins": [
       [
@@ -44,6 +46,7 @@
           "microphonePermission": false
         }
       ]
-    ]
+    ],
+    "icon": "./assets/yatri-icon.png"
   }
 }

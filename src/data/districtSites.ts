@@ -293,12 +293,42 @@ export const districtSites: DistrictSite[] = [
   {
     "district": "Jhapa",
     "name": "Kichakbadh",
-    "place": "Jhapa, Nepal",
-    "experience": "Discover Kichakbadh, one of Jhapa's best-known cultural or natural attractions. Use the map link for directions and confirm local access before setting out.",
-    "bestTime": "Clear mornings in the main October–May travel season",
-    "respect": "Ask before photographing people or ceremonies, follow local signs, and leave no litter.",
-    "image": "https://images.unsplash.com/photo-1518002054494-3a6f94352e9d?auto=format&fit=crop&w=1000&q=82",
-    "imageNote": "Representative Nepal travel photo"
+    "place": "Bhadrapur area, Jhapa",
+    "experience": "Visit the Kichakbadh archaeological and cultural site tied to local Mahabharata-era storytelling. Go with daylight, confirm access locally, and pair it with nearby tea-town stops if you have a full day.",
+    "bestTime": "Morning or late afternoon in the October-May travel season",
+    "respect": "Treat ruins and shrines gently, avoid climbing on structures, and ask before photographing worshippers or caretakers.",
+    "image": "https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=1000&q=82",
+    "imageNote": "Representative eastern Nepal heritage photo"
+  },
+  {
+    "district": "Jhapa",
+    "name": "Jamunkhadi Wetland",
+    "place": "Kankai, Jhapa",
+    "experience": "Walk around the community wetland, watch birds, and take a calm break from the highway towns around Birtamode and Damak.",
+    "bestTime": "Early morning for birds; avoid heavy monsoon rain",
+    "respect": "Keep distance from wildlife, do not feed animals, and carry trash back to town.",
+    "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=82",
+    "imageNote": "Representative wetland and nature photo"
+  },
+  {
+    "district": "Jhapa",
+    "name": "Arjundhara Jaleshwar Dham",
+    "place": "Arjundhara, Jhapa",
+    "experience": "Stop at one of Jhapa's familiar pilgrimage sites, known for temple visits and local religious gatherings.",
+    "bestTime": "Morning before crowds and heat build up",
+    "respect": "Remove shoes where required, dress modestly, and follow temple photo rules.",
+    "image": "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=1000&q=82",
+    "imageNote": "Representative Nepal temple photo"
+  },
+  {
+    "district": "Jhapa",
+    "name": "Kanyam Tea Gardens",
+    "place": "Ilam hills near Jhapa",
+    "experience": "A classic nearby side trip from Jhapa: rolling tea gardens, viewpoints, cool hill air, and photo stops above the plains.",
+    "bestTime": "Clear mornings, especially October-May",
+    "respect": "Stay on public paths, ask before entering tea fields, and support local tea shops fairly.",
+    "image": "https://images.unsplash.com/photo-1563911302283-d2bc129e7570?auto=format&fit=crop&w=1000&q=82",
+    "imageNote": "Representative tea garden photo"
   },
   {
     "district": "Jumla",

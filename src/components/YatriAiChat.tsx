@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { askYatriAssistant, type AssistantMessage } from '../services/aiAssistant';
@@ -40,21 +40,28 @@ export function YatriAiChat({ page }: YatriAiChatProps) {
     setMessages(nextMessages);
     setDraft('');
     setSending(true);
-
-    const reply = await askYatriAssistant({ question, messages: nextMessages, page });
-    setMessages((current) => [
-      ...current,
-      {
-        id: `assistant-${Date.now()}`,
-        role: 'assistant',
-        text: reply.source === 'offline' ? `${reply.text}
-
-Offline/basic answer — connect the trained model for deeper replies.` : reply.text
-      }
-    ]);
-    setSending(false);
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+
+    try {
+      const reply = await askYatriAssistant({ question, messages: nextMessages, page });
+      setMessages((current) => [
+        ...current,
+        {
+          id: `assistant-${Date.now()}`,
+          role: 'assistant',
+          text: reply.source === 'offline' ? `${reply.text}
+
+Offline/basic answer - connect the trained model for deeper replies.` : reply.text
+        }
+      ]);
+    } finally {
+      setSending(false);
+    }
   };
+
+  useEffect(() => {
+    if (open) requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+  }, [messages.length, open, sending]);
 
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
@@ -143,16 +150,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.md
   },
-  panelWrapDesktop: { bottom: 104, left: 'auto', right: 34, width: 460 },
-  panelDesktop: { maxHeight: 680, maxWidth: 460, padding: spacing.lg },
-  titleDesktop: { fontSize: 23 },
-  subtitleDesktop: { fontSize: 13 },
-  messagesDesktop: { maxHeight: 420 },
-  messageTextDesktop: { fontSize: 14, lineHeight: 22 },
+  panelWrapDesktop: { bottom: 112, left: 'auto', right: 38, width: 560 },
+  panelDesktop: { maxHeight: 760, maxWidth: 560, padding: spacing.lg },
+  titleDesktop: { fontSize: 30 },
+  subtitleDesktop: { fontSize: 16 },
+  messagesDesktop: { maxHeight: 500 },
+  messageTextDesktop: { fontSize: 18, lineHeight: 28 },
   quickChipDesktop: { paddingHorizontal: 12, paddingVertical: 9 },
-  quickTextDesktop: { fontSize: 12 },
-  inputDesktop: { fontSize: 15, minHeight: 48 },
-  fabDesktop: { bottom: 30, right: 34, height: 64, borderRadius: 32, paddingHorizontal: 20 },
+  quickTextDesktop: { fontSize: 15 },
+  inputDesktop: { fontSize: 18, minHeight: 54 },
+  fabDesktop: { bottom: 32, right: 38, height: 72, borderRadius: 36, paddingHorizontal: 24 },
   panel: {
     alignSelf: 'flex-end',
     backgroundColor: colors.surface,
@@ -176,7 +183,7 @@ const styles = StyleSheet.create({
   iconButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 14, borderWidth: 1, height: 34, justifyContent: 'center', width: 34 },
   messages: { maxHeight: 318 },
   messagesContent: { gap: spacing.sm, paddingVertical: spacing.sm },
-  bubble: { borderRadius: 15, maxWidth: '88%', paddingHorizontal: 12, paddingVertical: 10 },
+  bubble: { borderRadius: 15, maxWidth: '92%', paddingHorizontal: 14, paddingVertical: 12 },
   aiBubble: { alignSelf: 'flex-start', backgroundColor: colors.surface2, borderColor: colors.border, borderWidth: 1 },
   userBubble: { alignSelf: 'flex-end', backgroundColor: colors.mountainBlue },
   sender: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginBottom: 4 },
@@ -186,7 +193,7 @@ const styles = StyleSheet.create({
   loadingText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12 },
   quickList: { gap: spacing.xs, paddingBottom: spacing.sm, paddingTop: spacing.xs },
   quickChip: { backgroundColor: 'rgba(245,166,35,0.10)', borderColor: 'rgba(245,166,35,0.30)', borderRadius: 12, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
-  quickText: { color: colors.goldLight, fontFamily: fonts.body, fontSize: 10, fontWeight: '700' },
+  quickText: { color: colors.goldLight, fontFamily: fonts.body, fontSize: 12, fontWeight: '700' },
   composer: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexDirection: 'row', minHeight: 48, paddingLeft: 12, paddingRight: 5 },
   input: { color: colors.text, flex: 1, fontFamily: fonts.body, fontSize: 13, minHeight: 44, paddingVertical: 8 },
   sendButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 12, height: 38, justifyContent: 'center', width: 38 },

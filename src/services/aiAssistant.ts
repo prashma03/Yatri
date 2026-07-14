@@ -41,10 +41,14 @@ const localAnswers = [
   }
 ];
 
-function localAssistantReply(question: string, page: string) {
+function findLocalAnswer(question: string) {
   const normalized = question.toLowerCase();
-  const match = localAnswers.find((entry) => entry.keywords.some((keyword) => normalized.includes(keyword)));
-  if (match) return match.answer;
+  return localAnswers.find((entry) => entry.keywords.some((keyword) => normalized.includes(keyword)))?.answer ?? null;
+}
+
+function localAssistantReply(question: string, page: string) {
+  const match = findLocalAnswer(question);
+  if (match) return match;
 
   return page === 'safety'
     ? 'For safety, focus on public places, verified contacts, and clear location sharing. If this is urgent, use the SOS panel: Police 100, Ambulance 102, Tourist Police 1144, or contact your embassy/trusted person.'
@@ -54,16 +58,21 @@ function localAssistantReply(question: string, page: string) {
 export async function askYatriAssistant({ question, messages, page }: AssistantRequest) {
   const fallback = localAssistantReply(question, page);
 
+  const instant = findLocalAnswer(question);
+  if (instant) return { text: instant, source: 'offline' as const };
+
   if (!supabase) return { text: fallback, source: 'offline' as const };
 
   try {
-    const { data, error } = await supabase.functions.invoke('travel-assistant', {
+    const request = supabase.functions.invoke('travel-assistant', {
       body: {
         question,
         page,
         messages: messages.slice(-8).map(({ role, text }) => ({ role, content: text }))
       }
     });
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AI timeout')), 6500));
+    const { data, error } = await Promise.race([request, timeout]);
 
     if (error) throw error;
     const text = typeof data?.answer === 'string' ? data.answer.trim() : '';

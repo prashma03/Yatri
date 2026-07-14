@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   hasCompletedLocationPrompt,
@@ -16,6 +16,7 @@ import { TravelPreferenceScreen } from './src/components/TravelPreferenceScreen'
 import { YatriDashboardScreen } from './src/screens/YatriDashboardScreen';
 import { YatriLoginScreen } from './src/screens/YatriLoginScreen';
 import { YatriAiChat } from './src/components/YatriAiChat';
+import { colors, fonts, spacing } from './src/theme';
 
 type AppStage = 'loading' | 'login' | 'preferences' | 'location' | 'dashboard';
 type LoginIntent = 'sign-in' | 'sign-up';
@@ -28,6 +29,7 @@ function getSignedInStage(): AppStage {
 export default function App() {
   const [stage, setStage] = useState<AppStage>('loading');
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false);
 
   useEffect(() => {
     if (!supabase) {
@@ -65,6 +67,11 @@ export default function App() {
     setStage(hasCompletedLocationPrompt() ? 'dashboard' : 'location');
   }
 
+  function handleGuestContinue() {
+    setShowGuestPrompt(true);
+    proceedAfterPreferences();
+  }
+
   function handleAuthenticated(intent: LoginIntent) {
     if (intent === 'sign-up' && !hasCompletedTravelPreferences()) {
       setStage('preferences');
@@ -87,6 +94,12 @@ export default function App() {
   async function handleSignOut() {
     await supabase?.auth.signOut();
     setUserEmail(null);
+    setShowGuestPrompt(false);
+    setStage('login');
+  }
+
+  function openSignInFromGuestPrompt() {
+    setShowGuestPrompt(false);
     setStage('login');
   }
 
@@ -99,12 +112,31 @@ export default function App() {
         </View>
       )}
       {stage === 'login' && (
-        <YatriLoginScreen onAuthenticated={handleAuthenticated} onGuestContinue={proceedAfterPreferences} />
+        <YatriLoginScreen onAuthenticated={handleAuthenticated} onGuestContinue={handleGuestContinue} />
       )}
       {stage === 'preferences' && <TravelPreferenceScreen onComplete={handlePreferencesComplete} />}
       {stage === 'location' && <LocationPermissionScreen onComplete={handleLocationComplete} />}
       {stage === 'dashboard' && <YatriDashboardScreen onSignOut={handleSignOut} userEmail={userEmail} />}
       {stage === 'dashboard' && <YatriAiChat page={stage} />}
+      <Modal transparent animationType="fade" visible={stage === 'dashboard' && !userEmail && showGuestPrompt}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.guestPrompt}>
+            <Text style={styles.guestEyebrow}>Guest mode</Text>
+            <Text style={styles.guestTitle}>Sign in to unlock Yatri’s best features.</Text>
+            <Text style={styles.guestText}>
+              Keep exploring now, or sign in to sync saved districts, submit safety reports, confirm community alerts, and keep your emergency contacts with your account.
+            </Text>
+            <View style={styles.guestActions}>
+              <Pressable accessibilityRole="button" onPress={() => setShowGuestPrompt(false)} style={styles.guestSecondaryButton}>
+                <Text style={styles.guestSecondaryText}>Keep exploring</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={openSignInFromGuestPrompt} style={styles.guestPrimaryButton}>
+                <Text style={styles.guestPrimaryText}>Sign in</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaProvider>
   );
 }
@@ -115,5 +147,78 @@ const styles = StyleSheet.create({
     backgroundColor: '#07060f',
     flex: 1,
     justifyContent: 'center'
+  },
+  modalBackdrop: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(7,6,15,0.72)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: spacing.lg
+  },
+  guestPrompt: {
+    backgroundColor: colors.surface,
+    borderColor: 'rgba(245,166,35,0.36)',
+    borderRadius: 22,
+    borderWidth: 1,
+    maxWidth: 440,
+    padding: spacing.lg,
+    width: '100%'
+  },
+  guestEyebrow: {
+    color: colors.gold,
+    fontFamily: fonts.label,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.8,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase'
+  },
+  guestTitle: {
+    color: colors.text,
+    fontFamily: fonts.display,
+    fontSize: 30,
+    fontWeight: '700',
+    lineHeight: 36
+  },
+  guestText: {
+    color: colors.muted,
+    fontFamily: fonts.body,
+    fontSize: 15,
+    lineHeight: 23,
+    marginTop: spacing.sm
+  },
+  guestActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.lg
+  },
+  guestPrimaryButton: {
+    alignItems: 'center',
+    backgroundColor: colors.gold,
+    borderRadius: 15,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 48
+  },
+  guestPrimaryText: {
+    color: '#1a0f00',
+    fontFamily: fonts.accent,
+    fontSize: 14,
+    fontWeight: '900'
+  },
+  guestSecondaryButton: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: 15,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 48
+  },
+  guestSecondaryText: {
+    color: colors.text,
+    fontFamily: fonts.accent,
+    fontSize: 14,
+    fontWeight: '800'
   }
 });
