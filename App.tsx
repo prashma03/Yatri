@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
@@ -16,6 +17,7 @@ import { TravelPreferenceScreen } from './src/components/TravelPreferenceScreen'
 import { YatriDashboardScreen } from './src/screens/YatriDashboardScreen';
 import { YatriLoginScreen } from './src/screens/YatriLoginScreen';
 import { YatriAiChat } from './src/components/YatriAiChat';
+import { PrayerFlagStrip } from './src/components/PremiumUI';
 import { colors, fonts, spacing } from './src/theme';
 
 type AppStage = 'loading' | 'login' | 'preferences' | 'location' | 'dashboard';
@@ -112,7 +114,13 @@ export default function App() {
       <StatusBar style="light" />
       {stage === 'loading' && (
         <View style={styles.loading}>
-          <ActivityIndicator color="#f5a623" size="large" />
+          <LinearGradient colors={['rgba(245,166,35,0.16)', 'rgba(7,6,15,0.72)', colors.bg]} style={StyleSheet.absoluteFillObject} />
+          <View style={styles.loadingMark}>
+            <Text style={styles.loadingWordmark}>Yatri</Text>
+            <Text style={styles.loadingSub}>Explore Nepal with confidence</Text>
+            <PrayerFlagStrip />
+            <ActivityIndicator color={colors.gold} size="large" style={styles.loadingSpinner} />
+          </View>
         </View>
       )}
       {stage === 'login' && (
@@ -151,6 +159,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#07060f',
     flex: 1,
     justifyContent: 'center'
+  },
+  loadingMark: {
+    alignItems: 'center',
+    maxWidth: 360,
+    padding: spacing.lg,
+    width: '86%'
+  },
+  loadingWordmark: {
+    color: colors.gold,
+    fontFamily: fonts.display,
+    fontSize: 54,
+    fontWeight: '700',
+    letterSpacing: 0
+  },
+  loadingSub: {
+    color: colors.muted,
+    fontFamily: fonts.label,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.8,
+    marginTop: spacing.xs,
+    textTransform: 'uppercase'
+  },
+  loadingSpinner: {
+    marginTop: spacing.lg
   },
   modalBackdrop: {
     alignItems: 'center',

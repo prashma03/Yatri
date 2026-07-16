@@ -6,6 +6,7 @@ import * as SMS from 'expo-sms';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { YatriLogo } from '../components/YatriLogo';
+import { Badge, PrayerFlagStrip, premiumSurface, pressableLift } from '../components/PremiumUI';
 import { loadTravelPreferences, type TravelerPreferences } from '../auth/localSession';
 import { formatCoordinates, formatLocationAge, getForegroundLocation, getSavedLocation, type SavedLocation } from '../services/location';
 import {
@@ -91,6 +92,11 @@ const dashboardPages: { id: DashboardPage; label: string; icon: IconName; active
   { id: 'local', label: 'Local', icon: 'people-outline', activeIcon: 'people' },
   { id: 'prices', label: 'Prices', icon: 'pricetag-outline', activeIcon: 'pricetag' }
 ];
+
+function triggerTactileFeedback() {
+  if (typeof navigator === 'undefined') return;
+  (navigator as Navigator & { vibrate?: (pattern: number | number[]) => boolean }).vibrate?.(12);
+}
 
 type PersonalizedAction = {
   label: string;
@@ -274,6 +280,7 @@ export function YatriDashboardScreen({
 
   const handleQuickAction = (title: string) => {
     if (title === 'SOS') {
+      triggerTactileFeedback();
       setCurrentPage('safety');
       return;
     }
@@ -380,6 +387,7 @@ export function YatriDashboardScreen({
               <ModeButton mode="culture" selected={activeMode === 'culture'} onPress={() => setActiveMode('culture')} />
               <ModeButton mode="adventure" selected={activeMode === 'adventure'} onPress={() => setActiveMode('adventure')} />
             </View>
+            <PrayerFlagStrip />
 
             <ConnectivityControl mode={connectivity} onChange={setConnectivity} />
 
@@ -390,7 +398,7 @@ export function YatriDashboardScreen({
                   accessibilityRole="button"
                   key={action.title}
                   onPress={() => handleQuickAction(action.title)}
-                  style={[styles.quickAction, isTablet && styles.quickActionTablet]}
+                  style={({ pressed }) => [styles.quickAction, isTablet && styles.quickActionTablet, pressableLift(pressed)]}
                 >
                   <View style={[styles.quickIcon, { backgroundColor: `${action.accent}22` }]}>
                     <Ionicons name={action.icon} size={22} color={action.accent} />
@@ -768,7 +776,7 @@ function NearbyHotels({ selectedDistrict }: { selectedDistrict: string }) {
       <View style={styles.hotelLocationNote}>
         <Ionicons name="location-outline" size={16} color={colors.teal} />
         <Text style={styles.hotelLocationText}>{lodging.note}</Text>
-        <Text style={styles.hotelLiveText}>{lodging.live ? 'LIVE' : 'GUIDE'}</Text>
+        <Badge tone={lodging.live ? 'ok' : 'blue'}>{lodging.live ? 'LIVE' : 'GUIDE'}</Badge>
       </View>
       {lodging.hotels.map((hotel) => (
         <View key={hotel.name} style={styles.hotelRow}>
@@ -834,14 +842,14 @@ function FairPriceChecker({
   const quoted = Number(quotedPrice.replace(/[^0-9.]/g, ''));
   const hasQuote = Number.isFinite(quoted) && quoted > 0;
   const verdict = !hasQuote
-    ? { label: 'Enter a quoted price', color: colors.muted, detail: 'Yatri will compare it with the selected fair range.' }
+    ? { label: 'Enter a quoted price', color: colors.muted, tone: 'muted' as const, detail: 'Yatri will compare it with the selected fair range.' }
     : featured.high === 0
-      ? { label: 'Check official price', color: colors.gold, detail: 'This item needs an official counter or licensed agency check.' }
+      ? { label: 'Check official price', color: colors.gold, tone: 'warn' as const, detail: 'This item needs an official counter or licensed agency check.' }
       : quoted <= featured.high
-        ? { label: 'Looks within range', color: colors.teal, detail: 'Still confirm what is included before paying.' }
+        ? { label: 'Looks within range', color: colors.teal, tone: 'ok' as const, detail: 'Still confirm what is included before paying.' }
         : quoted <= featured.high * 1.35
-          ? { label: 'Slightly high', color: colors.gold, detail: 'Ask politely for a lower price or compare another seller.' }
-          : { label: 'Likely overcharge', color: colors.danger, detail: 'Step away, compare alternatives, or use an official counter/app.' };
+          ? { label: 'Slightly high', color: colors.gold, tone: 'warn' as const, detail: 'Ask politely for a lower price or compare another seller.' }
+          : { label: 'Likely overcharge', color: colors.danger, tone: 'danger' as const, detail: 'Step away, compare alternatives, or use an official counter/app.' };
 
   const chooseCategory = (next: FairPriceCategory | 'All') => {
     setCategory(next);
@@ -889,14 +897,12 @@ function FairPriceChecker({
             <Text style={styles.priceCompareItem}>{featured.item}</Text>
             <Text style={styles.priceCompareRange}>{featured.high === 0 ? 'Official price required' : 'Rs. ' + featured.low.toLocaleString() + '-' + featured.high.toLocaleString() + ' / ' + featured.unit}</Text>
           </View>
-          <View style={[styles.priceRiskBadge, featured.risk === 'High' && styles.priceRiskHigh, featured.risk === 'Medium' && styles.priceRiskMedium]}>
-            <Text style={styles.priceRiskText}>{featured.risk} RISK</Text>
-          </View>
+          <Badge tone={featured.risk === 'High' ? 'danger' : featured.risk === 'Medium' ? 'warn' : 'ok'}>{featured.risk} risk</Badge>
         </View>
         <View style={styles.priceQuoteRow}>
           <TextInput accessibilityLabel="Quoted price in rupees" keyboardType="numeric" onChangeText={setQuotedPrice} placeholder="Quoted Rs." placeholderTextColor={colors.dim} style={styles.priceQuoteInput} value={quotedPrice} />
           <View style={[styles.priceVerdict, { borderColor: `${verdict.color}66` }] }>
-            <Text style={[styles.priceVerdictLabel, { color: verdict.color }]}>{verdict.label}</Text>
+            <Badge tone={verdict.tone}>{verdict.label}</Badge>
             <Text style={styles.priceVerdictText}>{verdict.detail}</Text>
           </View>
         </View>
@@ -956,6 +962,7 @@ function ReferencePriceList({ items, icon }: { items: PriceItem[]; icon: IconNam
 
 function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { selectedDistrict: string; onSelectDistrict: (district: string) => void }) {
   const [districtSearch, setDistrictSearch] = useState('');
+  const [districtPickerOpen, setDistrictPickerOpen] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const selectedDirectoryItem = districtDirectory.find((item) => item.district === selectedDistrict) ?? districtDirectory.find((item) => item.district === 'Kathmandu')!;
   const detailedBriefing = districtBriefings.find((item) => item.district === selectedDistrict);
@@ -992,19 +999,37 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
     setSavedAt(saved.savedAt);
   };
 
+  const chooseDistrict = (district: string) => {
+    onSelectDistrict(district);
+    setDistrictSearch('');
+    setDistrictPickerOpen(false);
+  };
+
   return (
     <View style={styles.districtFeature}>
       <View style={styles.districtSearchPanel}>
-        <View style={styles.districtSearchHeader}>
-          <View>
-            <Text style={styles.districtSearchLabel}>SEARCH ALL 77 DISTRICTS</Text>
-            <Text style={styles.districtSearchHint}>Kathmandu is selected by default. Type letters like “ka”, “mu”, or “ru”.</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: districtPickerOpen }}
+          onPress={() => setDistrictPickerOpen((open) => !open)}
+          style={[styles.districtPickerButton, districtPickerOpen && styles.districtPickerButtonOpen]}
+        >
+          <View style={styles.districtPickerIcon}>
+            <Ionicons name="location-outline" size={21} color={colors.goldLight} />
+          </View>
+          <View style={styles.flex}>
+            <Text style={styles.districtSearchLabel}>SELECT DISTRICT</Text>
+            <Text style={styles.districtPickerName}>{selectedDirectoryItem.district}</Text>
+            <Text style={styles.districtSearchHint}>{selectedDirectoryItem.province}</Text>
           </View>
           <View style={styles.districtCountBadge}>
             <Text style={styles.districtCountText}>{filteredDistricts.length}/77</Text>
           </View>
-        </View>
+          <Ionicons name={districtPickerOpen ? 'chevron-up' : 'chevron-down'} size={22} color={colors.muted} />
+        </Pressable>
 
+        {districtPickerOpen && (
+          <>
         <View style={styles.districtSearchBox}>
           <Ionicons name="search-outline" size={18} color={colors.muted} />
           <TextInput
@@ -1032,7 +1057,7 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
                 key={item.district}
-                onPress={() => onSelectDistrict(item.district)}
+                onPress={() => chooseDistrict(item.district)}
                 style={[styles.districtListItem, selected && styles.districtListItemSelected]}
               >
                 <View style={[styles.districtListIcon, selected && styles.districtListIconSelected]}>
@@ -1047,6 +1072,8 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
             );
           })}
         </ScrollView>
+          </>
+        )}
       </View>
 
       <View style={styles.districtBriefing}>
@@ -1193,7 +1220,7 @@ function OfflinePackCard({ pack }: { pack: OfflinePack }) {
         <View style={styles.progressTrack}>
           <View style={[styles.progressFill, { width: `${pack.progress * 100}%` }]} />
         </View>
-        <Text style={styles.packStatus}>{pack.status}</Text>
+        <Badge tone={pack.progress >= 1 ? 'ok' : 'warn'}>{pack.status}</Badge>
       </View>
     </View>
   );
@@ -1335,6 +1362,7 @@ function ScamAlertMap() {
   }, []);
 
   const beginReport = async () => {
+    triggerTactileFeedback();
     const location = await getForegroundLocation(true);
     if (!location) {
       Alert.alert('Location required', 'Allow foreground location so the report can be placed accurately. Yatri does not request background location.');
@@ -1443,7 +1471,7 @@ function ScamAlertMap() {
               <View style={styles.flex}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.scamAlertTitle}>{label}</Text>
-                  <Text style={[styles.reportTrustBadge, verified && styles.reportTrustBadgeVerified]}>{verified ? 'VERIFIED ALERT' : 'COMMUNITY REPORT'}</Text>
+                  <Badge tone={verified ? 'ok' : 'warn'}>{verified ? 'Verified alert' : 'Community report'}</Badge>
                 </View>
                 <Text style={styles.scamAlertLocation}>{report.district ?? 'Nearby'} · {formatLocationAge(new Date(report.created_at).getTime())}</Text>
                 <Text style={styles.cardText}>{report.description}</Text>
@@ -1847,6 +1875,7 @@ function OfflineSos() {
   };
 
   const prepareSms = async () => {
+    triggerTactileFeedback();
     if (!location) {
       Alert.alert('No GPS fix', 'Refresh your location before preparing an SOS message.');
       return;
@@ -2066,12 +2095,12 @@ const styles = StyleSheet.create({
   modeButton: { alignItems: 'center', borderColor: 'transparent', borderRadius: 13, borderWidth: 1, flex: 1, paddingVertical: 11 },
   modeButtonText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.lg },
-  quickAction: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, minHeight: 126, padding: spacing.md, width: '48.5%' },
+  quickAction: { ...premiumSurface, alignItems: 'center', borderRadius: 16, minHeight: 126, padding: spacing.md, width: '48.5%' },
   quickActionTablet: { width: '23.5%' },
   quickIcon: { alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', marginBottom: spacing.sm, width: 44 },
   quickTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
   quickSub: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, marginTop: 4, textAlign: 'center' },
-  personalizedPanel: { backgroundColor: 'rgba(62,207,178,0.08)', borderColor: 'rgba(62,207,178,0.28)', borderRadius: 22, borderWidth: 1, gap: spacing.md, marginTop: spacing.lg, overflow: 'hidden', padding: spacing.lg },
+  personalizedPanel: { ...premiumSurface, backgroundColor: 'rgba(62,207,178,0.08)', borderColor: 'rgba(62,207,178,0.28)', borderRadius: 22, gap: spacing.md, marginTop: spacing.lg, overflow: 'hidden', padding: spacing.lg },
   personalizedHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md },
   personalizedIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.14)', borderRadius: 18, height: 52, justifyContent: 'center', width: 52 },
   personalizedLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 1.7, textTransform: 'uppercase' },
@@ -2100,7 +2129,7 @@ const styles = StyleSheet.create({
   hotelLocationNote: { alignItems: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 2 },
   hotelLocationText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 15 },
   hotelLiveText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
-  hotelRow: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  hotelRow: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   hotelIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
   hotelName: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
   hotelArea: { color: colors.teal, fontFamily: fonts.label, fontSize: 13, fontWeight: '800', lineHeight: 14, marginTop: 3 },
@@ -2129,10 +2158,14 @@ const styles = StyleSheet.create({
   districtTabSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
   districtTabText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
   districtTabTextSelected: { color: '#1a0f00' },
-  districtSearchPanel: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 18, borderWidth: 1, gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
+  districtSearchPanel: { ...premiumSurface, borderRadius: 18, gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
   districtSearchHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
   districtSearchLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
   districtSearchHint: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 16, marginTop: 4, maxWidth: 560 },
+  districtPickerButton: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 76, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  districtPickerButtonOpen: { borderColor: 'rgba(245,166,35,0.48)' },
+  districtPickerIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 15, height: 44, justifyContent: 'center', width: 44 },
+  districtPickerName: { color: colors.text, fontFamily: fonts.display, fontSize: 28, fontWeight: '700', lineHeight: 32, marginTop: 2 },
   districtCountBadge: { backgroundColor: 'rgba(62,207,178,0.12)', borderColor: 'rgba(62,207,178,0.32)', borderRadius: 12, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7 },
   districtCountText: { color: colors.teal, fontFamily: fonts.label, fontSize: 10, fontWeight: '900' },
   districtSearchBox: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 48, paddingHorizontal: 12 },
@@ -2152,7 +2185,7 @@ const styles = StyleSheet.create({
   districtGuideBadge: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
   districtStarterNotice: { alignItems: 'flex-start', backgroundColor: 'rgba(245,166,35,0.10)', borderColor: 'rgba(245,166,35,0.28)', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.md, padding: spacing.sm },
   districtStarterText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 17 },
-  districtBriefing: { backgroundColor: colors.surface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, borderWidth: 1, overflow: 'hidden', padding: spacing.md },
+  districtBriefing: { ...premiumSurface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, overflow: 'hidden', padding: spacing.md },
   districtHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   districtIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
   districtName: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700' },
@@ -2198,7 +2231,7 @@ const styles = StyleSheet.create({
   stack: { gap: spacing.sm },
   flex: { flex: 1 },
   rowBetween: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  offlineCard: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  offlineCard: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   offlineIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 15, height: 46, justifyContent: 'center', width: 46 },
   cardTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 20, fontWeight: '900' },
   cardText: { color: colors.muted, fontFamily: fonts.body, fontSize: 18, lineHeight: 28, marginTop: 4 },
@@ -2225,7 +2258,7 @@ const styles = StyleSheet.create({
   discoverLocation: { color: 'rgba(255,255,255,0.66)', fontFamily: fonts.label, fontSize: 12, marginTop: 2 },
   discoverSummary: { color: 'rgba(255,255,255,0.74)', fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 8 },
   discoverMeta: { color: colors.teal, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900', marginTop: 8 },
-  alertCard: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  alertCard: { ...premiumSurface, borderRadius: 16, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   alertUrgent: { borderColor: 'rgba(255,93,108,0.35)' },
   alertIcon: { alignItems: 'center', backgroundColor: 'rgba(79,163,217,0.16)', borderRadius: 14, height: 44, justifyContent: 'center', width: 44 },
   alertStatus: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
@@ -2234,7 +2267,7 @@ const styles = StyleSheet.create({
   mapText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, marginTop: 4 },
   navigateButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 18, flexDirection: 'row', gap: 5, paddingHorizontal: 12, paddingVertical: 9 },
   navigateText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
-  updateRow: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  updateRow: { ...premiumSurface, alignItems: 'center', borderRadius: 14, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   updateDot: { backgroundColor: colors.forest, borderRadius: 5, height: 10, width: 10 },
   updateTextWrap: { flex: 1 },
   updateRoute: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
@@ -2260,7 +2293,7 @@ const styles = StyleSheet.create({
   legendItem: { alignItems: 'center', flexDirection: 'row', gap: 6 },
   legendDot: { borderRadius: 4, height: 8, width: 8 },
   legendText: { color: colors.muted, fontFamily: fonts.label, fontSize: 10, fontWeight: '800' },
-  scamAlertRow: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  scamAlertRow: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 14, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
   scamAlertIcon: { alignItems: 'center', borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
   scamAlertTitle: { color: colors.text, flex: 1, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900', paddingRight: spacing.sm },
   scamAlertTime: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '800' },
@@ -2311,7 +2344,7 @@ const styles = StyleSheet.create({
   phraseTip: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 2 },
   infoCard: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   priceChecker: { gap: spacing.md },
-  priceHeroCard: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderColor: 'rgba(245,166,35,0.32)', borderRadius: 18, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  priceHeroCard: { ...premiumSurface, alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderColor: 'rgba(245,166,35,0.32)', borderRadius: 18, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   priceHeroIcon: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 18, height: 48, justifyContent: 'center', width: 48 },
   priceHeroTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 25, fontWeight: '700' },
   priceHeroText: { color: colors.muted, fontFamily: fonts.body, fontSize: 18, lineHeight: 28, marginTop: 3 },
@@ -2322,7 +2355,7 @@ const styles = StyleSheet.create({
   priceCategoryChipSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
   priceCategoryText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
   priceCategoryTextSelected: { color: '#1a0f00' },
-  priceCompareCard: { backgroundColor: colors.surface, borderColor: 'rgba(62,207,178,0.30)', borderRadius: 18, borderWidth: 1, gap: spacing.md, padding: spacing.md },
+  priceCompareCard: { ...premiumSurface, borderColor: 'rgba(62,207,178,0.30)', borderRadius: 18, gap: spacing.md, padding: spacing.md },
   priceCompareHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
   priceCompareLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
   priceCompareItem: { color: colors.text, fontFamily: fonts.accent, fontSize: 20, fontWeight: '900', marginTop: 4 },
@@ -2341,7 +2374,7 @@ const styles = StyleSheet.create({
   priceResultsHeader: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
   priceResultsTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 24, fontWeight: '700' },
   priceResultsDistrict: { color: colors.dim, fontFamily: fonts.body, fontSize: 12, textAlign: 'right' },
-  fairPriceRow: { alignItems: 'flex-start', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  fairPriceRow: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
   fairPriceIcon: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
   fairPriceName: { color: colors.text, fontFamily: fonts.accent, fontSize: 19, fontWeight: '900' },
   fairPriceMeta: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 12, fontWeight: '800', lineHeight: 14, marginTop: 3 },
@@ -2356,12 +2389,12 @@ const styles = StyleSheet.create({
   priceRange: { color: colors.teal, fontFamily: fonts.label, fontSize: 14, fontWeight: '900' },
   pricePhrase: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 11, fontWeight: '800', marginTop: 4 },
   foodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-  foodCard: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, padding: spacing.md, width: '48.5%' },
+  foodCard: { ...premiumSurface, borderRadius: 16, padding: spacing.md, width: '48.5%' },
   foodRegion: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
   foodDish: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 4 },
   foodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 6 },
   foodTip: { color: colors.dim, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 8 },
-  cultureBites: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, gap: spacing.md, padding: spacing.md },
+  cultureBites: { ...premiumSurface, borderRadius: 16, gap: spacing.md, padding: spacing.md },
   cultureBiteTabs: { backgroundColor: colors.surface2, borderRadius: 13, flexDirection: 'row', gap: spacing.xs, padding: 5 },
   cultureBiteTab: { alignItems: 'center', borderRadius: 10, flex: 1, flexDirection: 'row', gap: 6, justifyContent: 'center', minHeight: 38, paddingHorizontal: 8 },
   cultureBiteTabSelected: { backgroundColor: colors.gold },
@@ -2373,7 +2406,7 @@ const styles = StyleSheet.create({
   cultureFactTag: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', textTransform: 'uppercase' },
   cultureFactTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 17, fontWeight: '900', marginTop: 2 },
   cultureFactText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: 3 },
-  localChat: { backgroundColor: colors.surface, borderColor: 'rgba(62,207,178,0.28)', borderRadius: 18, borderWidth: 1, gap: spacing.md, overflow: 'hidden', padding: spacing.md },
+  localChat: { ...premiumSurface, borderColor: 'rgba(62,207,178,0.28)', borderRadius: 18, gap: spacing.md, overflow: 'hidden', padding: spacing.md },
   guideHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   guideAvatar: { alignItems: 'center', backgroundColor: colors.terracotta, borderRadius: 21, height: 42, justifyContent: 'center', position: 'relative', width: 42 },
   guideInitials: { color: colors.white, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
@@ -2403,7 +2436,7 @@ const styles = StyleSheet.create({
   tipChipSelected: { backgroundColor: 'rgba(245,166,35,0.14)', borderColor: colors.gold },
   tipChipText: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   tipChipTextSelected: { color: colors.goldLight },
-  altitudePanel: { backgroundColor: colors.surface, borderColor: 'rgba(79,163,217,0.30)', borderRadius: 18, borderWidth: 1, gap: spacing.md, padding: spacing.md },
+  altitudePanel: { ...premiumSurface, borderColor: 'rgba(79,163,217,0.30)', borderRadius: 18, gap: spacing.md, padding: spacing.md },
   altitudeHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   altitudeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   altitudeValue: { color: colors.white, fontFamily: fonts.display, fontSize: 31, fontWeight: '700', marginTop: 2 },
@@ -2425,7 +2458,7 @@ const styles = StyleSheet.create({
   checkInButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 15, flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 46, paddingHorizontal: 14 },
   checkInButtonText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
   medicalDisclaimer: { color: colors.dim, fontFamily: fonts.body, fontSize: 10, lineHeight: 15, textAlign: 'center' },
-  sosPanel: { backgroundColor: 'rgba(255,93,108,0.10)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, borderWidth: 1, gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
+  sosPanel: { ...premiumSurface, backgroundColor: 'rgba(255,93,108,0.10)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
   sosHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   sosIcon: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
   sosTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 32, fontWeight: '700' },
