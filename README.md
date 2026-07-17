@@ -110,6 +110,7 @@ Drafts live in:
 - `docs/PRIVACY.md`
 - `docs/TERMS.md`
 - `docs/BETA_CHECKLIST.md`
+- `docs/PRODUCTION_LAUNCH.md`
 
 ## Build and beta
 
@@ -121,6 +122,8 @@ npx eas build --profile preview --platform ios
 ```
 
 Before TestFlight or Google Play internal testing, complete the checklist in `docs/BETA_CHECKLIST.md`, test SOS SMS/calling on physical Android and iOS devices, and fill Apple privacy plus Google Data Safety disclosures for account data, reports, contacts, photos, and foreground location.
+
+For the full release sequence, use `docs/PRODUCTION_LAUNCH.md`. It covers Supabase SMTP, Edge Function secrets, legal URLs, data review, moderation operations, device QA, store release, and the requirements before enabling real guide tipping.
 
 ## Yatri AI assistant
 
@@ -139,7 +142,7 @@ npx supabase secrets set YATRI_AI_MODEL=your_model_name
 Deploy the assistant function. If your Expo app uses a new `sb_publishable_...` key instead of a legacy JWT anon key, deploy this public assistant with JWT verification disabled:
 
 ```bash
-npx supabase functions deploy travel-assistant --project-ref xugaakqczxhrjzbnulut --no-verify-jwt
+npx supabase functions deploy travel-assistant --project-ref your-project-ref --no-verify-jwt
 ```
 
 Do not put private AI keys in `.env` or in the mobile app. Keep them as Supabase secrets only.

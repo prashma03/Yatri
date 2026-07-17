@@ -424,7 +424,7 @@ export function YatriDashboardScreen({
                 <SectionHeader label="Saved on this device" title="Your offline district guide" />
                 <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={setSelectedDistrict} />
                 <SectionHeader label="Offline-first" title="Downloaded travel packs" />
-                <View style={styles.stack}>
+                <View style={[styles.stack, isDesktop && styles.desktopThreeColumnGrid]}>
                   {offlinePacks.map((pack) => (
                     <OfflinePackCard key={pack.title} pack={pack} />
                   ))}
@@ -451,7 +451,7 @@ export function YatriDashboardScreen({
                 <Text key={chip} style={styles.filterChip}>{chip}</Text>
               ))}
             </View>
-            <View style={styles.stack}>
+            <View style={[styles.stack, isDesktop && styles.desktopTwoColumnGrid]}>
               {selectedDiscover.map((item) => (
                 <DiscoverCard key={item.title} item={item} />
               ))}
@@ -468,7 +468,7 @@ export function YatriDashboardScreen({
                 <Text style={styles.navigateText}>Navigate</Text>
               </Pressable>
             </View>
-            <View style={styles.stack}>
+            <View style={[styles.stack, isDesktop && styles.desktopThreeColumnGrid]}>
               {trailUpdates.map((update) => (
                 <View key={update.route} style={styles.updateRow}>
                   <View style={styles.updateDot} />
@@ -487,20 +487,27 @@ export function YatriDashboardScreen({
           <>
             <PageHeading eyebrow="Safety" title="Alerts and emergency tools" />
             <SectionHeader label="Trail safety" title="Weather and altitude alerts" />
-            <View style={styles.stack}>
+            <View style={[styles.stack, isDesktop && styles.desktopTwoColumnGrid]}>
               {trailAlerts.map((alert) => (
                 <AlertCard key={alert.title} alert={alert} />
               ))}
             </View>
 
             <SectionHeader label="Altitude safety" title="Daily symptom check-in" />
-            <AltitudeTracker />
+            <View style={isDesktop && styles.desktopTwoColumnGrid}>
+              <AltitudeTracker />
+              <OfflineSos />
+            </View>
 
             <SectionHeader label="Traveler safety" title="Live scam alert map" />
             <ScamAlertMap />
 
-            <SectionHeader label="Emergency" title="Offline help" />
-            <OfflineSos />
+            {!isDesktop && (
+              <>
+                <SectionHeader label="Emergency" title="Offline help" />
+                <OfflineSos />
+              </>
+            )}
           </>
         )}
 
@@ -510,7 +517,7 @@ export function YatriDashboardScreen({
             {savedPreferences?.interests.includes('food') && (
               <>
                 <SectionHeader label="Taste Nepal" title="Regional food decoder" />
-                <View style={styles.foodGrid}>
+                <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
                   {foodCards.map((food) => (
                     <View key={food.dish} style={styles.foodCard}>
                       <Text style={styles.foodRegion}>{food.region}</Text>
@@ -526,6 +533,9 @@ export function YatriDashboardScreen({
             <SectionHeader label="Know Nepal" title={savedPreferences?.interests.includes('food') ? 'Phrases for ordering and meeting people' : 'Culture bites and useful phrases'} />
             <CultureBites initialView={savedPreferences?.interests.includes('food') ? 'phrases' : 'facts'} />
 
+            <SectionHeader label="Verified help" title="Ask a local guide" />
+            <AskALocalChat />
+
             <SectionHeader label="Respectful travel" title="Everyday etiquette" />
             <View style={styles.namasteCard}>
               <View style={styles.namasteAnimation}>
@@ -537,7 +547,7 @@ export function YatriDashboardScreen({
                 <Text style={styles.namasteText}>Bring your palms together at chest level, make a slight bow, and offer a calm smile.</Text>
               </View>
             </View>
-            <View style={styles.stack}>
+            <View style={[styles.stack, isDesktop && styles.desktopThreeColumnGrid]}>
               {etiquetteCards.map((card) => (
                 <InfoCard key={card.context} icon={card.icon} title={card.context} body={`${card.rule} ${card.detail}`} />
               ))}
@@ -546,7 +556,7 @@ export function YatriDashboardScreen({
             {!savedPreferences?.interests.includes('food') && (
               <>
                 <SectionHeader label="Taste Nepal" title="Regional food decoder" />
-                <View style={styles.foodGrid}>
+                <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
                   {foodCards.map((food) => (
                     <View key={food.dish} style={styles.foodCard}>
                       <Text style={styles.foodRegion}>{food.region}</Text>
@@ -757,6 +767,8 @@ function getDistrictLodging(selectedDistrict: string) {
 }
 
 function NearbyHotels({ selectedDistrict }: { selectedDistrict: string }) {
+  const { width } = useWindowDimensions();
+  const desktop = width >= 1024;
   const lodging = getDistrictLodging(selectedDistrict);
   const openNavigation = (address: string) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
@@ -772,7 +784,7 @@ function NearbyHotels({ selectedDistrict }: { selectedDistrict: string }) {
   };
 
   return (
-    <View style={styles.hotelList}>
+    <View style={[styles.hotelList, desktop && styles.hotelListDesktop]}>
       <View style={styles.hotelLocationNote}>
         <Ionicons name="location-outline" size={16} color={colors.teal} />
         <Text style={styles.hotelLocationText}>{lodging.note}</Text>
@@ -827,6 +839,8 @@ function FairPriceChecker({
   priceFocus: 'fair' | 'rides';
   onPriceFocusChange: (focus: 'fair' | 'rides') => void;
 }) {
+  const { width } = useWindowDimensions();
+  const desktop = width >= 1024;
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<FairPriceCategory | 'All'>(priceFocus === 'rides' ? 'Transport' : 'All');
   const [quotedPrice, setQuotedPrice] = useState('');
@@ -915,7 +929,7 @@ function FairPriceChecker({
         <Text style={styles.priceResultsDistrict}>{selectedDistrict} + common Nepal tourist prices</Text>
       </View>
 
-      <View style={styles.stack}>
+      <View style={[styles.stack, desktop && styles.desktopTwoColumnGrid]}>
         {filtered.map((item) => (
           <Pressable key={`${item.district}-${item.item}`} onPress={() => { setQuery(item.item); setCategory(item.category); setQuotedPrice(''); }} style={styles.fairPriceRow}>
             <View style={styles.fairPriceIcon}>
@@ -961,6 +975,8 @@ function ReferencePriceList({ items, icon }: { items: PriceItem[]; icon: IconNam
 }
 
 function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { selectedDistrict: string; onSelectDistrict: (district: string) => void }) {
+  const { width } = useWindowDimensions();
+  const desktop = width >= 1024;
   const [districtSearch, setDistrictSearch] = useState('');
   const [districtPickerOpen, setDistrictPickerOpen] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -1006,7 +1022,7 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
   };
 
   return (
-    <View style={styles.districtFeature}>
+    <View style={[styles.districtFeature, desktop && styles.districtFeatureDesktop]}>
       <View style={styles.districtSearchPanel}>
         <Pressable
           accessibilityRole="button"
@@ -1652,6 +1668,32 @@ type LocalMessage = {
   text: string;
 };
 
+function getLocalGuideReply(question: string) {
+  const normalized = question.toLowerCase();
+
+  if (normalized.includes('taxi') || normalized.includes('ride') || normalized.includes('price') || normalized.includes('fair')) {
+    return 'For taxis, compare Pathao/inDrive first when available. If a driver quotes a fixed fare, agree before entering and ask “meter ma janu huncha?” For Thamel to Boudha, Rs. 500-900 is a normal reference range depending on traffic.';
+  }
+
+  if (normalized.includes('temple') || normalized.includes('stupa') || normalized.includes('enter') || normalized.includes('photo')) {
+    return 'At temples and stupas, watch the entrance signs first. Remove shoes where required, walk clockwise around stupas, and ask before photographing people, rituals, monks, or cremation areas.';
+  }
+
+  if (normalized.includes('guide') || normalized.includes('licensed') || normalized.includes('license')) {
+    return 'Ask to see a guide ID or license before starting. Agree on the route, time, language, and total price first. Be careful if someone pressures you away from the official ticket counter.';
+  }
+
+  if (normalized.includes('food') || normalized.includes('momo') || normalized.includes('dal bhat') || normalized.includes('eat')) {
+    return 'For local food, look for busy family restaurants and clear menu prices. Momo, dal bhat, milk tea, and Newari snacks are good starts. Ask “kati parcha?” before ordering if the price is not posted.';
+  }
+
+  if (normalized.includes('unsafe') || normalized.includes('scam') || normalized.includes('help') || normalized.includes('emergency')) {
+    return 'Move to a public, well-lit place and avoid arguing over money in the street. Use Yatri Safety to report suspicious activity, save your location, and prepare an SOS message if you feel at risk.';
+  }
+
+  return 'Good question. Share the place, price, or situation, and I can help you decide what is normal, what to ask politely, and what warning signs to watch for.';
+}
+
 function AskALocalChat() {
   const [draft, setDraft] = useState('');
   const [selectedTip, setSelectedTip] = useState(100);
@@ -1661,17 +1703,18 @@ function AskALocalChat() {
   ]);
   const quickQuestions = ['Is this taxi price fair?', 'Can I enter this temple?', 'Is this guide licensed?'];
 
-  const sendQuestion = () => {
-    const question = draft.trim();
+  const sendQuestion = (override?: string) => {
+    const question = (override ?? draft).trim();
     if (!question) return;
+    const now = Date.now();
 
     setMessages((current) => [
       ...current,
-      { id: Date.now(), sender: 'traveler', text: question },
+      { id: now, sender: 'traveler', text: question },
       {
-        id: Date.now() + 1,
+        id: now + 1,
         sender: 'guide',
-        text: 'I have your question. For this prototype, a verified local reply appears here when the guide responds.'
+        text: getLocalGuideReply(question)
       }
     ]);
     setDraft('');
@@ -1716,7 +1759,7 @@ function AskALocalChat() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickQuestionList}>
         {quickQuestions.map((question) => (
-          <Pressable key={question} onPress={() => setDraft(question)} style={styles.quickQuestion}>
+          <Pressable key={question} onPress={() => sendQuestion(question)} style={styles.quickQuestion}>
             <Text style={styles.quickQuestionText}>{question}</Text>
           </Pressable>
         ))}
@@ -1726,7 +1769,7 @@ function AskALocalChat() {
         <TextInput
           accessibilityLabel="Question for a local guide"
           onChangeText={setDraft}
-          onSubmitEditing={sendQuestion}
+          onSubmitEditing={() => sendQuestion()}
           placeholder="Ask a quick question..."
           placeholderTextColor={colors.dim}
           returnKeyType="send"
@@ -1736,7 +1779,7 @@ function AskALocalChat() {
         <Pressable
           accessibilityLabel="Send question"
           accessibilityRole="button"
-          onPress={sendQuestion}
+          onPress={() => sendQuestion()}
           style={styles.chatSendButton}
         >
           <Ionicons name="send" size={18} color="#1a0f00" />
@@ -2126,10 +2169,11 @@ const styles = StyleSheet.create({
   connectivityOptionText: { color: colors.muted, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   connectivityOptionTextSelected: { color: '#1a0f00' },
   hotelList: { gap: spacing.sm },
+  hotelListDesktop: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   hotelLocationNote: { alignItems: 'center', flexDirection: 'row', gap: 6, paddingHorizontal: 2 },
   hotelLocationText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 15 },
   hotelLiveText: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
-  hotelRow: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  hotelRow: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexBasis: 360, flexDirection: 'row', flexGrow: 1, gap: spacing.sm, padding: spacing.md },
   hotelIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
   hotelName: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
   hotelArea: { color: colors.teal, fontFamily: fonts.label, fontSize: 13, fontWeight: '800', lineHeight: 14, marginTop: 3 },
@@ -2153,12 +2197,13 @@ const styles = StyleSheet.create({
   referencePriceBadgeGood: { color: colors.teal },
   contentSource: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, lineHeight: 14, textAlign: 'right' },
   districtFeature: { gap: spacing.md },
+  districtFeatureDesktop: { alignItems: 'flex-start', flexDirection: 'row' },
   districtTabs: { gap: spacing.xs, paddingRight: spacing.md },
   districtTab: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: 6, minHeight: 40, paddingHorizontal: 12 },
   districtTabSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
   districtTabText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
   districtTabTextSelected: { color: '#1a0f00' },
-  districtSearchPanel: { ...premiumSurface, borderRadius: 18, gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
+  districtSearchPanel: { ...premiumSurface, borderRadius: 18, flexBasis: 420, gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
   districtSearchHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
   districtSearchLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
   districtSearchHint: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 16, marginTop: 4, maxWidth: 560 },
@@ -2185,7 +2230,7 @@ const styles = StyleSheet.create({
   districtGuideBadge: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
   districtStarterNotice: { alignItems: 'flex-start', backgroundColor: 'rgba(245,166,35,0.10)', borderColor: 'rgba(245,166,35,0.28)', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.md, padding: spacing.sm },
   districtStarterText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 17 },
-  districtBriefing: { ...premiumSurface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, overflow: 'hidden', padding: spacing.md },
+  districtBriefing: { ...premiumSurface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, flex: 1, overflow: 'hidden', padding: spacing.md },
   districtHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   districtIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
   districtName: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700' },
@@ -2229,6 +2274,8 @@ const styles = StyleSheet.create({
   sectionLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8, marginBottom: spacing.xs, textTransform: 'uppercase' },
   sectionTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 30, fontWeight: '700', lineHeight: 35 },
   stack: { gap: spacing.sm },
+  desktopTwoColumnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  desktopThreeColumnGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   flex: { flex: 1 },
   rowBetween: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   offlineCard: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
@@ -2250,7 +2297,7 @@ const styles = StyleSheet.create({
   festivalWhy: { color: 'rgba(255,255,255,0.72)', fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
   filterWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   filterChip: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, color: colors.muted, fontFamily: fonts.accent, fontSize: 14, fontWeight: '800', overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 8 },
-  discoverCard: { height: 260, justifyContent: 'flex-end', overflow: 'hidden' },
+  discoverCard: { flexBasis: 440, flexGrow: 1, height: 300, justifyContent: 'flex-end', overflow: 'hidden' },
   discoverImage: { borderRadius: 18 },
   discoverCopy: { padding: spacing.md },
   discoverTag: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4, textTransform: 'uppercase' },
@@ -2258,7 +2305,7 @@ const styles = StyleSheet.create({
   discoverLocation: { color: 'rgba(255,255,255,0.66)', fontFamily: fonts.label, fontSize: 12, marginTop: 2 },
   discoverSummary: { color: 'rgba(255,255,255,0.74)', fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 8 },
   discoverMeta: { color: colors.teal, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900', marginTop: 8 },
-  alertCard: { ...premiumSurface, borderRadius: 16, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  alertCard: { ...premiumSurface, borderRadius: 16, flexBasis: 420, flexDirection: 'row', flexGrow: 1, gap: spacing.md, padding: spacing.md },
   alertUrgent: { borderColor: 'rgba(255,93,108,0.35)' },
   alertIcon: { alignItems: 'center', backgroundColor: 'rgba(79,163,217,0.16)', borderRadius: 14, height: 44, justifyContent: 'center', width: 44 },
   alertStatus: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
@@ -2267,7 +2314,7 @@ const styles = StyleSheet.create({
   mapText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, marginTop: 4 },
   navigateButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 18, flexDirection: 'row', gap: 5, paddingHorizontal: 12, paddingVertical: 9 },
   navigateText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
-  updateRow: { ...premiumSurface, alignItems: 'center', borderRadius: 14, flexDirection: 'row', gap: spacing.sm, padding: spacing.md },
+  updateRow: { ...premiumSurface, alignItems: 'center', borderRadius: 14, flexBasis: 320, flexDirection: 'row', flexGrow: 1, gap: spacing.sm, padding: spacing.md },
   updateDot: { backgroundColor: colors.forest, borderRadius: 5, height: 10, width: 10 },
   updateTextWrap: { flex: 1 },
   updateRoute: { color: colors.text, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
@@ -2374,7 +2421,7 @@ const styles = StyleSheet.create({
   priceResultsHeader: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
   priceResultsTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 24, fontWeight: '700' },
   priceResultsDistrict: { color: colors.dim, fontFamily: fonts.body, fontSize: 12, textAlign: 'right' },
-  fairPriceRow: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexDirection: 'row', gap: spacing.md, padding: spacing.md },
+  fairPriceRow: { ...premiumSurface, alignItems: 'flex-start', borderRadius: 16, flexBasis: 460, flexDirection: 'row', flexGrow: 1, gap: spacing.md, padding: spacing.md },
   fairPriceIcon: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 14, height: 42, justifyContent: 'center', width: 42 },
   fairPriceName: { color: colors.text, fontFamily: fonts.accent, fontSize: 19, fontWeight: '900' },
   fairPriceMeta: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 12, fontWeight: '800', lineHeight: 14, marginTop: 3 },
@@ -2389,7 +2436,8 @@ const styles = StyleSheet.create({
   priceRange: { color: colors.teal, fontFamily: fonts.label, fontSize: 14, fontWeight: '900' },
   pricePhrase: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 11, fontWeight: '800', marginTop: 4 },
   foodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-  foodCard: { ...premiumSurface, borderRadius: 16, padding: spacing.md, width: '48.5%' },
+  foodCard: { ...premiumSurface, borderRadius: 16, flexBasis: 260, flexGrow: 1, padding: spacing.md, width: '48.5%' },
+  foodGridDesktop: { gap: spacing.md },
   foodRegion: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
   foodDish: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 4 },
   foodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 6 },
@@ -2436,7 +2484,7 @@ const styles = StyleSheet.create({
   tipChipSelected: { backgroundColor: 'rgba(245,166,35,0.14)', borderColor: colors.gold },
   tipChipText: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   tipChipTextSelected: { color: colors.goldLight },
-  altitudePanel: { ...premiumSurface, borderColor: 'rgba(79,163,217,0.30)', borderRadius: 18, gap: spacing.md, padding: spacing.md },
+  altitudePanel: { ...premiumSurface, borderColor: 'rgba(79,163,217,0.30)', borderRadius: 18, flexBasis: 420, flexGrow: 1, gap: spacing.md, padding: spacing.md },
   altitudeHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   altitudeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900' },
   altitudeValue: { color: colors.white, fontFamily: fonts.display, fontSize: 31, fontWeight: '700', marginTop: 2 },
@@ -2458,7 +2506,7 @@ const styles = StyleSheet.create({
   checkInButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 15, flexDirection: 'row', gap: 7, justifyContent: 'center', minHeight: 46, paddingHorizontal: 14 },
   checkInButtonText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
   medicalDisclaimer: { color: colors.dim, fontFamily: fonts.body, fontSize: 10, lineHeight: 15, textAlign: 'center' },
-  sosPanel: { ...premiumSurface, backgroundColor: 'rgba(255,93,108,0.10)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
+  sosPanel: { ...premiumSurface, backgroundColor: 'rgba(255,93,108,0.10)', borderColor: 'rgba(255,93,108,0.35)', borderRadius: 18, flexBasis: 420, flexGrow: 1, gap: spacing.md, padding: spacing.md },
   sosHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   sosIcon: { alignItems: 'center', backgroundColor: colors.danger, borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
   sosTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 32, fontWeight: '700' },

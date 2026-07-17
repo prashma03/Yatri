@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,8 @@ type LocationPermissionScreenProps = {
 const backgroundImage = 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1600&q=85';
 
 export function LocationPermissionScreen({ onComplete }: LocationPermissionScreenProps) {
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
   const [requesting, setRequesting] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -37,10 +39,20 @@ export function LocationPermissionScreen({ onComplete }: LocationPermissionScree
 
   return (
     <ImageBackground source={{ uri: backgroundImage }} style={styles.background}>
-      <LinearGradient colors={['rgba(7,6,15,0.36)', 'rgba(7,6,15,0.92)']} style={StyleSheet.absoluteFillObject} />
-      <SafeAreaView style={styles.safeArea}>
-        <YatriLogo compact />
-        <View style={styles.content}>
+      <LinearGradient colors={['rgba(7,6,15,0.16)', 'rgba(7,6,15,0.52)', 'rgba(7,6,15,0.94)']} style={StyleSheet.absoluteFillObject} />
+      <SafeAreaView style={[styles.safeArea, isDesktop && styles.safeAreaDesktop]}>
+        <View style={styles.topRow}>
+          <YatriLogo compact />
+        </View>
+        <View style={[styles.shell, isDesktop && styles.shellDesktop]}>
+          {isDesktop && (
+            <View style={styles.desktopCopy}>
+              <Text style={styles.desktopEyebrow}>Location-aware safety</Text>
+              <Text style={styles.desktopTitle}>Nearby stays, district context, and SOS coordinates work better with your location.</Text>
+              <Text style={styles.desktopText}>Yatri only asks for foreground access. You can keep exploring without it, then enable it later when you need safer navigation.</Text>
+            </View>
+          )}
+        <View style={[styles.content, isDesktop && styles.contentDesktop]}>
           <View style={styles.locationIcon}>
             <Ionicons name="location" size={32} color="#1a0f00" />
           </View>
@@ -68,6 +80,7 @@ export function LocationPermissionScreen({ onComplete }: LocationPermissionScree
             <Text style={styles.notNowText}>Not now</Text>
           </Pressable>
         </View>
+        </View>
       </SafeAreaView>
     </ImageBackground>
   );
@@ -76,7 +89,16 @@ export function LocationPermissionScreen({ onComplete }: LocationPermissionScree
 const styles = StyleSheet.create({
   background: { flex: 1 },
   safeArea: { flex: 1, justifyContent: 'space-between', padding: spacing.lg },
+  safeAreaDesktop: { paddingHorizontal: 64, paddingVertical: 38 },
+  topRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  shell: { flex: 1, justifyContent: 'center' },
+  shellDesktop: { alignItems: 'center', flexDirection: 'row', gap: 72, justifyContent: 'center' },
+  desktopCopy: { flex: 1, maxWidth: 720 },
+  desktopEyebrow: { color: colors.gold, fontFamily: fonts.label, fontSize: 14, fontWeight: '900', letterSpacing: 2.2, textTransform: 'uppercase' },
+  desktopTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 64, fontWeight: '700', lineHeight: 72, marginTop: spacing.sm },
+  desktopText: { color: 'rgba(255,255,255,0.72)', fontFamily: fonts.body, fontSize: 21, lineHeight: 34, marginTop: spacing.lg, maxWidth: 620 },
   content: { alignSelf: 'center', backgroundColor: 'rgba(12,10,25,0.94)', borderColor: colors.border, borderRadius: 18, borderWidth: 1, maxWidth: 560, padding: spacing.xl, width: '100%' },
+  contentDesktop: { flex: 1, maxWidth: 560, padding: 38 },
   locationIcon: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 24, height: 52, justifyContent: 'center', marginBottom: spacing.lg, width: 52 },
   eyebrow: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.8 },
   title: { color: colors.white, fontFamily: fonts.display, fontSize: 34, fontWeight: '700', lineHeight: 40, marginTop: spacing.xs },

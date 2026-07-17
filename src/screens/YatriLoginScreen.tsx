@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ImageBackground, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Alert, ImageBackground, Linking, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,16 @@ type YatriLoginScreenProps = {
 
 const loginImage =
   'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1400&q=80';
+
+const legalLinks = [
+  { label: 'Privacy', url: process.env.EXPO_PUBLIC_PRIVACY_URL },
+  { label: 'Terms', url: process.env.EXPO_PUBLIC_TERMS_URL },
+  { label: 'Support', url: process.env.EXPO_PUBLIC_SUPPORT_URL }
+].filter((link): link is { label: string; url: string } => Boolean(link.url));
+
+function openLegalLink(label: string, url: string) {
+  Linking.openURL(url).catch(() => Alert.alert(`${label} unavailable`, `Open this link in your browser: ${url}`));
+}
 
 export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLoginScreenProps) {
   const { width } = useWindowDimensions();
@@ -37,7 +47,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
     const configurationError = getSupabaseConfigurationError();
 
     if (!supabase || configurationError) {
-      setMessage({ kind: 'error', text: configurationError ?? 'Supabase is unavailable.' });
+      setMessage({ kind: 'error', text: 'Sign-in is not connected in this preview. Continue as guest to explore Yatri now.' });
       return;
     }
 
@@ -96,7 +106,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!supabase || configurationError) {
-      setMessage({ kind: 'error', text: configurationError ?? 'Supabase is unavailable.' });
+      setMessage({ kind: 'error', text: 'Password reset needs the live Yatri auth service. Continue as guest in this preview.' });
       return;
     }
 
@@ -246,6 +256,15 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
                 ? 'By creating an account, you agree to secure email verification and session storage.'
                 : 'New to Yatri? Tap Sign up to create an account and verify your email.'}
             </Text>
+            {legalLinks.length > 0 && (
+              <View style={styles.legalLinks}>
+                {legalLinks.map((link) => (
+                  <Pressable accessibilityRole="link" key={link.label} onPress={() => openLegalLink(link.label, link.url)} style={styles.legalLinkButton}>
+                    <Text style={[styles.legalLinkText, isDesktop && styles.legalLinkTextDesktop]}>{link.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </ImageBackground>
@@ -288,6 +307,7 @@ const styles = StyleSheet.create({
   primaryTextDesktop: { fontSize: 18 },
   secondaryTextDesktop: { fontSize: 17 },
   termsDesktop: { fontSize: 14, lineHeight: 21 },
+  legalLinkTextDesktop: { fontSize: 14 },
   logoWrap: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(7,6,15,0.76)',
@@ -493,5 +513,28 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: spacing.md,
     textAlign: 'center'
+  },
+  legalLinks: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    marginTop: spacing.sm
+  },
+  legalLinkButton: {
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6
+  },
+  legalLinkText: {
+    color: colors.goldLight,
+    fontFamily: fonts.label,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+    textTransform: 'uppercase'
   }
 });

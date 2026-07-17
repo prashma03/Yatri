@@ -1,4 +1,4 @@
-const SESSION_KEY = 'yatri_demo_session';
+const SESSION_KEY = 'yatri_session';
 const LOCATION_PROMPT_KEY = 'yatri_location_prompt_complete';
 const TRAVEL_PREFERENCES_KEY = 'yatri_travel_preferences';
 const TRAVEL_PREFERENCES_COMPLETE_KEY = 'yatri_travel_preferences_complete';
