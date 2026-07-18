@@ -366,8 +366,21 @@ export function YatriDashboardScreen({
         showsVerticalScrollIndicator={false}
       >
         {currentPage === 'home' && (
+          isDesktop ? (
+            <DesktopHomeLayout
+              active={active}
+              activeMode={activeMode}
+              connectivity={connectivity}
+              onAction={handlePersonalizedAction}
+              onModeChange={setActiveMode}
+              onQuickAction={handleQuickAction}
+              onSelectDistrict={setSelectedDistrict}
+              personalizedPlan={personalizedPlan}
+              selectedDistrict={selectedDistrict}
+            />
+          ) : (
           <>
-            <ImageBackground source={{ uri: active.image }} style={[styles.hero, isDesktop && styles.heroDesktop]} imageStyle={styles.heroImage as any}>
+            <ImageBackground source={{ uri: active.image }} style={styles.hero} imageStyle={styles.heroImage as any}>
               <LinearGradient
                 colors={['rgba(7,6,15,0.05)', 'rgba(7,6,15,0.38)', 'rgba(7,6,15,0.94)']}
                 style={styles.heroGradient}
@@ -432,6 +445,7 @@ export function YatriDashboardScreen({
               </>
             )}
           </>
+          )
         )}
 
         {currentPage === 'explore' && (
@@ -591,6 +605,193 @@ export function YatriDashboardScreen({
   );
 }
 
+function DesktopHomeLayout({
+  active,
+  activeMode,
+  connectivity,
+  onAction,
+  onModeChange,
+  onQuickAction,
+  onSelectDistrict,
+  personalizedPlan,
+  selectedDistrict
+}: {
+  active: (typeof modeConfig)[TravelMode];
+  activeMode: TravelMode;
+  connectivity: ConnectivityMode;
+  onAction: (action: PersonalizedAction) => void;
+  onModeChange: (mode: TravelMode) => void;
+  onQuickAction: (title: string) => void;
+  onSelectDistrict: (district: string) => void;
+  personalizedPlan: PersonalizedPlan;
+  selectedDistrict: string;
+}) {
+  return (
+    <View style={styles.desktopHome}>
+      <ImageBackground source={{ uri: active.image }} style={styles.desktopHomeHero} imageStyle={styles.desktopHomeHeroImage as any}>
+        <LinearGradient
+          colors={['rgba(7,6,15,0.08)', 'rgba(7,6,15,0.48)', 'rgba(7,6,15,0.92)']}
+          style={styles.desktopHomeHeroGradient}
+        />
+        <View style={styles.desktopHomeHeroCopy}>
+          <Text style={styles.desktopHomeEyebrow}>Namaste, traveler</Text>
+          <Text style={styles.desktopHomeTitle}>Experience the real Nepal</Text>
+          <Text style={styles.desktopHomeText}>Local culture, warm people, sacred places and unforgettable moments await you.</Text>
+          <View style={styles.desktopHomeTags}>
+            {personalizedPlan.tags.map((tag, index) => (
+              <View key={tag} style={styles.desktopHomeTag}>
+                <Ionicons name={index === 0 ? 'people-outline' : index === 1 ? 'restaurant-outline' : 'calendar-outline'} size={14} color={colors.goldLight} />
+                <Text style={styles.desktopHomeTagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+        <HeroPromiseCard />
+      </ImageBackground>
+
+      <View style={styles.desktopModeRow}>
+        <ModeButton mode="culture" selected={activeMode === 'culture'} onPress={() => onModeChange('culture')} />
+        <ModeButton mode="adventure" selected={activeMode === 'adventure'} onPress={() => onModeChange('adventure')} />
+        <View style={styles.desktopConnectivityChip}>
+          <View style={[styles.connectivityDot, { backgroundColor: connectivity === 'online' ? colors.teal : colors.gold }]} />
+          <Text style={styles.desktopConnectivityText}>{connectivity === 'online' ? 'Live nearby data' : 'Offline packs ready'}</Text>
+        </View>
+      </View>
+
+      <View style={styles.desktopHomeActionGrid}>
+        {personalizedPlan.cards.map((card, index) => (
+          <DesktopActionCard
+            key={card.title}
+            card={card}
+            onPress={() => onAction(personalizedPlan.actions[index] ?? personalizedPlan.actions[0])}
+          />
+        ))}
+      </View>
+
+      <View style={styles.desktopHomeMainGrid}>
+        <View style={styles.desktopHomePrimary}>
+          <View style={styles.desktopSectionHeaderRow}>
+            <SectionHeader label="Know before you go" title="Choose your district" />
+            <Pressable accessibilityRole="button" onPress={() => onAction({ label: 'View all districts', page: 'explore', icon: 'map-outline' })} style={styles.viewAllButton}>
+              <Text style={styles.viewAllText}>View all districts</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            </Pressable>
+          </View>
+          <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={onSelectDistrict} />
+          <SectionHeader label="Online nearby" title={`Places to stay in ${selectedDistrict}`} />
+          <NearbyHotels selectedDistrict={selectedDistrict} />
+        </View>
+
+        <HomeRightRail onQuickAction={onQuickAction} selectedDistrict={selectedDistrict} />
+      </View>
+    </View>
+  );
+}
+
+function HeroPromiseCard() {
+  const promises = ['Local experiences that matter', 'Verified and fair pricing', 'Support local communities'];
+  return (
+    <View style={styles.heroPromiseCard}>
+      <View style={styles.heroPromiseHeader}>
+        <Ionicons name="ribbon-outline" size={24} color={colors.goldLight} />
+        <Text style={styles.heroPromiseTitle}>Yatri Promise</Text>
+      </View>
+      {promises.map((promise) => (
+        <View key={promise} style={styles.heroPromiseItem}>
+          <Ionicons name="checkmark-circle-outline" size={18} color={colors.teal} />
+          <Text style={styles.heroPromiseText}>{promise}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function DesktopActionCard({
+  card,
+  onPress
+}: {
+  card: PersonalizedPlan['cards'][number];
+  onPress: () => void;
+}) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.desktopHomeActionCard, pressableLift(pressed)]}>
+      <View style={[styles.desktopHomeActionIcon, { backgroundColor: `${card.accent}24` }]}>
+        <Ionicons name={card.icon} size={28} color={card.accent} />
+      </View>
+      <View style={styles.flex}>
+        <Text style={styles.desktopHomeActionTitle}>{card.title}</Text>
+        <Text style={styles.desktopHomeActionText}>{card.body}</Text>
+      </View>
+      <View style={[styles.desktopHomeActionArrow, { backgroundColor: `${card.accent}24` }]}>
+        <Ionicons name="arrow-forward" size={20} color={card.accent} />
+      </View>
+    </Pressable>
+  );
+}
+
+function HomeRightRail({ onQuickAction, selectedDistrict }: { onQuickAction: (title: string) => void; selectedDistrict: string }) {
+  return (
+    <View style={styles.desktopHomeRail}>
+      <OfficialGuideCard onOpenGuide={() => onQuickAction('Offline')} />
+      <View style={styles.quickHelpPanel}>
+        <Text style={styles.railPanelLabel}>Quick help</Text>
+        <View style={styles.quickHelpGrid}>
+          {quickActions.map((action) => (
+            <Pressable key={action.title} accessibilityRole="button" onPress={() => onQuickAction(action.title)} style={({ pressed }) => [styles.quickHelpTile, pressableLift(pressed)]}>
+              <View style={[styles.quickHelpIcon, { backgroundColor: `${action.accent}22` }]}>
+                <Ionicons name={action.icon} size={22} color={action.accent} />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.quickHelpTitle}>{action.title}</Text>
+                <Text style={styles.quickHelpText}>{action.subtitle}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      <View style={styles.railDistrictTip}>
+        <Badge tone="blue">LOCAL TIP</Badge>
+        <Text style={styles.railDistrictTitle}>{selectedDistrict} desk</Text>
+        <Text style={styles.railDistrictText}>Check base town, signal, transport, respect notes, and nearby lodging before you move.</Text>
+      </View>
+    </View>
+  );
+}
+
+function OfficialGuideCard({ onOpenGuide }: { onOpenGuide: () => void }) {
+  return (
+    <View style={styles.officialGuideCard}>
+      <View style={styles.officialGuideHeader}>
+        <Ionicons name="book-outline" size={19} color={colors.muted} />
+        <View>
+          <Text style={styles.railPanelLabel}>Official guide</Text>
+          <Text style={styles.railPanelSub}>Your pocket guide to Nepal</Text>
+        </View>
+      </View>
+      <View style={styles.officialGuideBody}>
+        <ImageBackground
+          source={{ uri: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=500&q=80' }}
+          style={styles.officialGuideCover}
+          imageStyle={styles.officialGuideCoverImage as any}
+        >
+          <LinearGradient colors={['rgba(7,6,15,0.05)', 'rgba(7,6,15,0.72)']} style={styles.officialGuideCoverGradient} />
+          <Text style={styles.officialGuideCoverText}>Nepal Travel Guide</Text>
+        </ImageBackground>
+        <View style={styles.flex}>
+          <Text style={styles.officialGuideTitle}>Nepal Travel Guide</Text>
+          <Text style={styles.officialGuideText}>Offline maps, phrases, tips and safety info.</Text>
+          <Pressable accessibilityRole="button" onPress={onOpenGuide} style={styles.officialGuideButton}>
+            <Text style={styles.officialGuideButtonText}>View guide</Text>
+          </Pressable>
+        </View>
+        <Pressable accessibilityLabel="Download guide" accessibilityRole="button" onPress={onOpenGuide} style={styles.downloadGuideButton}>
+          <Ionicons name="download-outline" size={19} color={colors.goldLight} />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 function DesktopNavigation({
   connectivity,
   currentPage,
@@ -626,6 +827,13 @@ function DesktopNavigation({
         <View>
           <Text style={styles.desktopStatusLabel}>{connectivity === 'online' ? 'CONNECTED' : 'OFFLINE READY'}</Text>
           <Text style={styles.desktopStatusText}>{connectivity === 'online' ? 'Live services available' : 'Using saved travel data'}</Text>
+        </View>
+      </View>
+      <View style={styles.desktopWeatherCard}>
+        <Ionicons name="partly-sunny" size={27} color={colors.goldLight} />
+        <View>
+          <Text style={styles.desktopWeatherTemp}>22 C</Text>
+          <Text style={styles.desktopWeatherText}>Kathmandu, Nepal</Text>
         </View>
       </View>
     </View>
@@ -2078,7 +2286,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { alignSelf: 'center', padding: spacing.md, paddingBottom: spacing.xl, width: '100%' },
   contentTablet: { padding: spacing.lg },
-  contentDesktop: { maxWidth: 1440, paddingHorizontal: 56, paddingVertical: 42 },
+  contentDesktop: { maxWidth: 1680, paddingHorizontal: 40, paddingVertical: 20 },
   webFriendlyStrip: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.035)', borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
   webFriendlyItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, minHeight: 34 },
   webFriendlyText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 17, fontWeight: '800' },
@@ -2088,9 +2296,12 @@ const styles = StyleSheet.create({
   desktopNavItemSelected: { backgroundColor: colors.gold },
   desktopNavText: { color: colors.muted, flex: 1, fontFamily: fonts.accent, fontSize: 20, fontWeight: '900' },
   desktopNavTextSelected: { color: '#1a0f00' },
-  desktopSidebarStatus: { alignItems: 'center', borderColor: colors.border, borderRadius: 13, borderWidth: 1, bottom: spacing.lg, flexDirection: 'row', gap: spacing.sm, left: spacing.md, padding: spacing.sm, position: 'absolute', right: spacing.md },
+  desktopSidebarStatus: { alignItems: 'center', borderColor: colors.border, borderRadius: 13, borderWidth: 1, bottom: 118, flexDirection: 'row', gap: spacing.sm, left: spacing.md, padding: spacing.sm, position: 'absolute', right: spacing.md },
   desktopStatusLabel: { color: colors.text, fontFamily: fonts.label, fontSize: 11, fontWeight: '900' },
   desktopStatusText: { color: colors.dim, fontFamily: fonts.body, fontSize: 12, marginTop: 2 },
+  desktopWeatherCard: { alignItems: 'center', borderColor: colors.border, borderRadius: 13, borderWidth: 1, bottom: spacing.lg, flexDirection: 'row', gap: spacing.sm, left: spacing.md, padding: spacing.md, position: 'absolute', right: spacing.md },
+  desktopWeatherTemp: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  desktopWeatherText: { color: colors.muted, fontFamily: fonts.body, fontSize: 13, marginTop: 2 },
   topBar: { alignItems: 'center', backgroundColor: colors.bg, borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 68, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   topBarActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   signOutButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 16, borderWidth: 1, height: 42, justifyContent: 'center', width: 42 },
@@ -2123,6 +2334,60 @@ const styles = StyleSheet.create({
   exchangePill: { alignItems: 'flex-end', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
   exchangeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 10, fontWeight: '800', letterSpacing: 1.4 },
   exchangeValue: { color: colors.teal, fontFamily: fonts.accent, fontSize: 13, fontWeight: '800', marginTop: 2 },
+  desktopHome: { gap: spacing.lg },
+  desktopHomeHero: { borderColor: colors.border, borderRadius: 22, borderWidth: 1, height: 390, justifyContent: 'flex-end', overflow: 'hidden' },
+  desktopHomeHeroImage: { borderRadius: 22 },
+  desktopHomeHeroGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 22 },
+  desktopHomeHeroCopy: { bottom: 34, left: 38, maxWidth: 620, position: 'absolute' },
+  desktopHomeEyebrow: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 13, fontWeight: '900', letterSpacing: 2.6, textTransform: 'uppercase' },
+  desktopHomeTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 56, fontWeight: '700', lineHeight: 62, marginTop: 12, maxWidth: 540 },
+  desktopHomeText: { color: 'rgba(255,255,255,0.82)', fontFamily: fonts.body, fontSize: 19, lineHeight: 28, marginTop: 14, maxWidth: 560 },
+  desktopHomeTags: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: 22 },
+  desktopHomeTag: { alignItems: 'center', backgroundColor: 'rgba(7,6,15,0.52)', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 7, paddingHorizontal: 13, paddingVertical: 9 },
+  desktopHomeTagText: { color: colors.white, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
+  heroPromiseCard: { backgroundColor: 'rgba(20,18,29,0.82)', borderColor: 'rgba(255,255,255,0.10)', borderRadius: 20, borderWidth: 1, gap: spacing.md, padding: spacing.lg, position: 'absolute', right: 56, top: 48, width: 278 },
+  heroPromiseHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginBottom: 2 },
+  heroPromiseTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  heroPromiseItem: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
+  heroPromiseText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
+  desktopModeRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginTop: -4 },
+  desktopConnectivityChip: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 8, minHeight: 44, paddingHorizontal: spacing.md },
+  desktopConnectivityText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  desktopHomeActionGrid: { flexDirection: 'row', gap: spacing.md },
+  desktopHomeActionCard: { ...premiumSurface, alignItems: 'center', borderRadius: 18, flex: 1, flexDirection: 'row', gap: spacing.md, minHeight: 118, padding: spacing.lg },
+  desktopHomeActionIcon: { alignItems: 'center', borderRadius: 22, height: 58, justifyContent: 'center', width: 58 },
+  desktopHomeActionTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 19, fontWeight: '900' },
+  desktopHomeActionText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 21, marginTop: 4 },
+  desktopHomeActionArrow: { alignItems: 'center', borderRadius: 18, height: 40, justifyContent: 'center', width: 40 },
+  desktopHomeMainGrid: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.xl },
+  desktopHomePrimary: { flex: 1, minWidth: 0 },
+  desktopHomeRail: { gap: spacing.md, width: 420 },
+  desktopSectionHeaderRow: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
+  viewAllButton: { alignItems: 'center', flexDirection: 'row', gap: 4, marginBottom: spacing.lg, padding: spacing.sm },
+  viewAllText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  officialGuideCard: { ...premiumSurface, borderRadius: 18, padding: spacing.lg },
+  officialGuideHeader: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', gap: spacing.sm, paddingBottom: spacing.md },
+  railPanelLabel: { color: colors.text, fontFamily: fonts.label, fontSize: 12, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase' },
+  railPanelSub: { color: colors.dim, fontFamily: fonts.body, fontSize: 13, marginTop: 3 },
+  officialGuideBody: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, paddingTop: spacing.md },
+  officialGuideCover: { height: 96, justifyContent: 'flex-end', overflow: 'hidden', width: 96 },
+  officialGuideCoverImage: { borderRadius: 12 },
+  officialGuideCoverGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
+  officialGuideCoverText: { color: colors.white, fontFamily: fonts.display, fontSize: 15, fontWeight: '700', lineHeight: 18, padding: 10 },
+  officialGuideTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  officialGuideText: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  officialGuideButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 11, marginTop: spacing.md, minHeight: 38, justifyContent: 'center', paddingHorizontal: spacing.lg },
+  officialGuideButtonText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  downloadGuideButton: { alignItems: 'center', borderColor: 'rgba(245,166,35,0.55)', borderRadius: 11, borderWidth: 1, height: 40, justifyContent: 'center', width: 40 },
+  quickHelpPanel: { ...premiumSurface, borderRadius: 18, padding: spacing.lg },
+  quickHelpGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+  quickHelpTile: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.025)', borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexBasis: '48%', flexDirection: 'row', gap: spacing.sm, minHeight: 76, padding: spacing.sm },
+  quickHelpIcon: { alignItems: 'center', borderRadius: 18, height: 42, justifyContent: 'center', width: 42 },
+  quickHelpTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
+  quickHelpText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 16, marginTop: 2 },
+  railDistrictTip: { ...premiumSurface, borderColor: 'rgba(79,163,217,0.28)', borderRadius: 18, padding: spacing.lg },
+  railDistrictTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 30, fontWeight: '700', marginTop: spacing.sm },
+  railDistrictText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: spacing.xs },
   hero: { height: 500, justifyContent: 'space-between', overflow: 'hidden' },
   heroDesktop: { height: 520 },
   heroImage: { borderRadius: 22 },
