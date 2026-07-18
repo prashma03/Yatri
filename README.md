@@ -123,7 +123,7 @@ npx eas build --profile preview --platform ios
 
 Before TestFlight or Google Play internal testing, complete the checklist in `docs/BETA_CHECKLIST.md`, test SOS SMS/calling on physical Android and iOS devices, and fill Apple privacy plus Google Data Safety disclosures for account data, reports, contacts, photos, and foreground location.
 
-For the full release sequence, use `docs/PRODUCTION_LAUNCH.md`. It covers Supabase SMTP, Edge Function secrets, legal URLs, data review, moderation operations, device QA, store release, and the requirements before enabling real guide tipping.
+For Vercel deployment, use `docs/VERCEL_DEPLOY.md`. For the full release sequence, use `docs/PRODUCTION_LAUNCH.md`. It covers Supabase SMTP, Edge Function secrets, legal URLs, data review, moderation operations, device QA, store release, and the requirements before enabling real guide tipping.
 
 ## Yatri Travel Desk
 
