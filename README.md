@@ -125,13 +125,13 @@ Before TestFlight or Google Play internal testing, complete the checklist in `do
 
 For the full release sequence, use `docs/PRODUCTION_LAUNCH.md`. It covers Supabase SMTP, Edge Function secrets, legal URLs, data review, moderation operations, device QA, store release, and the requirements before enabling real guide tipping.
 
-## Yatri AI assistant
+## Yatri Travel Desk
 
-The app includes a floating Yatri AI chat on every non-loading page. It answers Nepal travel-safety questions about scams, fair prices, SOS steps, offline prep, phrases, and etiquette.
+The app includes a floating Yatri Travel Desk on every non-loading page. It answers Nepal travel-safety questions about scams, fair prices, SOS steps, offline prep, phrases, and etiquette.
 
-The Expo app calls the Supabase Edge Function at `supabase/functions/travel-assistant`. If no trained model endpoint is configured, the chat uses a small built-in fallback so the UI still works.
+The Expo app calls the Supabase Edge Function at `supabase/functions/travel-assistant`. If no hosted response endpoint is configured, the Travel Desk uses a small built-in response set so the UI still works.
 
-To connect the same trained model style you used for Materna, point the Edge Function at that model endpoint with Supabase secrets:
+To connect the same response service style you used for Materna, point the Edge Function at that endpoint with Supabase secrets:
 
 ```bash
 npx supabase secrets set YATRI_AI_ENDPOINT=https://your-trained-model-endpoint
@@ -145,7 +145,7 @@ Deploy the assistant function. If your Expo app uses a new `sb_publishable_...` 
 npx supabase functions deploy travel-assistant --project-ref your-project-ref --no-verify-jwt
 ```
 
-Do not put private AI keys in `.env` or in the mobile app. Keep them as Supabase secrets only.
+Do not put private model keys in `.env` or in the mobile app. Keep them as Supabase secrets only.
 
 ## Verification
 

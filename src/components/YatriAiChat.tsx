@@ -12,7 +12,7 @@ const starterMessages: AssistantMessage[] = [
   {
     id: 'welcome',
     role: 'assistant',
-    text: 'Namaste — I’m Yatri AI. Ask me about scams, fair prices, SOS steps, phrases, offline prep, or respectful travel in Nepal.'
+    text: 'Namaste. Ask the Yatri Travel Desk about scams, fair prices, SOS steps, phrases, offline prep, or respectful travel in Nepal.'
   }
 ];
 
@@ -49,9 +49,7 @@ export function YatriAiChat({ page }: YatriAiChatProps) {
         {
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          text: reply.source === 'offline' ? `${reply.text}
-
-Offline/basic answer - connect the trained model for deeper replies.` : reply.text
+          text: reply.text
         }
       ]);
     } finally {
@@ -73,10 +71,10 @@ Offline/basic answer - connect the trained model for deeper replies.` : reply.te
                 <Ionicons name="sparkles" size={18} color="#1a0f00" />
               </View>
               <View style={styles.flex}>
-                <Text style={[styles.title, desktop && styles.titleDesktop]}>Yatri AI</Text>
+                <Text style={[styles.title, desktop && styles.titleDesktop]}>Yatri Travel Desk</Text>
                 <Text style={[styles.subtitle, desktop && styles.subtitleDesktop]}>Safety, scams, offline Nepal help</Text>
               </View>
-              <Pressable accessibilityLabel="Close Yatri AI chat" onPress={() => setOpen(false)} style={styles.iconButton}>
+              <Pressable accessibilityLabel="Close Yatri Travel Desk" onPress={() => setOpen(false)} style={styles.iconButton}>
                 <Ionicons name="close" size={18} color={colors.muted} />
               </Pressable>
             </View>
@@ -84,14 +82,14 @@ Offline/basic answer - connect the trained model for deeper replies.` : reply.te
             <ScrollView ref={scrollRef} style={[styles.messages, desktop && styles.messagesDesktop]} contentContainerStyle={styles.messagesContent} showsVerticalScrollIndicator={false}>
               {messages.map((message) => (
                 <View key={message.id} style={[styles.bubble, message.role === 'user' ? styles.userBubble : styles.aiBubble]}>
-                  {message.role === 'assistant' && <Text style={styles.sender}>YATRI AI</Text>}
+                  {message.role === 'assistant' && <Text style={styles.sender}>YATRI DESK</Text>}
                   <Text style={[styles.messageText, desktop && styles.messageTextDesktop, message.role === 'user' && styles.userText]}>{message.text}</Text>
                 </View>
               ))}
               {sending && (
                 <View style={[styles.bubble, styles.aiBubble, styles.loadingBubble]}>
                   <ActivityIndicator color={colors.teal} size="small" />
-                  <Text style={styles.loadingText}>Thinking…</Text>
+                  <Text style={styles.loadingText}>Checking...</Text>
                 </View>
               )}
             </ScrollView>
@@ -106,16 +104,16 @@ Offline/basic answer - connect the trained model for deeper replies.` : reply.te
 
             <View style={styles.composer}>
               <TextInput
-                accessibilityLabel="Ask Yatri AI"
+                accessibilityLabel="Ask Yatri Travel Desk"
                 onChangeText={setDraft}
                 onSubmitEditing={() => send()}
-                placeholder="Ask Yatri AI…"
+                placeholder="Ask Yatri..."
                 placeholderTextColor={colors.dim}
                 returnKeyType="send"
                 style={[styles.input, desktop && styles.inputDesktop]}
                 value={draft}
               />
-              <Pressable accessibilityLabel="Send message to Yatri AI" disabled={sending} onPress={() => send()} style={[styles.sendButton, sending && styles.sendButtonDisabled]}>
+              <Pressable accessibilityLabel="Send message to Yatri Travel Desk" disabled={sending} onPress={() => send()} style={[styles.sendButton, sending && styles.sendButtonDisabled]}>
                 <Ionicons name="send" size={17} color="#1a0f00" />
               </Pressable>
             </View>
@@ -125,9 +123,9 @@ Offline/basic answer - connect the trained model for deeper replies.` : reply.te
         </KeyboardAvoidingView>
       )}
 
-      <Pressable accessibilityLabel="Open Yatri AI chat" accessibilityRole="button" onPress={() => setOpen(true)} style={[styles.fab, desktop && styles.fabDesktop]}>
+      <Pressable accessibilityLabel="Open Yatri Travel Desk" accessibilityRole="button" onPress={() => setOpen(true)} style={[styles.fab, desktop && styles.fabDesktop]}>
         <Ionicons name={open ? 'chatbubble' : 'chatbubble-ellipses'} size={24} color="#1a0f00" />
-        {!open && <Text style={styles.fabText}>AI</Text>}
+        {!open && <Text style={styles.fabText}>Help</Text>}
       </Pressable>
     </View>
   );

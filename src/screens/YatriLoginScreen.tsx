@@ -47,7 +47,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
     const configurationError = getSupabaseConfigurationError();
 
     if (!supabase || configurationError) {
-      setMessage({ kind: 'error', text: 'Sign-in is not connected in this preview. Continue as guest to explore Yatri now.' });
+      setMessage({ kind: 'error', text: 'Sign-in is not available here yet. Continue as guest to explore Yatri now.' });
       return;
     }
 
@@ -106,7 +106,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
     const normalizedEmail = email.trim().toLowerCase();
 
     if (!supabase || configurationError) {
-      setMessage({ kind: 'error', text: 'Password reset needs the live Yatri auth service. Continue as guest in this preview.' });
+      setMessage({ kind: 'error', text: 'Password reset is not available here yet. Continue as guest to explore Yatri now.' });
       return;
     }
 

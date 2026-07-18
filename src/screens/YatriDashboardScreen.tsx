@@ -474,7 +474,7 @@ export function YatriDashboardScreen({
             <SectionHeader label="Trail updates" title="Routes and conditions" />
             <View style={styles.mapPanel}>
               <View style={styles.flex}>
-                <Text style={styles.mapTitle}>Offline vector map preview</Text>
+                <Text style={styles.mapTitle}>Offline trail map</Text>
                 <Text style={styles.mapText}>Trails, water, teahouses, checkpoints</Text>
               </View>
               <Pressable accessibilityRole="button" onPress={openTrailNavigation} style={styles.navigateButton}>
@@ -849,7 +849,7 @@ function WebFriendlyStrip() {
       </View>
       <View style={styles.webFriendlyItem}>
         <Ionicons name="chatbubble-ellipses-outline" size={18} color={colors.teal} />
-        <Text style={styles.webFriendlyText}>AI help floats on every page</Text>
+        <Text style={styles.webFriendlyText}>Travel Desk help stays close</Text>
       </View>
       <View style={styles.webFriendlyItem}>
         <Ionicons name="shield-checkmark-outline" size={18} color={colors.mountainBlue} />

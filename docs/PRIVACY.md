@@ -34,6 +34,6 @@ Operator: [INSERT LEGAL OPERATOR NAME]
 Email: [INSERT SUPPORT/PRIVACY EMAIL]
 Address: [INSERT POSTAL ADDRESS]
 
-## AI chat
+## Travel Desk
 
-If you use Yatri AI, your message text and limited app context may be sent to Yatri's Supabase Edge Function and configured AI model provider to generate a reply. Do not enter passport numbers, payment details, medical records, or other sensitive personal information into chat.
+If you use Yatri Travel Desk, your message text and limited app context may be sent to Yatri's Supabase Edge Function and configured response provider to generate a reply. Do not enter passport numbers, payment details, medical records, or other sensitive personal information into chat.

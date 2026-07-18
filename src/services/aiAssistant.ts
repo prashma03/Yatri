@@ -71,7 +71,7 @@ export async function askYatriAssistant({ question, messages, page }: AssistantR
         messages: messages.slice(-8).map(({ role, text }) => ({ role, content: text }))
       }
     });
-    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('AI timeout')), 6500));
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Travel Desk timeout')), 6500));
     const { data, error } = await Promise.race([request, timeout]);
 
     if (error) throw error;
