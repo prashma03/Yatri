@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Network from 'expo-network';
 import { supabase } from '../auth/supabase';
 
 const REPORT_QUEUE_KEY = 'yatri_pending_safety_reports_v1';
@@ -48,8 +47,11 @@ async function readJson<T>(key: string, fallback: T): Promise<T> {
 }
 
 async function isOnline() {
-  const state = await Network.getNetworkStateAsync();
-  return Boolean(state.isConnected && state.isInternetReachable !== false);
+  if (typeof navigator !== 'undefined' && 'onLine' in navigator) {
+    return navigator.onLine !== false;
+  }
+
+  return true;
 }
 
 async function currentUserId() {
