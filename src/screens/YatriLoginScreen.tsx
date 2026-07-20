@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Alert, ImageBackground, Linking, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, ImageBackground, Linking, Platform, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,6 +36,30 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ kind: 'error' | 'success'; text: string } | null>(null);
   const isSignUp = mode === 'sign-up';
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    if (document.getElementById('yatri-auth-input-theme')) return;
+
+    const style = document.createElement('style');
+    style.id = 'yatri-auth-input-theme';
+    style.textContent = `
+      input {
+        color-scheme: dark;
+        outline: none !important;
+      }
+
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px #1a1730 inset !important;
+        -webkit-text-fill-color: #f0eef8 !important;
+        caret-color: #f0eef8 !important;
+        transition: background-color 999999s ease-in-out 0s !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }, []);
 
   function changeMode(nextMode: 'sign-in' | 'sign-up') {
     setMode(nextMode);
