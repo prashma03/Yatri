@@ -133,7 +133,7 @@ export function YatriLoginScreen({ onAuthenticated, onGuestContinue }: YatriLogi
           style={styles.gradient}
         />
         <View style={[styles.content, isDesktop && styles.contentDesktop]}>
-          <View style={styles.logoWrap}>
+          <View style={[styles.logoWrap, isDesktop && styles.logoWrapDesktop]}>
             <YatriLogo />
           </View>
 
@@ -292,12 +292,12 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingBottom: spacing.lg
   },
-  contentDesktop: { alignItems: 'center', flexDirection: 'row', gap: 56, justifyContent: 'center', paddingHorizontal: 64 },
-  heroCopyDesktop: { flex: 1, marginTop: 0, maxWidth: 680, paddingBottom: 0 },
+  contentDesktop: { alignItems: 'center', flexDirection: 'row', gap: 44, justifyContent: 'center', paddingHorizontal: 48 },
+  heroCopyDesktop: { flex: 1, marginTop: 0, maxWidth: 520, paddingBottom: 0 },
   eyebrowDesktop: { fontSize: 14, letterSpacing: 2.6 },
-  titleDesktop: { fontSize: 68, lineHeight: 74, maxWidth: 680 },
-  subtitleDesktop: { fontSize: 21, lineHeight: 33, maxWidth: 620 },
-  formDesktop: { maxWidth: 520, padding: 28, width: 520 },
+  titleDesktop: { fontSize: 56, lineHeight: 62, maxWidth: 520 },
+  subtitleDesktop: { fontSize: 19, lineHeight: 30, maxWidth: 500 },
+  formDesktop: { maxWidth: 540, padding: 28, width: 540 },
   modeTabTextDesktop: { fontSize: 16 },
   labelDesktop: { fontSize: 13 },
   inputDesktop: { fontSize: 18, minHeight: 54 },
@@ -315,6 +315,11 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 1,
     padding: spacing.md
+  },
+  logoWrapDesktop: {
+    left: 32,
+    position: 'absolute',
+    top: 28
   },
   heroCopy: {
     marginTop: 'auto',
@@ -407,6 +412,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md
   },
   input: {
+    backgroundColor: 'transparent',
     color: colors.text,
     flex: 1,
     fontFamily: fonts.body,
