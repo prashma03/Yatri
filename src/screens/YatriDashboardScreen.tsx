@@ -97,13 +97,43 @@ const foodImages = {
   momo: require('../../assets/food/momo.jpg'),
   'dal-bhat': require('../../assets/food/dal-bhat.jpg'),
   'newari-khaja': require('../../assets/food/newari-khaja.jpg'),
-  yomari: require('../../assets/food/yomari.jpg')
+  yomari: require('../../assets/food/yomari.jpg'),
+  'thakali-set': require('../../assets/food/thakali-set.jpg'),
+  thukpa: require('../../assets/food/thukpa.jpg'),
+  'sel-roti': require('../../assets/food/sel-roti.jpg'),
+  'masala-chiya': require('../../assets/food/masala-chiya.jpg'),
+  lassi: require('../../assets/food/lassi.jpg'),
+  'juju-dhau': require('../../assets/food/juju-dhau.jpg'),
+  kheer: require('../../assets/food/kheer.jpg'),
+  'lal-mohan': require('../../assets/food/lal-mohan.jpg')
 };
 
 function FoodPassportGrid({ isDesktop }: { isDesktop: boolean }) {
+  const [category, setCategory] = useState<'All' | 'Food' | 'Drinks' | 'Desserts'>('All');
+  const categories: Array<'All' | 'Food' | 'Drinks' | 'Desserts'> = ['All', 'Food', 'Drinks', 'Desserts'];
+  const visibleCards = category === 'All' ? foodCards : foodCards.filter((item) => item.category === category);
+
   return (
-    <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
-      {foodCards.map((food) => (
+    <View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.foodCategoryList}>
+        {categories.map((option) => {
+          const selected = category === option;
+          const count = option === 'All' ? foodCards.length : foodCards.filter((item) => item.category === option).length;
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              key={option}
+              onPress={() => setCategory(option)}
+              style={[styles.foodCategoryChip, selected && styles.foodCategoryChipSelected]}
+            >
+              <Text style={[styles.foodCategoryText, selected && styles.foodCategoryTextSelected]}>{option} · {count}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+      <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
+      {visibleCards.map((food) => (
         <View
           accessibilityLabel={`${food.dish}, ${food.region}. ${food.description}. Typical price ${food.price}.`}
           key={food.dish}
@@ -139,6 +169,7 @@ function FoodPassportGrid({ isDesktop }: { isDesktop: boolean }) {
           </View>
         </View>
       ))}
+      </View>
     </View>
   );
 }
@@ -658,14 +689,17 @@ function DesktopHomeLayout({
   personalizedPlan: PersonalizedPlan;
   selectedDistrict: string;
 }) {
+  const { width } = useWindowDimensions();
+  const compactDesktop = width < 1280;
+
   return (
     <View style={styles.desktopHome}>
-      <ImageBackground source={{ uri: active.image }} style={styles.desktopHomeHero} imageStyle={styles.desktopHomeHeroImage as any}>
+      <ImageBackground source={{ uri: active.image }} style={[styles.desktopHomeHero, compactDesktop && styles.desktopHomeHeroCompact]} imageStyle={styles.desktopHomeHeroImage as any}>
         <LinearGradient
           colors={['rgba(7,6,15,0.08)', 'rgba(7,6,15,0.48)', 'rgba(7,6,15,0.92)']}
           style={styles.desktopHomeHeroGradient}
         />
-        <View style={styles.desktopHomeHeroCopy}>
+        <View style={[styles.desktopHomeHeroCopy, compactDesktop && styles.desktopHomeHeroCopyCompact]}>
           <Text style={styles.desktopHomeEyebrow}>Namaste, traveler</Text>
           <Text style={styles.desktopHomeTitle}>Experience the real Nepal</Text>
           <Text style={styles.desktopHomeText}>Local culture, warm people, sacred places and unforgettable moments await you.</Text>
@@ -678,7 +712,7 @@ function DesktopHomeLayout({
             ))}
           </View>
         </View>
-        <HeroPromiseCard />
+        <HeroPromiseCard compact={compactDesktop} />
       </ImageBackground>
 
       <View style={styles.desktopModeRow}>
@@ -710,20 +744,23 @@ function DesktopHomeLayout({
             </Pressable>
           </View>
           <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={onSelectDistrict} />
-          <SectionHeader label="Online nearby" title={`Places to stay in ${selectedDistrict}`} />
-          <NearbyHotels selectedDistrict={selectedDistrict} />
         </View>
 
         <HomeRightRail onQuickAction={onQuickAction} selectedDistrict={selectedDistrict} />
+      </View>
+
+      <View style={styles.desktopAdditionalSection}>
+        <SectionHeader label="Online nearby" title={`Places to stay in ${selectedDistrict}`} />
+        <NearbyHotels selectedDistrict={selectedDistrict} />
       </View>
     </View>
   );
 }
 
-function HeroPromiseCard() {
+function HeroPromiseCard({ compact = false }: { compact?: boolean }) {
   const promises = ['Local experiences that matter', 'Verified and fair pricing', 'Support local communities'];
   return (
-    <View style={styles.heroPromiseCard}>
+    <View style={[styles.heroPromiseCard, compact && styles.heroPromiseCardCompact]}>
       <View style={styles.heroPromiseHeader}>
         <Ionicons name="ribbon-outline" size={24} color={colors.goldLight} />
         <Text style={styles.heroPromiseTitle}>Yatri Promise</Text>
@@ -1216,7 +1253,7 @@ function ReferencePriceList({ items, icon }: { items: PriceItem[]; icon: IconNam
 
 function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { selectedDistrict: string; onSelectDistrict: (district: string) => void }) {
   const { width } = useWindowDimensions();
-  const desktop = width >= 1024;
+  const stackSecondarySites = width < 1200;
   const [districtSearch, setDistrictSearch] = useState('');
   const [districtPickerOpen, setDistrictPickerOpen] = useState(false);
   const [savedAt, setSavedAt] = useState<string | null>(null);
@@ -1262,7 +1299,7 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
   };
 
   return (
-    <View style={[styles.districtFeature, desktop && styles.districtFeatureDesktop]}>
+    <View style={styles.districtFeature}>
       <View style={styles.districtSearchPanel}>
         <Pressable
           accessibilityRole="button"
@@ -1377,7 +1414,7 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
         <DistrictInfoRow icon="bus-outline" label="Getting around" text={activeDistrict.transport} />
         <DistrictInfoRow icon="people-outline" label="Local respect" text={activeDistrict.etiquette} />
         <DistrictInfoRow icon="shield-checkmark-outline" label="Safety note" text={activeDistrict.safety} last />
-        <View style={styles.famousSitesSection}>
+        {famousSites.length > 0 && <View style={styles.famousSitesSection}>
           <View style={styles.famousSitesHeading}>
             <View style={styles.flex}>
               <Text style={styles.famousSitesEyebrow}>FAMOUS SITES</Text>
@@ -1385,17 +1422,22 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
             </View>
             <View style={styles.famousSitesCount}><Text style={styles.famousSitesCountText}>{famousSites.length}</Text></View>
           </View>
-          <ScrollView horizontal contentContainerStyle={styles.famousSitesList} showsHorizontalScrollIndicator={false}>
-            {famousSites.map((site) => <DistrictSiteCard key={`${site.district}-${site.name}`} site={site} />)}
-          </ScrollView>
-        </View>
+          <DistrictSiteCard featured key={`${famousSites[0].district}-${famousSites[0].name}`} site={famousSites[0]} />
+          {famousSites.length > 1 && (
+            <View style={[styles.famousSitesList, stackSecondarySites && styles.famousSitesListStacked]}>
+              {famousSites.slice(1).map((site) => <DistrictSiteCard compact={stackSecondarySites} key={`${site.district}-${site.name}`} site={site} />)}
+            </View>
+          )}
+        </View>}
         <Text style={styles.districtFreshness}>{savedAt ? `Offline copy saved ${new Date(savedAt).toLocaleDateString()} · ` : ''}Yatri district directory · 77 districts · reviewed July 6, 2026</Text>
       </View>
     </View>
   );
 }
 
-function DistrictSiteCard({ site }: { site: DistrictSite }) {
+function DistrictSiteCard({ compact = false, featured = false, site }: { compact?: boolean; featured?: boolean; site: DistrictSite }) {
+  const { width } = useWindowDimensions();
+  const horizontalFeature = featured && width >= 1200;
   const openMap = () => {
     const query = encodeURIComponent(`${site.name}, ${site.district}, Nepal`);
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`)
@@ -1403,8 +1445,8 @@ function DistrictSiteCard({ site }: { site: DistrictSite }) {
   };
 
   return (
-    <View style={styles.famousSiteCard}>
-      <ImageBackground source={{ uri: site.image }} style={styles.famousSitePhoto} imageStyle={styles.famousSiteImage as any}>
+    <View style={[styles.famousSiteCard, compact && styles.famousSiteCardCompact, featured && styles.famousSiteCardFeatured, horizontalFeature && styles.famousSiteCardFeaturedDesktop]}>
+      <ImageBackground source={{ uri: site.image }} style={[styles.famousSitePhoto, featured && styles.famousSitePhotoFeatured, horizontalFeature && styles.famousSitePhotoFeaturedDesktop]} imageStyle={styles.famousSiteImage as any}>
         <LinearGradient colors={['transparent', 'rgba(4,12,18,0.96)']} style={styles.famousSiteGradient} />
         <View style={styles.famousSitePhotoCopy}>
           <Text style={styles.famousSitePlace}>{site.place}</Text>
@@ -2318,7 +2360,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { alignSelf: 'center', padding: spacing.md, paddingBottom: spacing.xl, width: '100%' },
   contentTablet: { padding: spacing.lg },
-  contentDesktop: { maxWidth: 1680, paddingHorizontal: 40, paddingVertical: 20 },
+  contentDesktop: { maxWidth: 1440, paddingBottom: 60, paddingHorizontal: 40, paddingTop: 24 },
   webFriendlyStrip: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.035)', borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
   webFriendlyItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, minHeight: 34 },
   webFriendlyText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 17, fontWeight: '800' },
@@ -2337,7 +2379,7 @@ const styles = StyleSheet.create({
   topBar: { alignItems: 'center', backgroundColor: colors.bg, borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 68, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   topBarActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   signOutButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 16, borderWidth: 1, height: 42, justifyContent: 'center', width: 42 },
-  topBarDesktop: { minHeight: 76, paddingHorizontal: 32 },
+  topBarDesktop: { alignSelf: 'center', maxWidth: 1440, minHeight: 76, paddingHorizontal: 40, width: '100%' },
   desktopContext: { color: colors.dim, fontFamily: fonts.label, fontSize: 12, fontWeight: '900', letterSpacing: 1.6 },
   desktopPageName: { color: colors.text, fontFamily: fonts.display, fontSize: 40, fontWeight: '700', marginTop: 2 },
   pageHeading: { marginBottom: spacing.xs, paddingTop: spacing.sm },
@@ -2366,11 +2408,13 @@ const styles = StyleSheet.create({
   exchangePill: { alignItems: 'flex-end', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 16, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
   exchangeLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 10, fontWeight: '800', letterSpacing: 1.4 },
   exchangeValue: { color: colors.teal, fontFamily: fonts.accent, fontSize: 13, fontWeight: '800', marginTop: 2 },
-  desktopHome: { gap: spacing.lg },
+  desktopHome: { gap: 32, minWidth: 0, width: '100%' },
   desktopHomeHero: { borderColor: colors.border, borderRadius: 22, borderWidth: 1, height: 390, justifyContent: 'flex-end', overflow: 'hidden' },
+  desktopHomeHeroCompact: { height: 600 },
   desktopHomeHeroImage: { borderRadius: 22 },
   desktopHomeHeroGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 22 },
   desktopHomeHeroCopy: { bottom: 34, left: 38, maxWidth: 620, position: 'absolute' },
+  desktopHomeHeroCopyCompact: { bottom: 250, left: 28, maxWidth: 540, right: 28 },
   desktopHomeEyebrow: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 13, fontWeight: '900', letterSpacing: 2.6, textTransform: 'uppercase' },
   desktopHomeTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 56, fontWeight: '700', lineHeight: 62, marginTop: 12, maxWidth: 540 },
   desktopHomeText: { color: 'rgba(255,255,255,0.82)', fontFamily: fonts.body, fontSize: 19, lineHeight: 28, marginTop: 14, maxWidth: 560 },
@@ -2378,30 +2422,32 @@ const styles = StyleSheet.create({
   desktopHomeTag: { alignItems: 'center', backgroundColor: 'rgba(7,6,15,0.52)', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 7, paddingHorizontal: 13, paddingVertical: 9 },
   desktopHomeTagText: { color: colors.white, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
   heroPromiseCard: { backgroundColor: 'rgba(20,18,29,0.82)', borderColor: 'rgba(255,255,255,0.10)', borderRadius: 20, borderWidth: 1, gap: spacing.md, padding: spacing.lg, position: 'absolute', right: 56, top: 48, width: 278 },
+  heroPromiseCardCompact: { bottom: 24, left: 28, right: 28, top: 'auto', width: 'auto' },
   heroPromiseHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginBottom: 2 },
   heroPromiseTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
   heroPromiseItem: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   heroPromiseText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
-  desktopModeRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginTop: -4 },
+  desktopModeRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   desktopConnectivityChip: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 8, minHeight: 44, paddingHorizontal: spacing.md },
   desktopConnectivityText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
-  desktopHomeActionGrid: { flexDirection: 'row', gap: spacing.md },
-  desktopHomeActionCard: { ...premiumSurface, alignItems: 'center', borderRadius: 18, flex: 1, flexDirection: 'row', gap: spacing.md, minHeight: 118, padding: spacing.lg },
+  desktopHomeActionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, minWidth: 0 },
+  desktopHomeActionCard: { ...premiumSurface, alignItems: 'center', borderRadius: 18, flexBasis: 300, flexGrow: 1, flexShrink: 1, flexDirection: 'row', gap: spacing.md, minHeight: 118, minWidth: 0, padding: spacing.lg },
   desktopHomeActionIcon: { alignItems: 'center', borderRadius: 22, height: 58, justifyContent: 'center', width: 58 },
   desktopHomeActionTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 19, fontWeight: '900' },
   desktopHomeActionText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 21, marginTop: 4 },
   desktopHomeActionArrow: { alignItems: 'center', borderRadius: 18, height: 40, justifyContent: 'center', width: 40 },
-  desktopHomeMainGrid: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.xl },
-  desktopHomePrimary: { flex: 1, minWidth: 0 },
-  desktopHomeRail: { gap: spacing.md, width: 420 },
-  desktopSectionHeaderRow: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
+  desktopHomeMainGrid: { alignItems: 'flex-start', flexDirection: 'row', flexWrap: 'wrap', gap: 32, minWidth: 0, width: '100%' },
+  desktopHomePrimary: { flexBasis: 720, flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  desktopHomeRail: { flexBasis: 320, flexGrow: 0, flexShrink: 1, gap: spacing.md, maxWidth: 380, minWidth: 320, width: '100%' },
+  desktopAdditionalSection: { minWidth: 0, width: '100%' },
+  desktopSectionHeaderRow: { alignItems: 'flex-end', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, justifyContent: 'space-between', minWidth: 0 },
   viewAllButton: { alignItems: 'center', flexDirection: 'row', gap: 4, marginBottom: spacing.lg, padding: spacing.sm },
   viewAllText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   officialGuideCard: { ...premiumSurface, borderRadius: 18, padding: spacing.lg },
   officialGuideHeader: { alignItems: 'center', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', gap: spacing.sm, paddingBottom: spacing.md },
   railPanelLabel: { color: colors.text, fontFamily: fonts.label, fontSize: 12, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase' },
   railPanelSub: { color: colors.dim, fontFamily: fonts.body, fontSize: 13, marginTop: 3 },
-  officialGuideBody: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, paddingTop: spacing.md },
+  officialGuideBody: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, minWidth: 0, paddingTop: spacing.md },
   officialGuideCover: { height: 96, justifyContent: 'flex-end', overflow: 'hidden', width: 96 },
   officialGuideCoverImage: { borderRadius: 12 },
   officialGuideCoverGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 12 },
@@ -2413,7 +2459,7 @@ const styles = StyleSheet.create({
   downloadGuideButton: { alignItems: 'center', borderColor: 'rgba(245,166,35,0.55)', borderRadius: 11, borderWidth: 1, height: 40, justifyContent: 'center', width: 40 },
   quickHelpPanel: { ...premiumSurface, borderRadius: 18, padding: spacing.lg },
   quickHelpGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-  quickHelpTile: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.025)', borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexBasis: '48%', flexDirection: 'row', gap: spacing.sm, minHeight: 76, padding: spacing.sm },
+  quickHelpTile: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.025)', borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexBasis: 150, flexGrow: 1, flexShrink: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 76, minWidth: 0, padding: spacing.sm },
   quickHelpIcon: { alignItems: 'center', borderRadius: 18, height: 42, justifyContent: 'center', width: 42 },
   quickHelpTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
   quickHelpText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 16, marginTop: 2 },
@@ -2493,14 +2539,14 @@ const styles = StyleSheet.create({
   referencePriceBadge: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', marginTop: 4, textTransform: 'uppercase' },
   referencePriceBadgeGood: { color: colors.teal },
   contentSource: { color: colors.dim, fontFamily: fonts.body, fontSize: 9, lineHeight: 14, textAlign: 'right' },
-  districtFeature: { gap: spacing.md },
+  districtFeature: { gap: spacing.md, minWidth: 0, width: '100%' },
   districtFeatureDesktop: { alignItems: 'flex-start', flexDirection: 'row' },
   districtTabs: { gap: spacing.xs, paddingRight: spacing.md },
   districtTab: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 13, borderWidth: 1, flexDirection: 'row', gap: 6, minHeight: 40, paddingHorizontal: 12 },
   districtTabSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
   districtTabText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
   districtTabTextSelected: { color: '#1a0f00' },
-  districtSearchPanel: { ...premiumSurface, borderRadius: 18, flexBasis: 420, gap: spacing.sm, marginBottom: spacing.md, padding: spacing.md },
+  districtSearchPanel: { ...premiumSurface, borderRadius: 18, flexBasis: 360, flexGrow: 0, flexShrink: 1, gap: spacing.sm, minWidth: 0, padding: spacing.md, width: '100%' },
   districtSearchHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
   districtSearchLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
   districtSearchHint: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 16, marginTop: 4, maxWidth: 560 },
@@ -2527,38 +2573,44 @@ const styles = StyleSheet.create({
   districtGuideBadge: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
   districtStarterNotice: { alignItems: 'flex-start', backgroundColor: 'rgba(245,166,35,0.10)', borderColor: 'rgba(245,166,35,0.28)', borderRadius: 12, borderWidth: 1, flexDirection: 'row', gap: spacing.xs, marginBottom: spacing.md, padding: spacing.sm },
   districtStarterText: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 17 },
-  districtBriefing: { ...premiumSurface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, flex: 1, overflow: 'hidden', padding: spacing.md },
-  districtHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
+  districtBriefing: { ...premiumSurface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, flex: 1, minWidth: 0, overflow: 'hidden', padding: spacing.md, width: '100%' },
+  districtHeading: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md, minWidth: 0 },
   districtIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 16, height: 46, justifyContent: 'center', width: 46 },
-  districtName: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700' },
+  districtName: { color: colors.text, fontFamily: fonts.display, fontSize: 32, fontWeight: '700', lineHeight: 38 },
   districtProvince: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, marginTop: 2 },
   districtOfflineBadge: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.10)', borderRadius: 10, flexDirection: 'row', gap: 4, paddingHorizontal: 7, paddingVertical: 5 },
   districtOfflineText: { color: colors.teal, fontFamily: fonts.label, fontSize: 8, fontWeight: '900' },
-  districtFacts: { borderBottomColor: colors.border, borderBottomWidth: 1, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', paddingVertical: spacing.md },
-  districtFact: { flex: 1, paddingRight: spacing.xs },
+  districtFacts: { borderBottomColor: colors.border, borderBottomWidth: 1, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingVertical: spacing.md },
+  districtFact: { flexBasis: 140, flexGrow: 1, minWidth: 0, paddingRight: spacing.xs },
   districtFactLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 12, fontWeight: '900' },
   districtFactValue: { color: colors.text, fontFamily: fonts.accent, fontSize: 16, fontWeight: '900', lineHeight: 22, marginTop: 4 },
   districtBestFor: { alignItems: 'center', flexDirection: 'row', gap: 7, paddingVertical: spacing.md },
-  districtBestForText: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
+  districtBestForText: { color: colors.goldLight, flex: 1, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800', lineHeight: 18 },
   districtInfoRow: { alignItems: 'flex-start', borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', gap: spacing.sm, paddingVertical: spacing.sm },
   districtInfoRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
   districtInfoLabel: { color: colors.text, fontFamily: fonts.accent, fontSize: 16, fontWeight: '900' },
   districtInfoText: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 3 },
-  famousSitesSection: { borderTopColor: colors.border, borderTopWidth: 1, marginHorizontal: -spacing.md, marginTop: spacing.lg, paddingTop: spacing.lg },
+  famousSitesSection: { borderTopColor: colors.border, borderTopWidth: 1, marginHorizontal: -spacing.md, marginTop: spacing.lg, minWidth: 0, paddingHorizontal: spacing.md, paddingTop: spacing.lg },
   famousSitesHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.md },
   famousSitesEyebrow: { color: colors.teal, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
   famousSitesTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 34, fontWeight: '700', lineHeight: 39, marginTop: 4 },
   famousSitesCount: { alignItems: 'center', backgroundColor: 'rgba(62,207,178,0.12)', borderRadius: 17, height: 36, justifyContent: 'center', width: 36 },
   famousSitesCountText: { color: colors.teal, fontFamily: fonts.label, fontSize: 14, fontWeight: '900' },
-  famousSitesList: { gap: spacing.md, padding: spacing.md },
-  famousSiteCard: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 18, borderWidth: 1, overflow: 'hidden', width: 380 },
+  famousSitesList: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, paddingTop: spacing.md },
+  famousSitesListStacked: { flexDirection: 'column' },
+  famousSiteCard: { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexShrink: 0, minWidth: 320, overflow: 'hidden', width: 380 },
+  famousSiteCardCompact: { minWidth: 0, width: '100%' },
+  famousSiteCardFeatured: { marginTop: spacing.md, minWidth: 0, width: '100%' },
+  famousSiteCardFeaturedDesktop: { alignItems: 'stretch', flexDirection: 'row' },
   famousSitePhoto: { height: 240, justifyContent: 'flex-end' },
+  famousSitePhotoFeatured: { height: 300, width: '100%' },
+  famousSitePhotoFeaturedDesktop: { flexBasis: '43%', flexShrink: 0, height: 'auto', minHeight: 390, width: '43%' },
   famousSiteImage: { borderTopLeftRadius: 17, borderTopRightRadius: 17 },
   famousSiteGradient: { ...StyleSheet.absoluteFillObject },
   famousSitePhotoCopy: { padding: spacing.md },
   famousSitePlace: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' },
   famousSiteName: { color: colors.white, fontFamily: fonts.display, fontSize: 35, fontWeight: '700', lineHeight: 40, marginTop: 4 },
-  famousSiteBody: { gap: spacing.md, padding: spacing.md },
+  famousSiteBody: { flex: 1, gap: spacing.md, minWidth: 0, padding: spacing.md },
   famousSiteExperience: { color: colors.text, fontFamily: fonts.body, fontSize: 18, lineHeight: 28 },
   famousSiteMetaRow: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm },
   famousSiteMetaLabel: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', letterSpacing: 1 },
@@ -2735,6 +2787,11 @@ const styles = StyleSheet.create({
   foodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   foodCard: { ...premiumSurface, borderRadius: 18, flexBasis: 280, flexGrow: 1, overflow: 'hidden', padding: 0, width: '48.5%' },
   foodGridDesktop: { gap: spacing.md },
+  foodCategoryList: { gap: spacing.xs, paddingTop: spacing.md },
+  foodCategoryChip: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 9 },
+  foodCategoryChipSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
+  foodCategoryText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
+  foodCategoryTextSelected: { color: '#1a0f00' },
   foodImage: { height: 190, width: '100%' },
   foodCardBody: { gap: 10, padding: spacing.md },
   foodTitleRow: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },

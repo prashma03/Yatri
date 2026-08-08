@@ -81,8 +81,9 @@ export type EtiquetteCard = {
 
 export type FoodCard = {
   dish: string;
+  category: 'Food' | 'Drinks' | 'Desserts';
   region: string;
-  image: 'momo' | 'dal-bhat' | 'newari-khaja' | 'yomari';
+  image: 'momo' | 'dal-bhat' | 'newari-khaja' | 'yomari' | 'thakali-set' | 'thukpa' | 'sel-roti' | 'masala-chiya' | 'lassi' | 'juju-dhau' | 'kheer' | 'lal-mohan';
   description: string;
   orderTip: string;
   flavors: string;
@@ -590,6 +591,7 @@ export const etiquetteCards: EtiquetteCard[] = [
 export const foodCards: FoodCard[] = [
   {
     dish: 'Momo',
+    category: 'Food',
     region: 'Across Nepal',
     image: 'momo',
     description: 'Steamed dumplings served with a bright tomato-sesame achar.',
@@ -603,6 +605,7 @@ export const foodCards: FoodCard[] = [
   },
   {
     dish: 'Dal Bhat',
+    category: 'Food',
     region: 'Everyday Nepal',
     image: 'dal-bhat',
     description: 'Nepal’s everyday rice-and-lentil meal with vegetables, greens and achar.',
@@ -616,6 +619,7 @@ export const foodCards: FoodCard[] = [
   },
   {
     dish: 'Newari Khaja Set',
+    category: 'Food',
     region: 'Kathmandu Valley',
     image: 'newari-khaja',
     description: 'A generous Newari platter built around beaten rice and many savory sides.',
@@ -629,6 +633,7 @@ export const foodCards: FoodCard[] = [
   },
   {
     dish: 'Yomari',
+    category: 'Desserts',
     region: 'Newari sweet',
     image: 'yomari',
     description: 'Steamed rice-flour dumpling traditionally filled with chaku and sesame.',
@@ -639,6 +644,118 @@ export const foodCards: FoodCard[] = [
     allergens: 'Often sesame; confirm dairy preparation',
     price: 'Rs. 60–150 / piece',
     tryIn: 'Newari cafés in the Kathmandu Valley'
+  },
+  {
+    dish: 'Thakali Set',
+    category: 'Food',
+    region: 'Mustang tradition',
+    image: 'thakali-set',
+    description: 'A carefully balanced rice set with dal, curries, greens, gundruk and bold pickles.',
+    orderTip: 'Ask which sides and refills are included before ordering.',
+    flavors: 'Earthy · tangy · timur-spiced',
+    dietary: 'Veg or meat',
+    spice: 'Mild–medium',
+    allergens: 'Ask about dairy, gluten and sesame',
+    price: 'Rs. 450–900 / set',
+    tryIn: 'Pokhara, Kathmandu and the Annapurna region'
+  },
+  {
+    dish: 'Thukpa',
+    category: 'Food',
+    region: 'Himalayan',
+    image: 'thukpa',
+    description: 'A warming noodle soup with vegetables and an optional egg or meat broth.',
+    orderTip: 'Say “veg thukpa” and confirm the broth if you avoid meat.',
+    flavors: 'Brothy · warming · savory',
+    dietary: 'Veg, egg or meat',
+    spice: 'Mild–medium',
+    allergens: 'Usually wheat; may contain egg or soy',
+    price: 'Rs. 200–450 / bowl',
+    tryIn: 'Mountain towns, Pokhara and Kathmandu'
+  },
+  {
+    dish: 'Sel Roti',
+    category: 'Food',
+    region: 'Festival favorite',
+    image: 'sel-roti',
+    description: 'A lightly sweet, crisp-edged ring bread made from rice batter.',
+    orderTip: 'Try it fresh and warm, often with milk tea or yogurt.',
+    flavors: 'Crisp · chewy · gently sweet',
+    dietary: 'Usually vegetarian',
+    spice: 'Not spicy',
+    allergens: 'Ask about dairy; commonly gluten-free',
+    price: 'Rs. 30–80 / piece',
+    tryIn: 'Markets, tea shops and festival stalls'
+  },
+  {
+    dish: 'Masala Chiya',
+    category: 'Drinks',
+    region: 'Across Nepal',
+    image: 'masala-chiya',
+    description: 'Sweet milk tea brewed with black tea and warming spices.',
+    orderTip: 'Say “chini thorai” if you prefer less sugar.',
+    flavors: 'Milky · spiced · sweet',
+    dietary: 'Vegetarian',
+    spice: 'Gently spiced',
+    allergens: 'Contains milk unless requested otherwise',
+    price: 'Rs. 40–150 / cup',
+    tryIn: 'Tea shops and roadside stops everywhere'
+  },
+  {
+    dish: 'Lassi',
+    category: 'Drinks',
+    region: 'Terai + city cafés',
+    image: 'lassi',
+    description: 'A cool yogurt drink served plain, sweet or blended with fruit.',
+    orderTip: 'Choose a busy shop with good refrigeration and clean cups.',
+    flavors: 'Creamy · cool · tangy-sweet',
+    dietary: 'Vegetarian',
+    spice: 'Not spicy',
+    allergens: 'Contains dairy; toppings may contain nuts',
+    price: 'Rs. 100–300 / glass',
+    tryIn: 'Kathmandu, Pokhara and Terai cities'
+  },
+  {
+    dish: 'Juju Dhau',
+    category: 'Desserts',
+    region: 'Bhaktapur',
+    image: 'juju-dhau',
+    description: 'Bhaktapur’s famous rich, gently sweet set yogurt served in a clay pot.',
+    orderTip: 'Buy from a busy dairy shop and eat it chilled the same day.',
+    flavors: 'Rich · creamy · lightly caramel',
+    dietary: 'Vegetarian',
+    spice: 'Not spicy',
+    allergens: 'Contains dairy',
+    price: 'Rs. 80–250 / pot',
+    tryIn: 'Bhaktapur Durbar Square and local dairy shops'
+  },
+  {
+    dish: 'Kheer',
+    category: 'Desserts',
+    region: 'Celebration sweet',
+    image: 'kheer',
+    description: 'Slow-cooked rice pudding scented with cardamom and often topped with nuts.',
+    orderTip: 'Ask whether it contains nuts if you have an allergy.',
+    flavors: 'Creamy · cardamom · gently sweet',
+    dietary: 'Vegetarian',
+    spice: 'Not spicy',
+    allergens: 'Contains dairy; often contains tree nuts',
+    price: 'Rs. 120–300 / bowl',
+    tryIn: 'Sweet shops, restaurants and festival meals'
+  },
+  {
+    dish: 'Lal Mohan',
+    category: 'Desserts',
+    region: 'Sweet shops',
+    image: 'lal-mohan',
+    description: 'Soft fried milk dumplings soaked in fragrant cardamom sugar syrup.',
+    orderTip: 'Order one first—the syrup makes this dessert especially rich.',
+    flavors: 'Syrupy · milky · cardamom',
+    dietary: 'Vegetarian',
+    spice: 'Not spicy',
+    allergens: 'Contains dairy; may contain gluten',
+    price: 'Rs. 50–120 / piece',
+    tryIn: 'Mithai shops across Nepal'
   }
 ];
 
