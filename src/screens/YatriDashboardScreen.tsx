@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { Alert, Image, ImageBackground, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as SMS from 'expo-sms';
@@ -92,6 +92,56 @@ const dashboardPages: { id: DashboardPage; label: string; icon: IconName; active
   { id: 'local', label: 'Local', icon: 'people-outline', activeIcon: 'people' },
   { id: 'prices', label: 'Prices', icon: 'pricetag-outline', activeIcon: 'pricetag' }
 ];
+
+const foodImages = {
+  momo: require('../../assets/food/momo.jpg'),
+  'dal-bhat': require('../../assets/food/dal-bhat.jpg'),
+  'newari-khaja': require('../../assets/food/newari-khaja.jpg'),
+  yomari: require('../../assets/food/yomari.jpg')
+};
+
+function FoodPassportGrid({ isDesktop }: { isDesktop: boolean }) {
+  return (
+    <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
+      {foodCards.map((food) => (
+        <View
+          accessibilityLabel={`${food.dish}, ${food.region}. ${food.description}. Typical price ${food.price}.`}
+          key={food.dish}
+          style={styles.foodCard}
+        >
+          <Image accessibilityIgnoresInvertColors source={foodImages[food.image]} style={styles.foodImage} />
+          <View style={styles.foodCardBody}>
+            <View style={styles.foodTitleRow}>
+              <View style={styles.foodTitleCopy}>
+                <Text style={styles.foodRegion}>{food.region}</Text>
+                <Text style={styles.foodDish}>{food.dish}</Text>
+              </View>
+              <Text style={styles.foodPrice}>{food.price}</Text>
+            </View>
+            <Text style={styles.foodDescription}>{food.description}</Text>
+            <View style={styles.foodBadgeRow}>
+              <Text style={styles.foodBadge}>{food.dietary}</Text>
+              <Text style={styles.foodBadge}>{food.spice}</Text>
+            </View>
+            <Text style={styles.foodFlavors}>{food.flavors}</Text>
+            <View style={styles.foodDetailRow}>
+              <Ionicons name="location-outline" size={15} color={colors.teal} />
+              <Text style={styles.foodDetailText}>{food.tryIn}</Text>
+            </View>
+            <View style={styles.foodDetailRow}>
+              <Ionicons name="alert-circle-outline" size={15} color={colors.gold} />
+              <Text style={styles.foodDetailText}>{food.allergens}</Text>
+            </View>
+            <View style={styles.foodOrderBox}>
+              <Text style={styles.foodOrderLabel}>ORDER WITH CONFIDENCE</Text>
+              <Text style={styles.foodTip}>{food.orderTip}</Text>
+            </View>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 function triggerTactileFeedback() {
   if (typeof navigator === 'undefined') return;
@@ -531,16 +581,7 @@ export function YatriDashboardScreen({
             {savedPreferences?.interests.includes('food') && (
               <>
                 <SectionHeader label="Taste Nepal" title="Regional food decoder" />
-                <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
-                  {foodCards.map((food) => (
-                    <View key={food.dish} style={styles.foodCard}>
-                      <Text style={styles.foodRegion}>{food.region}</Text>
-                      <Text style={styles.foodDish}>{food.dish}</Text>
-                      <Text style={styles.foodText}>{food.flavors}</Text>
-                      <Text style={styles.foodTip}>{food.orderTip}</Text>
-                    </View>
-                  ))}
-                </View>
+                <FoodPassportGrid isDesktop={isDesktop} />
               </>
             )}
 
@@ -570,16 +611,7 @@ export function YatriDashboardScreen({
             {!savedPreferences?.interests.includes('food') && (
               <>
                 <SectionHeader label="Taste Nepal" title="Regional food decoder" />
-                <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
-                  {foodCards.map((food) => (
-                    <View key={food.dish} style={styles.foodCard}>
-                      <Text style={styles.foodRegion}>{food.region}</Text>
-                      <Text style={styles.foodDish}>{food.dish}</Text>
-                      <Text style={styles.foodText}>{food.flavors}</Text>
-                      <Text style={styles.foodTip}>{food.orderTip}</Text>
-                    </View>
-                  ))}
-                </View>
+                <FoodPassportGrid isDesktop={isDesktop} />
               </>
             )}
           </>
@@ -2701,12 +2733,24 @@ const styles = StyleSheet.create({
   priceRange: { color: colors.teal, fontFamily: fonts.label, fontSize: 14, fontWeight: '900' },
   pricePhrase: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 11, fontWeight: '800', marginTop: 4 },
   foodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
-  foodCard: { ...premiumSurface, borderRadius: 16, flexBasis: 260, flexGrow: 1, padding: spacing.md, width: '48.5%' },
+  foodCard: { ...premiumSurface, borderRadius: 18, flexBasis: 280, flexGrow: 1, overflow: 'hidden', padding: 0, width: '48.5%' },
   foodGridDesktop: { gap: spacing.md },
+  foodImage: { height: 190, width: '100%' },
+  foodCardBody: { gap: 10, padding: spacing.md },
+  foodTitleRow: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.sm, justifyContent: 'space-between' },
+  foodTitleCopy: { flex: 1 },
   foodRegion: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
   foodDish: { color: colors.text, fontFamily: fonts.display, fontSize: 21, fontWeight: '700', marginTop: 4 },
-  foodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, marginTop: 6 },
-  foodTip: { color: colors.dim, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 8 },
+  foodPrice: { color: colors.teal, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', maxWidth: 110, textAlign: 'right' },
+  foodDescription: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 20 },
+  foodBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  foodBadge: { backgroundColor: 'rgba(62,207,178,0.11)', borderColor: 'rgba(62,207,178,0.28)', borderRadius: 999, borderWidth: 1, color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 6 },
+  foodFlavors: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
+  foodDetailRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 7 },
+  foodDetailText: { color: colors.dim, flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 16 },
+  foodOrderBox: { backgroundColor: 'rgba(245,166,35,0.08)', borderColor: 'rgba(245,166,35,0.24)', borderRadius: 12, borderWidth: 1, marginTop: 2, padding: 10 },
+  foodOrderLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
+  foodTip: { color: colors.text, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
   cultureBites: { ...premiumSurface, borderRadius: 16, gap: spacing.md, padding: spacing.md },
   cultureBiteTabs: { backgroundColor: colors.surface2, borderRadius: 13, flexDirection: 'row', gap: spacing.xs, padding: 5 },
   cultureBiteTab: { alignItems: 'center', borderRadius: 10, flex: 1, flexDirection: 'row', gap: 6, justifyContent: 'center', minHeight: 38, paddingHorizontal: 8 },

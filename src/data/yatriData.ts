@@ -82,8 +82,15 @@ export type EtiquetteCard = {
 export type FoodCard = {
   dish: string;
   region: string;
+  image: 'momo' | 'dal-bhat' | 'newari-khaja' | 'yomari';
+  description: string;
   orderTip: string;
   flavors: string;
+  dietary: string;
+  spice: string;
+  allergens: string;
+  price: string;
+  tryIn: string;
 };
 
 export type PriceTool = {
@@ -582,22 +589,56 @@ export const etiquetteCards: EtiquetteCard[] = [
 
 export const foodCards: FoodCard[] = [
   {
+    dish: 'Momo',
+    region: 'Across Nepal',
+    image: 'momo',
+    description: 'Steamed dumplings served with a bright tomato-sesame achar.',
+    orderTip: 'Say “veg momo dinus na” for a vegetarian plate.',
+    flavors: 'Savory · tangy achar',
+    dietary: 'Veg or meat',
+    spice: 'Mild–hot achar',
+    allergens: 'Usually wheat; ask about sesame and soy',
+    price: 'Rs. 150–350 / plate',
+    tryIn: 'Kathmandu, Pokhara and town cafés'
+  },
+  {
+    dish: 'Dal Bhat',
+    region: 'Everyday Nepal',
+    image: 'dal-bhat',
+    description: 'Nepal’s everyday rice-and-lentil meal with vegetables, greens and achar.',
+    orderTip: 'Ask whether dal, rice and tarkari refills are included.',
+    flavors: 'Comforting · earthy · balanced',
+    dietary: 'Often vegetarian',
+    spice: 'Usually mild',
+    allergens: 'Ask about dairy and gluten in sides',
+    price: 'Rs. 250–650 / set',
+    tryIn: 'Local bhatti and family restaurants'
+  },
+  {
+    dish: 'Newari Khaja Set',
+    region: 'Kathmandu Valley',
+    image: 'newari-khaja',
+    description: 'A generous Newari platter built around beaten rice and many savory sides.',
+    orderTip: 'Veg sets are available; confirm before ordering because choila is meat.',
+    flavors: 'Toasty · smoky · spicy',
+    dietary: 'Veg or meat',
+    spice: 'Medium–hot',
+    allergens: 'May contain soy, sesame and eggs',
+    price: 'Rs. 300–700 / set',
+    tryIn: 'Patan, Kirtipur and Bhaktapur'
+  },
+  {
     dish: 'Yomari',
-    region: 'Newari',
-    orderTip: 'Ask for chaku filling if you want the classic sweet version.',
-    flavors: 'Steamed rice flour, molasses, sesame'
-  },
-  {
-    dish: 'Thakali Set',
-    region: 'Thakali',
-    orderTip: 'Look for gundruk, timur achar, and balanced refills.',
-    flavors: 'Rice, lentils, curry, pickles, greens'
-  },
-  {
-    dish: 'Sherpa Stew',
-    region: 'Mountain',
-    orderTip: 'Best after a cold trek day; ask if yak cheese is available.',
-    flavors: 'Broth, potatoes, noodles, vegetables'
+    region: 'Newari sweet',
+    image: 'yomari',
+    description: 'Steamed rice-flour dumpling traditionally filled with chaku and sesame.',
+    orderTip: 'Ask for chaku filling for the classic sweet version.',
+    flavors: 'Soft · warm · molasses-sweet',
+    dietary: 'Usually vegetarian',
+    spice: 'Not spicy',
+    allergens: 'Often sesame; confirm dairy preparation',
+    price: 'Rs. 60–150 / piece',
+    tryIn: 'Newari cafés in the Kathmandu Valley'
   }
 ];
 
