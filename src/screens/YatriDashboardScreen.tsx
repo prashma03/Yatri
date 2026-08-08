@@ -2546,7 +2546,7 @@ const styles = StyleSheet.create({
   districtTabSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
   districtTabText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 11, fontWeight: '900' },
   districtTabTextSelected: { color: '#1a0f00' },
-  districtSearchPanel: { ...premiumSurface, borderRadius: 18, flexBasis: 360, flexGrow: 0, flexShrink: 1, gap: spacing.sm, minWidth: 0, padding: spacing.md, width: '100%' },
+  districtSearchPanel: { ...premiumSurface, borderRadius: 18, flexGrow: 0, flexShrink: 1, gap: spacing.sm, minWidth: 0, padding: spacing.md, width: '100%' },
   districtSearchHeader: { alignItems: 'center', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
   districtSearchLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4 },
   districtSearchHint: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 16, marginTop: 4, maxWidth: 560 },
