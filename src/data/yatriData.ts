@@ -85,6 +85,8 @@ export type FoodCard = {
   region: string;
   image: 'momo' | 'dal-bhat' | 'newari-khaja' | 'yomari' | 'thakali-set' | 'thukpa' | 'sel-roti' | 'masala-chiya' | 'lassi' | 'juju-dhau' | 'kheer' | 'lal-mohan';
   description: string;
+  specialty?: string;
+  ingredients?: string;
   orderTip: string;
   flavors: string;
   dietary: string;

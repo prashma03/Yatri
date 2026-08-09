@@ -109,6 +109,69 @@ const foodImages = {
   'lal-mohan': require('../../assets/food/lal-mohan.jpg')
 };
 
+const foodInfo: Record<string, { specialty: string; ingredients: string; allergy: string }> = {
+  Momo: {
+    specialty: 'Nepal snack staple; best for a quick shared plate.',
+    ingredients: 'Wheat wrapper, veg or minced meat filling, tomato-sesame achar',
+    allergy: 'Usually wheat; ask about sesame, soy and meat broth.'
+  },
+  'Dal Bhat': {
+    specialty: 'Everyday Nepali meal; reliable filling lunch on travel days.',
+    ingredients: 'Rice, lentil soup, seasonal vegetables, greens, achar, optional curry',
+    allergy: 'Ask about dairy, ghee and gluten in sides.'
+  },
+  'Newari Khaja Set': {
+    specialty: 'Kathmandu Valley feast plate with many small textures.',
+    ingredients: 'Beaten rice, potato, beans, pickles, greens, egg or choila depending on set',
+    allergy: 'May include soy, sesame, egg and meat.'
+  },
+  Yomari: {
+    specialty: 'Newari festival sweet, especially loved around Yomari Punhi.',
+    ingredients: 'Rice flour shell, chaku molasses, sesame, sometimes khuwa',
+    allergy: 'Often sesame; confirm dairy or khuwa filling.'
+  },
+  'Thakali Set': {
+    specialty: 'Polished mountain-style set known for balance and sharp pickles.',
+    ingredients: 'Rice, dal, tarkari, gundruk, greens, achar, optional meat curry',
+    allergy: 'Ask about dairy, gluten, sesame and meat stock.'
+  },
+  Thukpa: {
+    specialty: 'Cold-weather Himalayan comfort food for mountain towns.',
+    ingredients: 'Wheat noodles, broth, vegetables, herbs, optional egg or meat',
+    allergy: 'Usually wheat; may contain egg, soy or meat broth.'
+  },
+  'Sel Roti': {
+    specialty: 'Festival ring bread common during Dashain, Tihar and family visits.',
+    ingredients: 'Rice flour batter, sugar, ghee or oil, sometimes cardamom',
+    allergy: 'Often rice-based; ask about dairy or shared frying oil.'
+  },
+  'Masala Chiya': {
+    specialty: 'Roadside pause drink; great for bus stops and cold mornings.',
+    ingredients: 'Black tea, milk, sugar, ginger or cardamom, warming spices',
+    allergy: 'Contains milk unless you request black tea.'
+  },
+  Lassi: {
+    specialty: 'Cooling city drink, especially refreshing in warm Terai weather.',
+    ingredients: 'Yogurt, sugar, water or milk, fruit or toppings depending on shop',
+    allergy: 'Contains dairy; toppings may contain nuts.'
+  },
+  'Juju Dhau': {
+    specialty: 'Bhaktapur signature dessert known as the king of curd.',
+    ingredients: 'Buffalo or cow milk, yogurt culture, sugar, clay-pot setting',
+    allergy: 'Contains dairy.'
+  },
+  Kheer: {
+    specialty: 'Celebration dessert served at festivals, family meals and rituals.',
+    ingredients: 'Rice, milk, sugar, cardamom, ghee, raisins or nuts sometimes',
+    allergy: 'Contains dairy; often contains tree nuts.'
+  },
+  'Lal Mohan': {
+    specialty: 'Rich mithai-shop sweet for small portions after meals.',
+    ingredients: 'Milk solids, flour, ghee or oil, sugar syrup, cardamom',
+    allergy: 'Contains dairy; may contain gluten.'
+  }
+};
+
 function FoodPassportGrid({ isDesktop }: { isDesktop: boolean }) {
   const [category, setCategory] = useState<'All' | 'Food' | 'Drinks' | 'Desserts'>('All');
   const categories: Array<'All' | 'Food' | 'Drinks' | 'Desserts'> = ['All', 'Food', 'Drinks', 'Desserts'];
@@ -134,42 +197,55 @@ function FoodPassportGrid({ isDesktop }: { isDesktop: boolean }) {
         })}
       </ScrollView>
       <View style={[styles.foodGrid, isDesktop && styles.foodGridDesktop]}>
-      {visibleCards.map((food) => (
-        <View
-          accessibilityLabel={`${food.dish}, ${food.region}. ${food.description}. Typical price ${food.price}.`}
-          key={food.dish}
-          style={styles.foodCard}
-        >
-          <Image accessibilityIgnoresInvertColors source={foodImages[food.image]} style={styles.foodImage} />
-          <View style={styles.foodCardBody}>
-            <View style={styles.foodTitleRow}>
-              <View style={styles.foodTitleCopy}>
-                <Text style={styles.foodRegion}>{food.region}</Text>
-                <Text style={styles.foodDish}>{food.dish}</Text>
+      {visibleCards.map((food) => {
+        const info = foodInfo[food.dish] ?? { specialty: food.specialty ?? food.description, ingredients: food.ingredients ?? food.flavors, allergy: food.allergens };
+        return (
+          <View
+            accessibilityLabel={`${food.dish}, ${food.region}. ${food.description}. Specialty: ${info.specialty}. Ingredients: ${info.ingredients}. Allergy note: ${info.allergy}. Typical price ${food.price}.`}
+            key={food.dish}
+            style={styles.foodCard}
+          >
+            <Image accessibilityIgnoresInvertColors source={foodImages[food.image]} style={styles.foodImage} />
+            <View style={styles.foodCardBody}>
+              <View style={styles.foodTitleRow}>
+                <View style={styles.foodTitleCopy}>
+                  <Text style={styles.foodRegion}>{food.region}</Text>
+                  <Text style={styles.foodDish}>{food.dish}</Text>
+                </View>
+                <Text style={styles.foodPrice}>{food.price}</Text>
               </View>
-              <Text style={styles.foodPrice}>{food.price}</Text>
-            </View>
-            <Text style={styles.foodDescription}>{food.description}</Text>
-            <View style={styles.foodBadgeRow}>
-              <Text style={styles.foodBadge}>{food.dietary}</Text>
-              <Text style={styles.foodBadge}>{food.spice}</Text>
-            </View>
-            <Text style={styles.foodFlavors}>{food.flavors}</Text>
-            <View style={styles.foodDetailRow}>
-              <Ionicons name="location-outline" size={15} color={colors.teal} />
-              <Text style={styles.foodDetailText}>{food.tryIn}</Text>
-            </View>
-            <View style={styles.foodDetailRow}>
-              <Ionicons name="alert-circle-outline" size={15} color={colors.gold} />
-              <Text style={styles.foodDetailText}>{food.allergens}</Text>
-            </View>
-            <View style={styles.foodOrderBox}>
-              <Text style={styles.foodOrderLabel}>ORDER WITH CONFIDENCE</Text>
-              <Text style={styles.foodTip}>{food.orderTip}</Text>
+              <Text style={styles.foodDescription}>{food.description}</Text>
+              <View style={styles.foodBadgeRow}>
+                <Text style={styles.foodBadge}>{food.dietary}</Text>
+                <Text style={styles.foodBadge}>{food.spice}</Text>
+              </View>
+              <Text style={styles.foodFlavors}>{food.flavors}</Text>
+              <View style={styles.foodInfoGrid}>
+                <View style={styles.foodInfoBox}>
+                  <Text style={styles.foodInfoLabel}>SPECIALTY</Text>
+                  <Text style={styles.foodInfoText}>{info.specialty}</Text>
+                </View>
+                <View style={styles.foodInfoBox}>
+                  <Text style={styles.foodInfoLabel}>INGREDIENTS</Text>
+                  <Text style={styles.foodInfoText}>{info.ingredients}</Text>
+                </View>
+                <View style={[styles.foodInfoBox, styles.foodAllergyBox]}>
+                  <Text style={styles.foodInfoLabel}>ALLERGY NOTE</Text>
+                  <Text style={styles.foodInfoText}>{info.allergy}</Text>
+                </View>
+              </View>
+              <View style={styles.foodDetailRow}>
+                <Ionicons name="location-outline" size={15} color={colors.teal} />
+                <Text style={styles.foodDetailText}>{food.tryIn}</Text>
+              </View>
+              <View style={styles.foodOrderBox}>
+                <Text style={styles.foodOrderLabel}>ORDER WITH CONFIDENCE</Text>
+                <Text style={styles.foodTip}>{food.orderTip}</Text>
+              </View>
             </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
       </View>
     </View>
   );
@@ -2872,6 +2948,11 @@ const styles = StyleSheet.create({
   foodBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   foodBadge: { backgroundColor: 'rgba(62,207,178,0.11)', borderColor: 'rgba(62,207,178,0.28)', borderRadius: 999, borderWidth: 1, color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 6 },
   foodFlavors: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 12, fontWeight: '800' },
+  foodInfoGrid: { gap: spacing.xs },
+  foodInfoBox: { backgroundColor: 'rgba(255,255,255,0.035)', borderColor: colors.border, borderRadius: 12, borderWidth: 1, padding: 9 },
+  foodAllergyBox: { backgroundColor: 'rgba(245,166,35,0.08)', borderColor: 'rgba(245,166,35,0.24)' },
+  foodInfoLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
+  foodInfoText: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 4 },
   foodDetailRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 7 },
   foodDetailText: { color: colors.dim, flex: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 16 },
   foodOrderBox: { backgroundColor: 'rgba(245,166,35,0.08)', borderColor: 'rgba(245,166,35,0.24)', borderRadius: 12, borderWidth: 1, marginTop: 2, padding: 10 },
