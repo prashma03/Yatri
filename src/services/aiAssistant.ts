@@ -16,6 +16,14 @@ type AssistantRequest = {
 
 const localAnswers = [
   {
+    keywords: ['what is pathao', "what's pathao", 'whats pathao', 'pathao app', 'pathao bike'],
+    answer: 'Pathao is a ride-hailing app used in Nepal, especially around Kathmandu. Travelers use it to book bike rides or cars, see an app-based fare before riding, and avoid guessing taxi prices. It is useful when you have internet and a local pickup point, but still check the plate/driver details before getting on.'
+  },
+  {
+    keywords: ['what is indrive', "what's indrive", 'whats indrive', 'indrive app'],
+    answer: 'inDrive is a ride app where you suggest a fare and drivers can accept or counter it. In Nepal, it can be useful for cars or longer city rides because the price is agreed in the app before the trip. Confirm the driver, vehicle, and final fare before starting.'
+  },
+  {
     keywords: ['taxi', 'cab', 'ride', 'pathao', 'indrive', 'fare'],
     answer: 'For taxis in tourist areas, compare Pathao/inDrive first, ask for the meter, and agree on the fare before entering. If the price feels pressured or changes mid-ride, step away and use a ride app or hotel/restaurant help.'
   },

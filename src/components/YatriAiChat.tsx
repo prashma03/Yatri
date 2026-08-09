@@ -25,6 +25,7 @@ const quickPrompts = [
 export function YatriAiChat({ page }: YatriAiChatProps) {
   const { width } = useWindowDimensions();
   const desktop = width >= 1024;
+  const panelWidth = Math.max(320, Math.min(600, width - 76));
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
   const [messages, setMessages] = useState<AssistantMessage[]>(starterMessages);
@@ -64,7 +65,7 @@ export function YatriAiChat({ page }: YatriAiChatProps) {
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
       {open && (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} pointerEvents="box-none" style={[styles.panelWrap, desktop && styles.panelWrapDesktop]}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} pointerEvents="box-none" style={[styles.panelWrap, desktop && styles.panelWrapDesktop, desktop ? { width: panelWidth } : null]}>
           <View style={[styles.panel, desktop && styles.panelDesktop]}>
             <View style={styles.header}>
               <View style={styles.avatar}>
@@ -148,15 +149,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.md
   },
-  panelWrapDesktop: { bottom: 112, left: 'auto', right: 38, width: 560 },
-  panelDesktop: { maxHeight: 760, maxWidth: 560, padding: spacing.lg },
-  titleDesktop: { fontSize: 30 },
-  subtitleDesktop: { fontSize: 16 },
-  messagesDesktop: { maxHeight: 500 },
-  messageTextDesktop: { fontSize: 18, lineHeight: 28 },
+  panelWrapDesktop: { bottom: 102, left: 'auto', right: 38 },
+  panelDesktop: { maxHeight: 620, maxWidth: 600, padding: spacing.md },
+  titleDesktop: { fontSize: 24 },
+  subtitleDesktop: { fontSize: 13 },
+  messagesDesktop: { maxHeight: 390 },
+  messageTextDesktop: { fontSize: 15, lineHeight: 23 },
   quickChipDesktop: { paddingHorizontal: 12, paddingVertical: 9 },
-  quickTextDesktop: { fontSize: 15 },
-  inputDesktop: { fontSize: 18, minHeight: 54 },
+  quickTextDesktop: { fontSize: 13 },
+  inputDesktop: { fontSize: 15, minHeight: 50 },
   fabDesktop: { bottom: 32, right: 38, height: 72, borderRadius: 36, paddingHorizontal: 24 },
   panel: {
     alignSelf: 'flex-end',
