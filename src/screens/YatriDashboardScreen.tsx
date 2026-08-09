@@ -82,12 +82,13 @@ const modeConfig = {
   }
 };
 
-type DashboardPage = 'home' | 'explore' | 'food' | 'safety' | 'local' | 'prices' | 'moderation';
+type DashboardPage = 'home' | 'explore' | 'district' | 'food' | 'safety' | 'local' | 'prices' | 'moderation';
 type ConnectivityMode = 'online' | 'offline';
 
 const dashboardPages: { id: DashboardPage; label: string; icon: IconName; activeIcon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
   { id: 'explore', label: 'Explore', icon: 'compass-outline', activeIcon: 'compass' },
+  { id: 'district', label: 'District', icon: 'map-outline', activeIcon: 'map' },
   { id: 'food', label: 'Food', icon: 'restaurant-outline', activeIcon: 'restaurant' },
   { id: 'safety', label: 'Safety', icon: 'shield-outline', activeIcon: 'shield' },
   { id: 'local', label: 'Local', icon: 'people-outline', activeIcon: 'people' },
@@ -496,6 +497,11 @@ export function YatriDashboardScreen({
     setCurrentPage(action.page);
   };
 
+  const openDistrictGuide = (district: string) => {
+    setSelectedDistrict(district);
+    setCurrentPage('district');
+  };
+
   const openTrailNavigation = () => {
     if (connectivity === 'offline') {
       Alert.alert('Offline map selected', 'The downloaded trail map is ready for turn-by-turn navigation in the native map build.');
@@ -566,7 +572,7 @@ export function YatriDashboardScreen({
               onAction={handlePersonalizedAction}
               onModeChange={setActiveMode}
               onQuickAction={handleQuickAction}
-              onSelectDistrict={setSelectedDistrict}
+              onSelectDistrict={openDistrictGuide}
               personalizedPlan={personalizedPlan}
               selectedDistrict={selectedDistrict}
             />
@@ -619,7 +625,7 @@ export function YatriDashboardScreen({
             {connectivity === 'online' ? (
               <>
                 <SectionHeader label="Know before you go" title="Choose your district" />
-                <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={setSelectedDistrict} />
+                <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={openDistrictGuide} />
                 <SectionHeader label="Online nearby" title={`Places to stay in ${selectedDistrict}`} />
                 <NearbyHotels selectedDistrict={selectedDistrict} />
               </>
@@ -627,7 +633,7 @@ export function YatriDashboardScreen({
               <>
                 <OfflineReadyBanner />
                 <SectionHeader label="Saved on this device" title="Your offline district guide" />
-                <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={setSelectedDistrict} />
+                <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={openDistrictGuide} />
                 <SectionHeader label="Offline-first" title="Downloaded travel packs" />
                 <View style={[styles.stack, isDesktop && styles.desktopThreeColumnGrid]}>
                   {offlinePacks.map((pack) => (
@@ -715,6 +721,19 @@ export function YatriDashboardScreen({
               </>
             )}
           </>
+        )}
+
+        {currentPage === 'district' && (
+          <DistrictGuidePage
+            isDesktop={isDesktop}
+            onChangeDistrict={setSelectedDistrict}
+            onOpenFood={() => setCurrentPage('food')}
+            onOpenPrices={() => {
+              setPriceFocus('fair');
+              setCurrentPage('prices');
+            }}
+            selectedDistrict={selectedDistrict}
+          />
         )}
 
         {currentPage === 'food' && (
@@ -954,6 +973,78 @@ function HomeRightRail({ onQuickAction, selectedDistrict }: { onQuickAction: (ti
         <Text style={styles.railDistrictText}>Check base town, signal, transport, respect notes, and nearby lodging before you move.</Text>
       </View>
     </View>
+  );
+}
+
+function DistrictGuidePage({
+  isDesktop,
+  onChangeDistrict,
+  onOpenFood,
+  onOpenPrices,
+  selectedDistrict
+}: {
+  isDesktop: boolean;
+  onChangeDistrict: (district: string) => void;
+  onOpenFood: () => void;
+  onOpenPrices: () => void;
+  selectedDistrict: string;
+}) {
+  const district = districtBriefings.find((item) => item.district === selectedDistrict);
+  const directoryItem = districtDirectory.find((item) => item.district === selectedDistrict);
+  const province = district?.province ?? directoryItem?.province ?? 'Nepal';
+  const foodPreview = foodCards.slice(0, 3);
+
+  return (
+    <>
+      <PageHeading eyebrow="District guide" title={`${selectedDistrict} District Guide`} />
+      <View style={styles.districtGuideHero}>
+        <View style={styles.districtGuideHeroIcon}>
+          <Ionicons name={district?.icon ?? 'map-outline'} size={28} color="#1a0f00" />
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.districtGuideProvince}>{province}</Text>
+          <Text style={styles.districtGuideTitle}>{selectedDistrict}</Text>
+          <Text style={styles.districtGuideText}>
+            {district
+              ? `${district.bestFor}. Base yourself around ${district.base}, check ${district.connectivity.toLowerCase()} connectivity, and review local transport and safety notes before moving.`
+              : 'Use this guide to choose a base town, check local transport, save offline notes, and open nearby places before you travel.'}
+          </Text>
+        </View>
+      </View>
+
+      <SectionHeader label="Choose district" title="Switch guide anytime" />
+      <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={onChangeDistrict} />
+
+      <SectionHeader label="Nearby stays" title={`Places to stay in ${selectedDistrict}`} />
+      <NearbyHotels selectedDistrict={selectedDistrict} />
+
+      <SectionHeader label="Taste nearby" title="Food to start with" />
+      <View style={[styles.districtFoodPreview, isDesktop && styles.desktopThreeColumnGrid]}>
+        {foodPreview.map((food) => {
+          const info = foodInfo[food.dish];
+          return (
+            <Pressable accessibilityRole="button" key={food.dish} onPress={onOpenFood} style={({ pressed }) => [styles.districtFoodCard, pressableLift(pressed)]}>
+              <Image accessibilityIgnoresInvertColors source={foodImages[food.image]} style={styles.districtFoodImage} />
+              <View style={styles.districtFoodCopy}>
+                <Text style={styles.foodRegion}>{food.region}</Text>
+                <Text style={styles.districtFoodName}>{food.dish}</Text>
+                <Text style={styles.districtFoodText}>{info?.specialty ?? food.description}</Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <SectionHeader label="District prices" title="Check before you pay" />
+      <View style={styles.districtGuideCtaRow}>
+        <InfoCard icon="restaurant-outline" title="Food guide" body="Open regional dishes, ingredients, allergy notes, and ordering tips." />
+        <InfoCard icon="calculator-outline" title="Fair prices" body="Compare meal, ride, SIM, shopping, and permit ranges before agreeing." />
+      </View>
+      <Pressable accessibilityRole="button" onPress={onOpenPrices} style={styles.districtGuidePrimaryButton}>
+        <Ionicons name="calculator-outline" size={18} color="#1a0f00" />
+        <Text style={styles.districtGuidePrimaryText}>Open fair price checker</Text>
+      </Pressable>
+    </>
   );
 }
 
@@ -2596,6 +2687,20 @@ const styles = StyleSheet.create({
   railDistrictTip: { ...premiumSurface, borderColor: 'rgba(79,163,217,0.28)', borderRadius: 18, padding: spacing.lg },
   railDistrictTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 30, fontWeight: '700', marginTop: spacing.sm },
   railDistrictText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 23, marginTop: spacing.xs },
+  districtGuideHero: { ...premiumSurface, alignItems: 'flex-start', borderColor: 'rgba(245,166,35,0.28)', borderRadius: 20, flexDirection: 'row', gap: spacing.md, padding: spacing.lg },
+  districtGuideHeroIcon: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 18, height: 56, justifyContent: 'center', width: 56 },
+  districtGuideProvince: { color: colors.gold, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 1.6, textTransform: 'uppercase' },
+  districtGuideTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 38, fontWeight: '700', marginTop: 4 },
+  districtGuideText: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, marginTop: 8 },
+  districtFoodPreview: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  districtFoodCard: { ...premiumSurface, borderRadius: 18, flexBasis: 260, flexGrow: 1, overflow: 'hidden', padding: 0 },
+  districtFoodImage: { height: 150, width: '100%' },
+  districtFoodCopy: { gap: 5, padding: spacing.md },
+  districtFoodName: { color: colors.text, fontFamily: fonts.display, fontSize: 22, fontWeight: '700' },
+  districtFoodText: { color: colors.muted, fontFamily: fonts.body, fontSize: 13, lineHeight: 19 },
+  districtGuideCtaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  districtGuidePrimaryButton: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: colors.gold, borderRadius: 16, flexDirection: 'row', gap: 8, minHeight: 48, paddingHorizontal: 16 },
+  districtGuidePrimaryText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   hero: { height: 500, justifyContent: 'space-between', overflow: 'hidden' },
   heroDesktop: { height: 520 },
   heroImage: { borderRadius: 22 },
