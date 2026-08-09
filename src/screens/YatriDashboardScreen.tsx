@@ -82,12 +82,13 @@ const modeConfig = {
   }
 };
 
-type DashboardPage = 'home' | 'explore' | 'safety' | 'local' | 'prices' | 'moderation';
+type DashboardPage = 'home' | 'explore' | 'food' | 'safety' | 'local' | 'prices' | 'moderation';
 type ConnectivityMode = 'online' | 'offline';
 
 const dashboardPages: { id: DashboardPage; label: string; icon: IconName; activeIcon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
   { id: 'explore', label: 'Explore', icon: 'compass-outline', activeIcon: 'compass' },
+  { id: 'food', label: 'Food', icon: 'restaurant-outline', activeIcon: 'restaurant' },
   { id: 'safety', label: 'Safety', icon: 'shield-outline', activeIcon: 'shield' },
   { id: 'local', label: 'Local', icon: 'people-outline', activeIcon: 'people' },
   { id: 'prices', label: 'Prices', icon: 'pricetag-outline', activeIcon: 'pricetag' }
@@ -174,6 +175,40 @@ function FoodPassportGrid({ isDesktop }: { isDesktop: boolean }) {
   );
 }
 
+function FoodPriceSnapshot({ onOpenPrices }: { onOpenPrices: () => void }) {
+  return (
+    <View style={styles.foodSnapshot}>
+      <View style={styles.foodSnapshotHeader}>
+        <View>
+          <Text style={styles.foodSnapshotLabel}>Meal price checks</Text>
+          <Text style={styles.foodSnapshotTitle}>Know local ranges before ordering</Text>
+        </View>
+        <Pressable accessibilityRole="button" onPress={onOpenPrices} style={styles.foodSnapshotButton}>
+          <Text style={styles.foodSnapshotButtonText}>Open full guide</Text>
+          <Ionicons name="arrow-forward" size={15} color="#1a0f00" />
+        </Pressable>
+      </View>
+      <View style={styles.foodSnapshotGrid}>
+        {foodPrices.map((item) => (
+          <View key={item.name} style={styles.foodSnapshotCard}>
+            <View style={styles.foodSnapshotIcon}>
+              <Ionicons name={item.good ? 'checkmark-circle-outline' : 'alert-circle-outline'} size={20} color={item.good ? colors.teal : colors.gold} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.foodSnapshotName}>{item.name}</Text>
+              <Text style={styles.foodSnapshotNote}>{item.note}</Text>
+            </View>
+            <View style={styles.foodSnapshotPriceBox}>
+              <Text style={styles.foodSnapshotPrice}>{item.price}</Text>
+              <Text style={[styles.foodSnapshotBadge, !item.good && styles.foodSnapshotBadgeWarn]}>{item.badge}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function triggerTactileFeedback() {
   if (typeof navigator === 'undefined') return;
   (navigator as Navigator & { vibrate?: (pattern: number | number[]) => boolean }).vibrate?.(12);
@@ -247,7 +282,7 @@ function getPersonalizedPlan(preferences: TravelerPreferences | null): Personali
         { icon: 'calculator-outline', title: 'Meal price checks', body: 'Compare momo, dal bhat, bottled water, and tea against local ranges.', accent: colors.mountainBlue }
       ],
       actions: [
-        { label: 'Open food guide', page: 'local', icon: 'restaurant-outline' },
+        { label: 'Open food guide', page: 'food', icon: 'restaurant-outline' },
         { label: 'Check meal prices', page: 'prices', icon: 'calculator-outline', priceFocus: 'fair' }
       ]
     };
@@ -603,6 +638,25 @@ export function YatriDashboardScreen({
                 <OfflineSos />
               </>
             )}
+          </>
+        )}
+
+        {currentPage === 'food' && (
+          <>
+            <PageHeading eyebrow="Food" title="Taste Nepal with confidence" />
+            <SectionHeader label="Taste Nepal" title="Regional food decoder" />
+            <FoodPassportGrid isDesktop={isDesktop} />
+
+            <SectionHeader label="Fair meal prices" title="Order without guessing" />
+            <FoodPriceSnapshot
+              onOpenPrices={() => {
+                setPriceFocus('fair');
+                setCurrentPage('prices');
+              }}
+            />
+
+            <SectionHeader label="Useful phrases" title="Small words that help at tea shops" />
+            <CultureBites initialView="phrases" />
           </>
         )}
 
@@ -2784,6 +2838,21 @@ const styles = StyleSheet.create({
   priceRangeBox: { alignItems: 'flex-end' },
   priceRange: { color: colors.teal, fontFamily: fonts.label, fontSize: 14, fontWeight: '900' },
   pricePhrase: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 11, fontWeight: '800', marginTop: 4 },
+  foodSnapshot: { ...premiumSurface, borderColor: 'rgba(245,166,35,0.28)', borderRadius: 18, gap: spacing.md, padding: spacing.md },
+  foodSnapshotHeader: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, justifyContent: 'space-between' },
+  foodSnapshotLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4, textTransform: 'uppercase' },
+  foodSnapshotTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 24, fontWeight: '700', marginTop: 4 },
+  foodSnapshotButton: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 14, flexDirection: 'row', gap: 7, minHeight: 42, paddingHorizontal: 13 },
+  foodSnapshotButtonText: { color: '#1a0f00', fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
+  foodSnapshotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  foodSnapshotCard: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: 15, borderWidth: 1, flexBasis: 260, flexDirection: 'row', flexGrow: 1, gap: spacing.sm, minWidth: 0, padding: spacing.sm },
+  foodSnapshotIcon: { alignItems: 'center', backgroundColor: 'rgba(245,166,35,0.12)', borderRadius: 13, height: 40, justifyContent: 'center', width: 40 },
+  foodSnapshotName: { color: colors.text, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
+  foodSnapshotNote: { color: colors.muted, fontFamily: fonts.body, fontSize: 11, lineHeight: 16, marginTop: 2 },
+  foodSnapshotPriceBox: { alignItems: 'flex-end', minWidth: 76 },
+  foodSnapshotPrice: { color: colors.teal, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', textAlign: 'right' },
+  foodSnapshotBadge: { color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', marginTop: 4, textTransform: 'uppercase' },
+  foodSnapshotBadgeWarn: { color: colors.gold },
   foodGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
   foodCard: { ...premiumSurface, borderRadius: 18, flexBasis: 280, flexGrow: 1, overflow: 'hidden', padding: 0, width: '48.5%' },
   foodGridDesktop: { gap: spacing.md },
