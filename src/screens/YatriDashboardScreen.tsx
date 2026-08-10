@@ -39,7 +39,6 @@ import {
   fairPriceSourceNote,
   festivals,
   festivalContentSource,
-  filterChips,
   foodCards,
   foodPrices,
   nearbyHotels,
@@ -84,6 +83,7 @@ const modeConfig = {
 
 type DashboardPage = 'home' | 'explore' | 'district' | 'food' | 'safety' | 'local' | 'prices' | 'moderation';
 type ConnectivityMode = 'online' | 'offline';
+type ExploreFilter = 'All' | 'Nature' | 'Culture' | 'Adventure' | 'Food' | 'Spiritual' | 'Hidden gems';
 
 const dashboardPages: { id: DashboardPage; label: string; icon: IconName; activeIcon: IconName }[] = [
   { id: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
@@ -172,6 +172,65 @@ const foodInfo: Record<string, { specialty: string; ingredients: string; allergy
     allergy: 'Contains dairy; may contain gluten.'
   }
 };
+
+const exploreFilters: ExploreFilter[] = ['All', 'Nature', 'Culture', 'Adventure', 'Food', 'Spiritual', 'Hidden gems'];
+
+const featuredDestinations = [
+  {
+    title: 'Pokhara',
+    district: 'Kaski',
+    region: 'Gandaki Province',
+    category: 'Nature',
+    tags: ['Lake', 'Views', 'Soft adventure'],
+    reason: 'A gentle first base for mountains, lakeside food, and day hikes.',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    title: 'Kathmandu Valley',
+    district: 'Kathmandu',
+    region: 'Bagmati Province',
+    category: 'Culture',
+    tags: ['Heritage', 'Food', 'Temples'],
+    reason: 'Dense with courtyards, stupas, markets, and local food walks.',
+    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    title: 'Chitwan',
+    district: 'Chitwan',
+    region: 'Bagmati Province',
+    category: 'Nature',
+    tags: ['Wildlife', 'Tharu culture', 'River'],
+    reason: 'A slower Terai stop for wildlife, village culture, and warm evenings.',
+    image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    title: 'Mustang',
+    district: 'Mustang',
+    region: 'Gandaki Province',
+    category: 'Adventure',
+    tags: ['Himalayan desert', 'Permits', 'Monasteries'],
+    reason: 'High-altitude landscapes, cliff villages, and Buddhist heritage.',
+    image: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    title: 'Everest Region',
+    district: 'Solukhumbu',
+    region: 'Koshi Province',
+    category: 'Adventure',
+    tags: ['Trekking', 'Altitude', 'Sherpa towns'],
+    reason: 'Iconic trails, mountain villages, and careful acclimatization days.',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    title: 'Patan',
+    district: 'Lalitpur',
+    region: 'Bagmati Province',
+    category: 'Culture',
+    tags: ['Craft', 'Newari food', 'Hidden gems'],
+    reason: 'A compact heritage walk through metal workshops and quiet bahals.',
+    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80'
+  }
+] as const;
 
 function FoodPassportGrid({ isDesktop }: { isDesktop: boolean }) {
   const [category, setCategory] = useState<'All' | 'Food' | 'Drinks' | 'Desserts'>('All');
@@ -435,12 +494,30 @@ export function YatriDashboardScreen({
   const active = modeConfig[activeMode];
   const [currentPage, setCurrentPage] = useState<DashboardPage>('home');
   const [selectedDistrict, setSelectedDistrict] = useState('Kathmandu');
+  const [exploreSearch, setExploreSearch] = useState('');
+  const [exploreFilter, setExploreFilter] = useState<ExploreFilter>('All');
   const [priceFocus, setPriceFocus] = useState<'fair' | 'rides'>('fair');
   const [isModerator, setIsModerator] = useState(false);
   const [connectivity, setConnectivity] = useState<ConnectivityMode>(() =>
     typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'online'
   );
+  const normalizedExploreSearch = exploreSearch.trim().toLowerCase();
   const selectedDiscover = discoverItems.filter((item) => item.mode === activeMode);
+  const visibleDestinations = featuredDestinations.filter((destination) => {
+    const filterMatch = exploreFilter === 'All'
+      || destination.category === exploreFilter
+      || destination.tags.some((tag) => tag.toLowerCase().includes(exploreFilter.toLowerCase()));
+    const searchMatch = normalizedExploreSearch.length === 0
+      || [destination.title, destination.district, destination.region, destination.category, destination.reason, ...destination.tags]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedExploreSearch);
+    return filterMatch && searchMatch;
+  });
+  const visibleDiscoverItems = selectedDiscover.filter((item) => {
+    if (!normalizedExploreSearch) return true;
+    return [item.title, item.location, item.tag, item.summary, item.meta].join(' ').toLowerCase().includes(normalizedExploreSearch);
+  });
 
   const confirmAccountDeletion = () => {
     Alert.alert('Delete Yatri account?', 'This permanently removes your account, profile, reports, saved districts, and contacts. This cannot be undone.', [
@@ -648,28 +725,83 @@ export function YatriDashboardScreen({
 
         {currentPage === 'explore' && (
           <>
-            <PageHeading eyebrow="Explore" title="Find your next Nepal experience" />
-            <SectionHeader label="Happening soon" title="Festivals near you" />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalList}>
+            <View style={[styles.exploreHero, isDesktop && styles.exploreHeroDesktop]}>
+              <Text style={styles.exploreEyebrow}>Explore Nepal</Text>
+              <Text style={[styles.exploreTitle, isDesktop && styles.exploreTitleDesktop]}>Find your next Nepal experience</Text>
+              <Text style={[styles.exploreIntro, isDesktop && styles.exploreIntroDesktop]}>
+                Discover places, festivals, food and experiences based on how you want to travel.
+              </Text>
+              <View style={[styles.exploreSearchBox, isDesktop && styles.exploreSearchBoxDesktop]}>
+                <Ionicons name="search-outline" size={22} color={colors.goldLight} />
+                <TextInput
+                  accessibilityLabel="Search destinations, districts or experiences"
+                  onChangeText={setExploreSearch}
+                  placeholder="Search destinations, districts or experiences..."
+                  placeholderTextColor="rgba(240,238,248,0.42)"
+                  style={styles.exploreSearchInput}
+                  value={exploreSearch}
+                />
+                {exploreSearch.length > 0 && (
+                  <Pressable accessibilityLabel="Clear Explore search" onPress={() => setExploreSearch('')} style={styles.exploreClearButton}>
+                    <Ionicons name="close" size={18} color={colors.muted} />
+                  </Pressable>
+                )}
+              </View>
+              <View style={styles.exploreFilterWrap}>
+                {exploreFilters.map((filter) => {
+                  const selected = exploreFilter === filter;
+                  return (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      key={filter}
+                      onPress={() => setExploreFilter(filter)}
+                      style={[styles.exploreFilterChip, selected && styles.exploreFilterChipSelected]}
+                    >
+                      <Text style={[styles.exploreFilterText, selected && styles.exploreFilterTextSelected]}>{filter}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <ExploreSectionHeading label="Featured for you" title="Places worth exploring" action="View all" />
+            <View style={styles.exploreDestinationGrid}>
+              {visibleDestinations.map((destination) => (
+                <DestinationCard
+                  destination={destination}
+                  key={destination.title}
+                  onPress={() => openDistrictGuide(destination.district)}
+                />
+              ))}
+            </View>
+            {visibleDestinations.length === 0 && (
+              <View style={styles.exploreEmptyState}>
+                <Text style={styles.exploreEmptyTitle}>No matching places yet</Text>
+                <Text style={styles.exploreEmptyText}>Try another search or switch back to All.</Text>
+              </View>
+            )}
+
+            <ExploreSectionHeading label="Happening soon" title="Festivals & events" action="View all" />
+            <View style={styles.festivalGrid}>
               {festivals.map((festival) => (
                 <FestivalPhotoCard key={festival.name} festival={festival} />
               ))}
-            </ScrollView>
+            </View>
             <Text style={styles.contentSourceNote}>{festivalContentSource}</Text>
 
-            <SectionHeader label="Discover Nepal" title="Mountain trails or cultural wonders" />
-            <View style={styles.filterWrap}>
-              {filterChips.map((chip) => (
-                <Text key={chip} style={styles.filterChip}>{chip}</Text>
-              ))}
-            </View>
-            <View style={[styles.stack, isDesktop && styles.desktopTwoColumnGrid]}>
-              {selectedDiscover.map((item) => (
-                <DiscoverCard key={item.title} item={item} />
-              ))}
-            </View>
+            {savedPreferences && (
+              <>
+                <ExploreSectionHeading label="Recommended for you" title="Based on your interests" />
+                <View style={styles.exploreDestinationGrid}>
+                  {visibleDiscoverItems.map((item) => (
+                    <DiscoverCard key={item.title} item={item} />
+                  ))}
+                </View>
+              </>
+            )}
 
-            <SectionHeader label="Trail updates" title="Routes and conditions" />
+            <ExploreSectionHeading label="Trail updates" title="Routes and conditions" />
             <View style={styles.mapPanel}>
               <View style={styles.flex}>
                 <Text style={styles.mapTitle}>Offline trail map</Text>
@@ -1745,25 +1877,101 @@ function OfflinePackCard({ pack }: { pack: OfflinePack }) {
   );
 }
 
-function FestivalPhotoCard({ festival }: { festival: Festival }) {
-  const { width } = useWindowDimensions();
-  const desktop = width >= 1024;
+function ExploreSectionHeading({ action, label, title }: { action?: string; label: string; title: string }) {
   return (
-    <ImageBackground source={{ uri: festival.image }} style={[styles.festivalPhoto, desktop && styles.festivalPhotoDesktop]} imageStyle={styles.festivalImage as any}>
-      <LinearGradient colors={['rgba(7,6,15,0.08)', 'rgba(7,6,15,0.86)']} style={styles.photoGradient} />
-      <Text style={[styles.countdown, { backgroundColor: festival.accent }]}>{festival.countdown}</Text>
-      <View style={styles.festivalCopy}>
-        <Text style={[styles.festivalCrowd, desktop && styles.festivalCrowdDesktop]}>{festival.crowd}</Text>
-        <Text style={[styles.festivalName, desktop && styles.festivalNameDesktop]}>{festival.name}</Text>
-        <Text style={[styles.festivalWhy, desktop && styles.festivalWhyDesktop]}>{festival.why}</Text>
+    <View style={styles.exploreSectionHeading}>
+      <View>
+        <Text style={styles.exploreSectionLabel}>{label}</Text>
+        <Text style={styles.exploreSectionTitle}>{title}</Text>
       </View>
-    </ImageBackground>
+      {action && (
+        <Pressable accessibilityRole="button" style={styles.exploreViewAll}>
+          <Text style={styles.exploreViewAllText}>{action}</Text>
+          <Ionicons name="arrow-forward" size={16} color={colors.muted} />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+function DestinationCard({
+  destination,
+  onPress
+}: {
+  destination: typeof featuredDestinations[number];
+  onPress: () => void;
+}) {
+  const briefing = districtBriefings.find((item) => item.district === destination.district);
+  const signal = briefing?.connectivity ? `${briefing.connectivity} signal` : destination.region;
+
+  return (
+    <Pressable
+      accessibilityLabel={`Explore ${destination.title}, ${destination.region}. ${destination.reason}`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.destinationCard, pressableLift(pressed)]}
+    >
+      <ImageBackground
+        accessibilityLabel={`${destination.title} destination photograph`}
+        source={{ uri: destination.image }}
+        style={styles.destinationImage}
+        imageStyle={styles.destinationImageRadius as any}
+      >
+        <LinearGradient colors={['rgba(7,6,15,0.06)', 'rgba(7,6,15,0.84)']} style={styles.destinationImageGradient} />
+        <View style={styles.destinationTagPill}>
+          <Ionicons name={destination.category === 'Adventure' ? 'trail-sign-outline' : destination.category === 'Nature' ? 'leaf-outline' : 'sparkles-outline'} size={14} color={colors.goldLight} />
+          <Text style={styles.destinationTagPillText}>{destination.category}</Text>
+        </View>
+      </ImageBackground>
+      <View style={styles.destinationBody}>
+        <Text style={styles.destinationName}>{destination.title}</Text>
+        <Text style={styles.destinationRegion}>{destination.region}</Text>
+        <View style={styles.destinationTags}>
+          {destination.tags.map((tag) => (
+            <Text key={tag} style={styles.destinationTag}>{tag}</Text>
+          ))}
+        </View>
+        <Text style={styles.destinationReason}>{destination.reason}</Text>
+        <View style={styles.destinationFooter}>
+          <Text style={styles.destinationSignal}>{signal}</Text>
+          <View style={styles.destinationArrow}>
+            <Ionicons name="arrow-forward" size={16} color="#1a0f00" />
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function FestivalPhotoCard({ festival }: { festival: Festival }) {
+  return (
+    <View style={styles.festivalPhoto}>
+      <ImageBackground
+        accessibilityLabel={`${festival.name} festival photograph`}
+        source={{ uri: festival.image }}
+        style={styles.festivalImageWrap}
+        imageStyle={styles.festivalImage as any}
+      >
+        <LinearGradient colors={['rgba(7,6,15,0.02)', 'rgba(7,6,15,0.52)']} style={styles.festivalImageGradient} />
+        <Text style={[styles.countdown, { backgroundColor: festival.accent }]}>{festival.countdown}</Text>
+      </ImageBackground>
+      <View style={styles.festivalCopy}>
+        <Text style={styles.festivalCrowd}>{festival.crowd}</Text>
+        <Text style={styles.festivalName}>{festival.name}</Text>
+        <Text style={styles.festivalLocation}>{festival.date}</Text>
+        <Text style={styles.festivalWhy}>{festival.description}</Text>
+        <Pressable accessibilityRole="button" style={styles.festivalLink}>
+          <Text style={styles.festivalLinkText}>View festival</Text>
+          <Ionicons name="arrow-forward" size={15} color={colors.goldLight} />
+        </Pressable>
+      </View>
+    </View>
   );
 }
 
 function DiscoverCard({ item }: { item: DiscoverItem }) {
   return (
-    <ImageBackground source={{ uri: item.image }} style={styles.discoverCard} imageStyle={styles.discoverImage as any}>
+    <ImageBackground accessibilityLabel={`${item.title} experience photograph`} source={{ uri: item.image }} style={styles.discoverCard} imageStyle={styles.discoverImage as any}>
       <LinearGradient colors={['rgba(7,6,15,0.10)', 'rgba(7,6,15,0.90)']} style={styles.photoGradient} />
       <View style={styles.discoverCopy}>
         <Text style={styles.discoverTag}>{item.tag}</Text>
@@ -2581,7 +2789,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   content: { alignSelf: 'center', padding: spacing.md, paddingBottom: spacing.xl, width: '100%' },
   contentTablet: { padding: spacing.lg },
-  contentDesktop: { maxWidth: 1440, paddingBottom: 60, paddingHorizontal: 40, paddingTop: 24 },
+  contentDesktop: { maxWidth: 1440, paddingBottom: 60, paddingHorizontal: 48, paddingTop: 22 },
   webFriendlyStrip: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.035)', borderColor: colors.border, borderRadius: 18, borderWidth: 1, flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.lg, padding: spacing.md },
   webFriendlyItem: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm, minHeight: 34 },
   webFriendlyText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 17, fontWeight: '800' },
@@ -2600,7 +2808,7 @@ const styles = StyleSheet.create({
   topBar: { alignItems: 'center', backgroundColor: colors.bg, borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', minHeight: 68, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   topBarActions: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   signOutButton: { alignItems: 'center', borderColor: colors.border, borderRadius: 16, borderWidth: 1, height: 42, justifyContent: 'center', width: 42 },
-  topBarDesktop: { alignSelf: 'center', maxWidth: 1440, minHeight: 76, paddingHorizontal: 40, width: '100%' },
+  topBarDesktop: { alignSelf: 'center', maxWidth: 1440, minHeight: 70, paddingHorizontal: 48, width: '100%' },
   desktopContext: { color: colors.dim, fontFamily: fonts.label, fontSize: 12, fontWeight: '900', letterSpacing: 1.6 },
   desktopPageName: { color: colors.text, fontFamily: fonts.display, fontSize: 40, fontWeight: '700', marginTop: 2 },
   pageHeading: { marginBottom: spacing.xs, paddingTop: spacing.sm },
@@ -2616,10 +2824,47 @@ const styles = StyleSheet.create({
   sectionHeaderDesktop: { marginTop: 46 },
   sectionLabelDesktop: { fontSize: 14, letterSpacing: 2.4 },
   sectionTitleDesktop: { fontSize: 56, lineHeight: 64, maxWidth: 980 },
-  festivalPhotoDesktop: { height: 370, width: 360 },
-  festivalCrowdDesktop: { fontSize: 12 },
-  festivalNameDesktop: { fontSize: 40, lineHeight: 46 },
-  festivalWhyDesktop: { fontSize: 18, lineHeight: 27 },
+  exploreHero: { ...premiumSurface, borderColor: 'rgba(245,166,35,0.22)', borderRadius: 22, gap: spacing.md, marginTop: spacing.md, padding: spacing.lg },
+  exploreHeroDesktop: { paddingHorizontal: 34, paddingVertical: 30 },
+  exploreEyebrow: { color: colors.gold, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 2.2, textTransform: 'uppercase' },
+  exploreTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 40, fontWeight: '700', lineHeight: 45, maxWidth: 850 },
+  exploreTitleDesktop: { fontSize: 58, lineHeight: 64 },
+  exploreIntro: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, lineHeight: 24, maxWidth: 680 },
+  exploreIntroDesktop: { fontSize: 18, lineHeight: 27 },
+  exploreSearchBox: { alignItems: 'center', backgroundColor: colors.surface2, borderColor: 'rgba(255,255,255,0.12)', borderRadius: 18, borderWidth: 1, flexDirection: 'row', gap: spacing.sm, minHeight: 58, paddingHorizontal: spacing.md },
+  exploreSearchBoxDesktop: { maxWidth: 760, minHeight: 66 },
+  exploreSearchInput: { color: colors.text, flex: 1, fontFamily: fonts.body, fontSize: 17, minHeight: 50, minWidth: 0, paddingVertical: 8 },
+  exploreClearButton: { alignItems: 'center', height: 34, justifyContent: 'center', width: 34 },
+  exploreFilterWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  exploreFilterChip: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.035)', borderColor: colors.border, borderRadius: 999, borderWidth: 1, minHeight: 38, paddingHorizontal: 14, paddingVertical: 8 },
+  exploreFilterChipSelected: { backgroundColor: colors.gold, borderColor: colors.gold },
+  exploreFilterText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  exploreFilterTextSelected: { color: '#1a0f00' },
+  exploreSectionHeading: { alignItems: 'flex-end', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, justifyContent: 'space-between', marginBottom: spacing.md, marginTop: 48 },
+  exploreSectionLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', letterSpacing: 2.1, textTransform: 'uppercase' },
+  exploreSectionTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 34, fontWeight: '700', lineHeight: 40, marginTop: 4 },
+  exploreViewAll: { alignItems: 'center', flexDirection: 'row', gap: 5, minHeight: 36, paddingHorizontal: 8 },
+  exploreViewAllText: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
+  exploreDestinationGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, minWidth: 0, width: '100%' },
+  destinationCard: { ...premiumSurface, borderRadius: 20, flexBasis: 360, flexGrow: 1, flexShrink: 1, minWidth: 0, overflow: 'hidden', padding: 0 },
+  destinationImage: { height: 178, justifyContent: 'flex-start', overflow: 'hidden' },
+  destinationImageRadius: { borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  destinationImageGradient: { ...StyleSheet.absoluteFillObject },
+  destinationTagPill: { alignItems: 'center', alignSelf: 'flex-start', backgroundColor: 'rgba(7,6,15,0.72)', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 6, margin: spacing.md, paddingHorizontal: 11, paddingVertical: 7 },
+  destinationTagPillText: { color: colors.white, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', textTransform: 'uppercase' },
+  destinationBody: { gap: 9, minHeight: 230, padding: spacing.lg },
+  destinationName: { color: colors.text, fontFamily: fonts.display, fontSize: 28, fontWeight: '700', lineHeight: 32 },
+  destinationRegion: { color: colors.muted, fontFamily: fonts.body, fontSize: 14 },
+  destinationTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  destinationTag: { backgroundColor: 'rgba(62,207,178,0.10)', borderColor: 'rgba(62,207,178,0.24)', borderRadius: 999, borderWidth: 1, color: colors.teal, fontFamily: fonts.label, fontSize: 9, fontWeight: '900', overflow: 'hidden', paddingHorizontal: 9, paddingVertical: 5, textTransform: 'uppercase' },
+  destinationReason: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 15, lineHeight: 22 },
+  destinationFooter: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.xs },
+  destinationSignal: { color: colors.goldLight, flex: 1, fontFamily: fonts.accent, fontSize: 12, fontWeight: '900' },
+  destinationArrow: { alignItems: 'center', backgroundColor: colors.gold, borderRadius: 16, height: 34, justifyContent: 'center', width: 34 },
+  exploreEmptyState: { ...premiumSurface, borderRadius: 18, padding: spacing.lg },
+  exploreEmptyTitle: { color: colors.text, fontFamily: fonts.accent, fontSize: 18, fontWeight: '900' },
+  exploreEmptyText: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 22, marginTop: 4 },
+  festivalGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, minWidth: 0, width: '100%' },
   bottomNav: { alignItems: 'center', backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', minHeight: 68, paddingHorizontal: spacing.sm, paddingTop: 7 },
   bottomNavItem: { alignItems: 'center', flex: 1, gap: 3, justifyContent: 'center', minHeight: 56 },
   bottomNavIcon: { alignItems: 'center', borderRadius: 13, height: 30, justifyContent: 'center', width: 42 },
@@ -2871,17 +3116,22 @@ const styles = StyleSheet.create({
   progressFill: { backgroundColor: colors.gold, borderRadius: 99, height: 7 },
   packStatus: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 11, fontWeight: '800', marginTop: 6 },
   horizontalList: { gap: spacing.md, paddingRight: spacing.md },
-  festivalPhoto: { height: 286, overflow: 'hidden', width: 256 },
-  festivalImage: { borderRadius: 18 },
+  festivalPhoto: { ...premiumSurface, borderRadius: 20, flexBasis: 360, flexGrow: 1, flexShrink: 1, minHeight: 404, minWidth: 0, overflow: 'hidden', padding: 0 },
+  festivalImageWrap: { height: 164, justifyContent: 'flex-start', overflow: 'hidden' },
+  festivalImage: { borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  festivalImageGradient: { ...StyleSheet.absoluteFillObject },
   photoGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 18 },
-  countdown: { alignSelf: 'flex-start', borderRadius: 12, color: colors.white, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', margin: spacing.md, overflow: 'hidden', paddingHorizontal: 10, paddingVertical: 5 },
-  festivalCopy: { bottom: 0, left: 0, padding: spacing.md, position: 'absolute', right: 0 },
+  countdown: { alignSelf: 'flex-start', borderRadius: 12, color: colors.white, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', margin: spacing.md, overflow: 'hidden', paddingHorizontal: 10, paddingVertical: 6, textTransform: 'uppercase' },
+  festivalCopy: { flex: 1, gap: 7, padding: spacing.lg },
   festivalCrowd: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase' },
-  festivalName: { color: colors.white, fontFamily: fonts.display, fontSize: 27, fontWeight: '700', marginTop: 4 },
-  festivalWhy: { color: 'rgba(255,255,255,0.72)', fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 4 },
+  festivalName: { color: colors.text, fontFamily: fonts.display, fontSize: 25, fontWeight: '700', lineHeight: 30 },
+  festivalLocation: { color: colors.muted, fontFamily: fonts.accent, fontSize: 13, fontWeight: '800' },
+  festivalWhy: { color: colors.muted, flex: 1, fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
+  festivalLink: { alignItems: 'center', alignSelf: 'flex-start', flexDirection: 'row', gap: 5, marginTop: spacing.xs, paddingVertical: 4 },
+  festivalLinkText: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 13, fontWeight: '900' },
   filterWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md },
   filterChip: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 999, borderWidth: 1, color: colors.muted, fontFamily: fonts.accent, fontSize: 14, fontWeight: '800', overflow: 'hidden', paddingHorizontal: 12, paddingVertical: 8 },
-  discoverCard: { flexBasis: 440, flexGrow: 1, height: 300, justifyContent: 'flex-end', overflow: 'hidden' },
+  discoverCard: { borderColor: colors.border, borderRadius: 20, borderWidth: 1, flexBasis: 360, flexGrow: 1, height: 282, justifyContent: 'flex-end', minWidth: 0, overflow: 'hidden' },
   discoverImage: { borderRadius: 18 },
   discoverCopy: { padding: spacing.md },
   discoverTag: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.4, textTransform: 'uppercase' },
