@@ -174,61 +174,35 @@ const foodInfo: Record<string, { specialty: string; ingredients: string; allergy
 };
 
 const exploreFilters: ExploreFilter[] = ['All', 'Nature', 'Culture', 'Adventure', 'Food', 'Spiritual', 'Hidden gems'];
+const launchDistricts = ['Kathmandu', 'Kaski', 'Chitwan'];
 
 const featuredDestinations = [
-  {
-    title: 'Pokhara',
-    district: 'Kaski',
-    region: 'Gandaki Province',
-    category: 'Nature',
-    tags: ['Lake', 'Views', 'Soft adventure'],
-    reason: 'A gentle first base for mountains, lakeside food, and day hikes.',
-    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80'
-  },
   {
     title: 'Kathmandu Valley',
     district: 'Kathmandu',
     region: 'Bagmati Province',
     category: 'Culture',
-    tags: ['Heritage', 'Food', 'Temples'],
-    reason: 'Dense with courtyards, stupas, markets, and local food walks.',
+    tags: ['Airport taxi', 'SIM cards', 'Bills'],
+    reason: 'Start here for arrival taxis, SIM purchases, food bills, and heritage-area approaches.',
     image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80'
+  },
+  {
+    title: 'Pokhara',
+    district: 'Kaski',
+    region: 'Gandaki Province',
+    category: 'Nature',
+    tags: ['Lakeside taxis', 'Boats', 'Trail starts'],
+    reason: 'Check Lakeside transport, boat rates, weather shifts, and offline trekking readiness.',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80'
   },
   {
     title: 'Chitwan',
     district: 'Chitwan',
     region: 'Bagmati Province',
     category: 'Nature',
-    tags: ['Wildlife', 'Tharu culture', 'River'],
-    reason: 'A slower Terai stop for wildlife, village culture, and warm evenings.',
+    tags: ['Safari quotes', 'Permits', 'Local help'],
+    reason: 'Compare safari inclusions, transport quotes, and safety steps before paying.',
     image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    title: 'Mustang',
-    district: 'Mustang',
-    region: 'Gandaki Province',
-    category: 'Adventure',
-    tags: ['Himalayan desert', 'Permits', 'Monasteries'],
-    reason: 'High-altitude landscapes, cliff villages, and Buddhist heritage.',
-    image: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    title: 'Everest Region',
-    district: 'Solukhumbu',
-    region: 'Koshi Province',
-    category: 'Adventure',
-    tags: ['Trekking', 'Altitude', 'Sherpa towns'],
-    reason: 'Iconic trails, mountain villages, and careful acclimatization days.',
-    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=900&q=80'
-  },
-  {
-    title: 'Patan',
-    district: 'Lalitpur',
-    region: 'Bagmati Province',
-    category: 'Culture',
-    tags: ['Craft', 'Newari food', 'Hidden gems'],
-    reason: 'A compact heritage walk through metal workshops and quiet bahals.',
-    image: 'https://images.unsplash.com/photo-1608023136037-626dad6c6188?auto=format&fit=crop&w=900&q=80'
   }
 ] as const;
 
@@ -554,9 +528,13 @@ export function YatriDashboardScreen({
       setCurrentPage('safety');
       return;
     }
-    if (title === 'Offline') {
+    if (title === 'Offline' || title === 'Offline Help') {
       setConnectivity('offline');
       setCurrentPage('home');
+      return;
+    }
+    if (title === 'Scam Alerts') {
+      setCurrentPage('safety');
       return;
     }
     if (title === 'Ride Tips') {
@@ -665,9 +643,9 @@ export function YatriDashboardScreen({
                 <Text style={styles.location}>Kathmandu ready - offline packs active</Text>
               </View>
               <View style={styles.heroCopy}>
-                <Text style={[styles.modeBadge, { color: active.secondary }]}>{active.label}</Text>
-                <Text style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}>{personalizedPlan.title}</Text>
-                <Text style={[styles.heroText, isDesktop && styles.heroTextDesktop]}>{personalizedPlan.summary}</Text>
+                <Text style={[styles.modeBadge, { color: active.secondary }]}>Kathmandu · Pokhara · Chitwan</Text>
+                <Text style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}>Check prices, avoid common scams, and get help offline in Nepal.</Text>
+                <Text style={[styles.heroText, isDesktop && styles.heroTextDesktop]}>Built around the moments travelers actually need protection: taxis, SIM cards, restaurant bills, permits, and emergencies without signal.</Text>
               </View>
             </ImageBackground>
 
@@ -701,7 +679,7 @@ export function YatriDashboardScreen({
 
             {connectivity === 'online' ? (
               <>
-                <SectionHeader label="Know before you go" title="Choose your district" />
+                <SectionHeader label="Launch corridor" title="Choose Kathmandu, Pokhara or Chitwan" />
                 <DistrictBriefingSelector selectedDistrict={selectedDistrict} onSelectDistrict={openDistrictGuide} />
                 <SectionHeader label="Online nearby" title={`Places to stay in ${selectedDistrict}`} />
                 <NearbyHotels selectedDistrict={selectedDistrict} />
@@ -981,13 +959,13 @@ function DesktopHomeLayout({
           style={styles.desktopHomeHeroGradient}
         />
         <View style={[styles.desktopHomeHeroCopy, compactDesktop && styles.desktopHomeHeroCopyCompact]}>
-          <Text style={styles.desktopHomeEyebrow}>Namaste, traveler</Text>
-          <Text style={styles.desktopHomeTitle}>Experience the real Nepal</Text>
-          <Text style={styles.desktopHomeText}>Local culture, warm people, sacred places and unforgettable moments await you.</Text>
+          <Text style={styles.desktopHomeEyebrow}>Kathmandu · Pokhara · Chitwan</Text>
+          <Text style={styles.desktopHomeTitle}>Check prices, avoid common scams, and get help offline in Nepal.</Text>
+          <Text style={styles.desktopHomeText}>Yatri protects the five travel moments that go wrong most often: airport taxis, SIM purchases, restaurant bills, trekking permits, and offline emergencies.</Text>
           <View style={styles.desktopHomeTags}>
-            {personalizedPlan.tags.map((tag, index) => (
+            {['Price checks', 'Scam playbooks', 'Offline SOS'].map((tag, index) => (
               <View key={tag} style={styles.desktopHomeTag}>
-                <Ionicons name={index === 0 ? 'people-outline' : index === 1 ? 'restaurant-outline' : 'calendar-outline'} size={14} color={colors.goldLight} />
+                <Ionicons name={index === 0 ? 'calculator-outline' : index === 1 ? 'shield-checkmark-outline' : 'cloud-offline-outline'} size={14} color={colors.goldLight} />
                 <Text style={styles.desktopHomeTagText}>{tag}</Text>
               </View>
             ))}
@@ -1018,9 +996,9 @@ function DesktopHomeLayout({
       <View style={styles.desktopHomeMainGrid}>
         <View style={styles.desktopHomePrimary}>
           <View style={styles.desktopSectionHeaderRow}>
-            <SectionHeader label="Know before you go" title="Choose your district" />
-            <Pressable accessibilityRole="button" onPress={() => onAction({ label: 'View all districts', page: 'explore', icon: 'map-outline' })} style={styles.viewAllButton}>
-              <Text style={styles.viewAllText}>View all districts</Text>
+            <SectionHeader label="Launch corridor" title="Choose Kathmandu, Pokhara or Chitwan" />
+            <Pressable accessibilityRole="button" onPress={() => onAction({ label: 'Explore launch areas', page: 'explore', icon: 'map-outline' })} style={styles.viewAllButton}>
+              <Text style={styles.viewAllText}>Explore launch areas</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.muted} />
             </Pressable>
           </View>
@@ -1039,12 +1017,12 @@ function DesktopHomeLayout({
 }
 
 function HeroPromiseCard({ compact = false }: { compact?: boolean }) {
-  const promises = ['Local experiences that matter', 'Verified and fair pricing', 'Support local communities'];
+  const promises = ['Dated price observations', 'Scam and safety playbooks', 'Offline help when signal drops'];
   return (
     <View style={[styles.heroPromiseCard, compact && styles.heroPromiseCardCompact]}>
       <View style={styles.heroPromiseHeader}>
         <Ionicons name="ribbon-outline" size={24} color={colors.goldLight} />
-        <Text style={styles.heroPromiseTitle}>Yatri Promise</Text>
+        <Text style={styles.heroPromiseTitle}>Protected Traveler Promise</Text>
       </View>
       {promises.map((promise) => (
         <View key={promise} style={styles.heroPromiseItem}>
@@ -1082,7 +1060,7 @@ function DesktopActionCard({
 function HomeRightRail({ onQuickAction, selectedDistrict }: { onQuickAction: (title: string) => void; selectedDistrict: string }) {
   return (
     <View style={styles.desktopHomeRail}>
-      <OfficialGuideCard onOpenGuide={() => onQuickAction('Offline')} />
+      <OfficialGuideCard onOpenGuide={() => onQuickAction('Offline Help')} />
       <View style={styles.quickHelpPanel}>
         <Text style={styles.railPanelLabel}>Quick help</Text>
         <View style={styles.quickHelpGrid}>
@@ -1101,8 +1079,8 @@ function HomeRightRail({ onQuickAction, selectedDistrict }: { onQuickAction: (ti
       </View>
       <View style={styles.railDistrictTip}>
         <Badge tone="blue">LOCAL TIP</Badge>
-        <Text style={styles.railDistrictTitle}>{selectedDistrict} desk</Text>
-        <Text style={styles.railDistrictText}>Check base town, signal, transport, respect notes, and nearby lodging before you move.</Text>
+        <Text style={styles.railDistrictTitle}>{selectedDistrict === 'Kaski' ? 'Pokhara' : selectedDistrict} desk</Text>
+        <Text style={styles.railDistrictText}>Focus on the next real decision: check the quote, read the alert, save offline help, or open SOS.</Text>
       </View>
     </View>
   );
@@ -1483,6 +1461,7 @@ function FairPriceChecker({
     return categoryMatch && queryMatch;
   });
   const featured = filtered[0] ?? districtItems[0] ?? fairPriceCatalog[0];
+  const featuredConfidence = getPriceConfidence(featured);
   const quoted = Number(quotedPrice.replace(/[^0-9.]/g, ''));
   const hasQuote = Number.isFinite(quoted) && quoted > 0;
   const verdict = !hasQuote
@@ -1509,7 +1488,7 @@ function FairPriceChecker({
         </View>
         <View style={styles.flex}>
           <Text style={styles.priceHeroTitle}>Fair price checker</Text>
-          <Text style={styles.priceHeroText}>Search common Nepal travel costs, compare a quoted price, and get a quick overcharge warning.</Text>
+          <Text style={styles.priceHeroText}>Compare dated Kathmandu, Pokhara, and Chitwan observations before paying for taxis, SIMs, meals, permits, and common tourist purchases.</Text>
         </View>
       </View>
 
@@ -1541,7 +1520,10 @@ function FairPriceChecker({
             <Text style={styles.priceCompareItem}>{featured.item}</Text>
             <Text style={styles.priceCompareRange}>{featured.high === 0 ? 'Official price required' : 'Rs. ' + featured.low.toLocaleString() + '-' + featured.high.toLocaleString() + ' / ' + featured.unit}</Text>
           </View>
-          <Badge tone={featured.risk === 'High' ? 'danger' : featured.risk === 'Medium' ? 'warn' : 'ok'}>{featured.risk} risk</Badge>
+          <View style={styles.priceBadgeStack}>
+            <Badge tone={featured.risk === 'High' ? 'danger' : featured.risk === 'Medium' ? 'warn' : 'ok'}>{featured.risk} risk</Badge>
+            <Badge tone={featuredConfidence.tone}>{featuredConfidence.label}</Badge>
+          </View>
         </View>
         <View style={styles.priceQuoteRow}>
           <TextInput accessibilityLabel="Quoted price in rupees" keyboardType="numeric" onChangeText={setQuotedPrice} placeholder="Quoted Rs." placeholderTextColor={colors.dim} style={styles.priceQuoteInput} value={quotedPrice} />
@@ -1552,35 +1534,57 @@ function FairPriceChecker({
         </View>
         <Text style={styles.pricePhraseLarge}>Say: “{featured.phrase}”</Text>
         <Text style={styles.priceTip}>{featured.tip}</Text>
+        <Text style={styles.priceObservationSource}>{featured.source}</Text>
       </View>
 
       <View style={styles.priceResultsHeader}>
-        <Text style={styles.priceResultsTitle}>{filtered.length} price references</Text>
-        <Text style={styles.priceResultsDistrict}>{selectedDistrict} + common Nepal tourist prices</Text>
+        <Text style={styles.priceResultsTitle}>{filtered.length} price observations</Text>
+        <Text style={styles.priceResultsDistrict}>{selectedDistrict === 'Kaski' ? 'Pokhara' : selectedDistrict} launch corridor</Text>
       </View>
 
       <View style={[styles.stack, desktop && styles.desktopTwoColumnGrid]}>
-        {filtered.map((item) => (
-          <Pressable key={`${item.district}-${item.item}`} onPress={() => { setQuery(item.item); setCategory(item.category); setQuotedPrice(''); }} style={styles.fairPriceRow}>
-            <View style={styles.fairPriceIcon}>
-              <Ionicons name={item.category === 'Transport' ? 'car-outline' : item.category === 'Food' ? 'restaurant-outline' : item.category === 'Connectivity' ? 'phone-portrait-outline' : item.category === 'Permits' ? 'document-text-outline' : 'bag-outline'} size={20} color={colors.teal} />
-            </View>
-            <View style={styles.flex}>
-              <Text style={styles.fairPriceName}>{item.item}</Text>
-              <Text style={styles.fairPriceMeta}>{item.category} · {item.district} · {item.source}</Text>
-              <Text style={styles.fairPriceTip}>{item.tip}</Text>
-            </View>
-            <View style={styles.fairPriceRangeBox}>
-              <Text style={styles.fairPriceRange}>{item.high === 0 ? 'Official' : 'Rs. ' + item.low.toLocaleString() + '-' + item.high.toLocaleString()}</Text>
-              <Text style={styles.fairPriceUnit}>{item.unit}</Text>
-            </View>
-          </Pressable>
-        ))}
+        {filtered.map((item) => {
+          const confidence = getPriceConfidence(item);
+          return (
+            <Pressable key={`${item.district}-${item.item}`} onPress={() => { setQuery(item.item); setCategory(item.category); setQuotedPrice(''); }} style={styles.fairPriceRow}>
+              <View style={styles.fairPriceIcon}>
+                <Ionicons name={item.category === 'Transport' ? 'car-outline' : item.category === 'Food' ? 'restaurant-outline' : item.category === 'Connectivity' ? 'phone-portrait-outline' : item.category === 'Permits' ? 'document-text-outline' : 'bag-outline'} size={20} color={colors.teal} />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.fairPriceName}>{item.item}</Text>
+                <Text style={styles.fairPriceMeta}>{item.category} · {item.district} · {item.source}</Text>
+                <View style={styles.priceConfidenceRow}>
+                  <Badge tone={confidence.tone}>{confidence.label}</Badge>
+                  <Text style={styles.priceConfidenceText}>{confidence.detail}</Text>
+                </View>
+                <Text style={styles.fairPriceTip}>{item.tip}</Text>
+              </View>
+              <View style={styles.fairPriceRangeBox}>
+                <Text style={styles.fairPriceRange}>{item.high === 0 ? 'Official' : 'Rs. ' + item.low.toLocaleString() + '-' + item.high.toLocaleString()}</Text>
+                <Text style={styles.fairPriceUnit}>{item.unit}</Text>
+              </View>
+            </Pressable>
+          );
+        })}
       </View>
       <Text style={styles.contentSource}>{fairPriceSourceNote}</Text>
     </View>
   );
 }
+
+function getPriceConfidence(item: FairPriceItem): { detail: string; label: string; tone: 'ok' | 'warn' | 'danger' | 'blue' | 'muted' } {
+  if (item.high === 0 || item.source.toLowerCase().includes('official')) {
+    return { detail: 'Confirm at an official counter before paying.', label: 'Official check', tone: 'warn' };
+  }
+  if (item.district === 'Kathmandu' && item.risk !== 'High') {
+    return { detail: 'Dated community observation with lower-risk variance.', label: 'Higher confidence', tone: 'ok' };
+  }
+  if (launchDistricts.includes(item.district)) {
+    return { detail: 'Launch-area observation; verify inclusions and timing.', label: 'Medium confidence', tone: 'blue' };
+  }
+  return { detail: 'Use as a starting point only; Yatri is collecting fresher samples.', label: 'Needs samples', tone: 'muted' };
+}
+
 function ReferencePriceList({ items, icon }: { items: PriceItem[]; icon: IconName }) {
   return (
     <View style={styles.stack}>
@@ -1631,9 +1635,11 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
       ? colors.gold
       : colors.danger;
   const normalizedSearch = districtSearch.trim().toLowerCase();
-  const filteredDistricts = districtDirectory.filter((item) => {
+  const launchDistrictDirectory = districtDirectory.filter((item) => launchDistricts.includes(item.district));
+  const filteredDistricts = launchDistrictDirectory.filter((item) => {
     if (!normalizedSearch) return true;
-    return item.district.toLowerCase().includes(normalizedSearch) || item.province.toLowerCase().includes(normalizedSearch);
+    const searchableName = item.district === 'Kaski' ? 'kaski pokhara' : item.district.toLowerCase();
+    return searchableName.includes(normalizedSearch) || item.province.toLowerCase().includes(normalizedSearch);
   });
 
   useEffect(() => {
@@ -1669,7 +1675,7 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
             <Text style={styles.districtSearchHint}>{selectedDirectoryItem.province}</Text>
           </View>
           <View style={styles.districtCountBadge}>
-            <Text style={styles.districtCountText}>{filteredDistricts.length}/77</Text>
+            <Text style={styles.districtCountText}>{filteredDistricts.length}/3</Text>
           </View>
           <Ionicons name={districtPickerOpen ? 'chevron-up' : 'chevron-down'} size={22} color={colors.muted} />
         </Pressable>
@@ -1682,7 +1688,7 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
             accessibilityLabel="Search Nepal districts"
             autoCapitalize="words"
             onChangeText={setDistrictSearch}
-            placeholder="Search district or province..."
+            placeholder="Search Kathmandu, Pokhara or Chitwan..."
             placeholderTextColor={colors.dim}
             style={styles.districtSearchInput}
             value={districtSearch}
@@ -1782,7 +1788,7 @@ function DistrictBriefingSelector({ selectedDistrict, onSelectDistrict }: { sele
             </View>
           )}
         </View>}
-        <Text style={styles.districtFreshness}>{savedAt ? `Offline copy saved ${new Date(savedAt).toLocaleDateString()} · ` : ''}Yatri district directory · 77 districts · reviewed July 6, 2026</Text>
+        <Text style={styles.districtFreshness}>{savedAt ? `Offline copy saved ${new Date(savedAt).toLocaleDateString()} · ` : ''}Launch corridor guide · Kathmandu, Pokhara and Chitwan · reviewed July 6, 2026</Text>
       </View>
     </View>
   );
@@ -1919,7 +1925,7 @@ function DestinationCard({
       >
         <LinearGradient colors={['rgba(7,6,15,0.06)', 'rgba(7,6,15,0.84)']} style={styles.destinationImageGradient} />
         <View style={styles.destinationTagPill}>
-          <Ionicons name={destination.category === 'Adventure' ? 'trail-sign-outline' : destination.category === 'Nature' ? 'leaf-outline' : 'sparkles-outline'} size={14} color={colors.goldLight} />
+          <Ionicons name={destination.category === 'Nature' ? 'leaf-outline' : 'sparkles-outline'} size={14} color={colors.goldLight} />
           <Text style={styles.destinationTagPillText}>{destination.category}</Text>
         </View>
       </ImageBackground>
@@ -3238,6 +3244,7 @@ const styles = StyleSheet.create({
   priceCategoryTextSelected: { color: '#1a0f00' },
   priceCompareCard: { ...premiumSurface, borderColor: 'rgba(62,207,178,0.30)', borderRadius: 18, gap: spacing.md, padding: spacing.md },
   priceCompareHeader: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md, justifyContent: 'space-between' },
+  priceBadgeStack: { alignItems: 'flex-end', gap: spacing.xs },
   priceCompareLabel: { color: colors.gold, fontFamily: fonts.label, fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
   priceCompareItem: { color: colors.text, fontFamily: fonts.accent, fontSize: 20, fontWeight: '900', marginTop: 4 },
   priceCompareRange: { color: colors.teal, fontFamily: fonts.display, fontSize: 24, fontWeight: '700', marginTop: 6 },
@@ -3252,6 +3259,9 @@ const styles = StyleSheet.create({
   priceVerdictText: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 18, marginTop: 3 },
   pricePhraseLarge: { color: colors.goldLight, fontFamily: fonts.accent, fontSize: 15, fontWeight: '900' },
   priceTip: { color: colors.muted, fontFamily: fonts.body, fontSize: 14, lineHeight: 21 },
+  priceObservationSource: { color: colors.dim, fontFamily: fonts.label, fontSize: 9, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase' },
+  priceConfidenceRow: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: 8 },
+  priceConfidenceText: { color: colors.dim, flexShrink: 1, fontFamily: fonts.body, fontSize: 11, lineHeight: 16 },
   priceResultsHeader: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.sm },
   priceResultsTitle: { color: colors.text, fontFamily: fonts.display, fontSize: 24, fontWeight: '700' },
   priceResultsDistrict: { color: colors.dim, fontFamily: fonts.body, fontSize: 12, textAlign: 'right' },

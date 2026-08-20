@@ -158,10 +158,10 @@ export type ScamAlert = {
 };
 
 export const quickActions: QuickAction[] = [
-  { title: 'SOS', subtitle: 'GPS + help lines', icon: 'medical-outline', accent: '#ff5d6c' },
-  { title: 'Fair Price', subtitle: 'Check before paying', icon: 'calculator-outline', accent: '#3ecfb2' },
-  { title: 'Ride Tips', subtitle: 'Pathao + inDrive', icon: 'car-outline', accent: '#85b7eb' },
-  { title: 'Offline', subtitle: 'Download packs', icon: 'cloud-download-outline', accent: '#f5a623' }
+  { title: 'Fair Price', subtitle: 'Taxis, SIMs, bills', icon: 'calculator-outline', accent: '#3ecfb2' },
+  { title: 'Scam Alerts', subtitle: 'Known tourist traps', icon: 'shield-checkmark-outline', accent: '#85b7eb' },
+  { title: 'Offline Help', subtitle: 'Packs + contacts', icon: 'cloud-download-outline', accent: '#f5a623' },
+  { title: 'SOS', subtitle: 'GPS + emergency', icon: 'medical-outline', accent: '#ff5d6c' }
 ];
 
 export type Feature = {
