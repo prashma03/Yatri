@@ -644,7 +644,7 @@ export function YatriDashboardScreen({
               </View>
               <View style={styles.heroCopy}>
                 <Text style={[styles.modeBadge, { color: active.secondary }]}>Kathmandu · Pokhara · Chitwan</Text>
-                <Text style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}>Check prices, avoid common scams, and get help offline in Nepal.</Text>
+                <Text style={[styles.heroTitle, isDesktop && styles.heroTitleDesktop]}>Check prices, avoid scams, and get offline help in Nepal.</Text>
                 <Text style={[styles.heroText, isDesktop && styles.heroTextDesktop]}>Built around the moments travelers actually need protection: taxis, SIM cards, restaurant bills, permits, and emergencies without signal.</Text>
               </View>
             </ImageBackground>
@@ -960,8 +960,8 @@ function DesktopHomeLayout({
         />
         <View style={[styles.desktopHomeHeroCopy, compactDesktop && styles.desktopHomeHeroCopyCompact]}>
           <Text style={styles.desktopHomeEyebrow}>Kathmandu · Pokhara · Chitwan</Text>
-          <Text style={styles.desktopHomeTitle}>Check prices, avoid common scams, and get help offline in Nepal.</Text>
-          <Text style={styles.desktopHomeText}>Yatri protects the five travel moments that go wrong most often: airport taxis, SIM purchases, restaurant bills, trekking permits, and offline emergencies.</Text>
+          <Text style={[styles.desktopHomeTitle, compactDesktop && styles.desktopHomeTitleCompact]}>Check prices, avoid scams, and get offline help in Nepal.</Text>
+          <Text style={[styles.desktopHomeText, compactDesktop && styles.desktopHomeTextCompact]}>Yatri protects the travel moments that go wrong most often: airport taxis, SIM purchases, restaurant bills, trekking permits, and emergencies without signal.</Text>
           <View style={styles.desktopHomeTags}>
             {['Price checks', 'Scam playbooks', 'Offline SOS'].map((tag, index) => (
               <View key={tag} style={styles.desktopHomeTag}>
@@ -971,7 +971,7 @@ function DesktopHomeLayout({
             ))}
           </View>
         </View>
-        <HeroPromiseCard compact={compactDesktop} />
+        {!compactDesktop && <HeroPromiseCard />}
       </ImageBackground>
 
       <View style={styles.desktopModeRow}>
@@ -2882,14 +2882,16 @@ const styles = StyleSheet.create({
   exchangeValue: { color: colors.teal, fontFamily: fonts.accent, fontSize: 13, fontWeight: '800', marginTop: 2 },
   desktopHome: { gap: 32, minWidth: 0, width: '100%' },
   desktopHomeHero: { borderColor: colors.border, borderRadius: 22, borderWidth: 1, height: 390, justifyContent: 'flex-end', overflow: 'hidden' },
-  desktopHomeHeroCompact: { height: 600 },
+  desktopHomeHeroCompact: { height: 430 },
   desktopHomeHeroImage: { borderRadius: 22 },
   desktopHomeHeroGradient: { ...StyleSheet.absoluteFillObject, borderRadius: 22 },
   desktopHomeHeroCopy: { bottom: 34, left: 38, maxWidth: 620, position: 'absolute' },
-  desktopHomeHeroCopyCompact: { bottom: 250, left: 28, maxWidth: 540, right: 28 },
+  desktopHomeHeroCopyCompact: { bottom: 30, left: 28, maxWidth: 780, right: 28 },
   desktopHomeEyebrow: { color: colors.goldLight, fontFamily: fonts.label, fontSize: 13, fontWeight: '900', letterSpacing: 2.6, textTransform: 'uppercase' },
-  desktopHomeTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 56, fontWeight: '700', lineHeight: 62, marginTop: 12, maxWidth: 540 },
+  desktopHomeTitle: { color: colors.white, fontFamily: fonts.display, fontSize: 48, fontWeight: '700', lineHeight: 54, marginTop: 12, maxWidth: 760 },
+  desktopHomeTitleCompact: { fontSize: 42, lineHeight: 47, maxWidth: 760 },
   desktopHomeText: { color: 'rgba(255,255,255,0.82)', fontFamily: fonts.body, fontSize: 19, lineHeight: 28, marginTop: 14, maxWidth: 560 },
+  desktopHomeTextCompact: { fontSize: 17, lineHeight: 25, maxWidth: 680 },
   desktopHomeTags: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: 22 },
   desktopHomeTag: { alignItems: 'center', backgroundColor: 'rgba(7,6,15,0.52)', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 7, paddingHorizontal: 13, paddingVertical: 9 },
   desktopHomeTagText: { color: colors.white, fontFamily: fonts.label, fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
